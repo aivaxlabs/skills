@@ -8,15 +8,25 @@ This repository contains only the AIVAX skill package:
 aivax/
 +-- SKILL.md
 +-- references/
-    +-- overview/
-    +-- mcp/
+    +-- account/
+    +-- agentic-tests/
     +-- ai-gateways/
-    +-- rag/
-    +-- batch-jobs/
+    +-- batch/
+    +-- composition/
     +-- cost-monitoring/
-    +-- conversations/
-    +-- operations/
+    +-- image-generation/
+    +-- multimodal/
+    +-- observability/
+    +-- platform-rules/
+    +-- rag/
+    +-- rerankers/
+    +-- resilience/
     +-- skill-development/
+    +-- speech/
+    +-- text-inference/
+    +-- text-tools/
+    +-- voice-realtime/
+    +-- web-chat/
 ```
 
 ## What It Does
@@ -25,18 +35,24 @@ The `aivax` skill teaches an agent to operate an AIVAX user account through the 
 
 It includes:
 
-- A product and resource overview.
-- MCP tool selection and safe mutation rules.
-- AI Gateway playbooks.
-- RAG analysis and troubleshooting playbooks.
-- Batch job diagnostics.
-- Conversation and chat client analysis.
-- Cost monitoring workflows.
-- Operational debugging guidance.
+- A capability router that loads only the relevant operational guidance.
+- Platform rules for tool choice, error handling, and safe mutations.
+- Playbooks for AI gateways, text inference, RAG, reranking, and agentic tests.
+- Batch, web chat, account, cost monitoring, and observability workflows.
+- Image, multimodal, speech, realtime voice, and text-tool guidance.
+- Composition and resilience patterns for cross-capability workflows.
 
 ## Install
 
-Copy the `aivax/` folder into the skills directory used by your harness.
+### Recommended: install with `npx skills`
+
+```bash
+npx skills add aivaxlabs/skills
+```
+
+### Manual installation
+
+If your harness does not support the `skills` CLI, copy the `aivax/` folder into its skills directory.
 
 ### Codex
 
@@ -106,6 +122,11 @@ Project-level:
 New-Item -ItemType Directory -Force -Path ".\.github\skills" | Out-Null
 Copy-Item -Recurse -Force ".\aivax" ".\.github\skills\aivax"
 ```
+
+## Get Started with AIVAX
+
+- [Create an AIVAX account](https://console.aivax.net/)
+- [AIVAX documentation](https://docs.aivax.net/)
 
 ## Security
 

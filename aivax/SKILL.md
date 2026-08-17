@@ -1,140 +1,157 @@
 ---
 name: aivax
-description: Operate AIVAX user accounts through the AIVAX Account Management MCP and account APIs, not by changing AIVAX source code. Use when an agent such as Codex, Claude, or Antigravity needs to understand AIVAX, choose the right AIVAX product surface, inspect resources, debug failures, analyze RAG or conversations, configure AI gateways or chat clients, run batch jobs, manage account skills, monitor costs, or safely mutate account state. This skill is an operational router to MCP tools, safe mutations, gotchas, and task-specific situation playbooks.
+description: Operate AIVAX as a unified agent platform. Use when an agent needs to plan, execute, or validate work that touches AIVAX inference, RAG, rerankers, agentic tests, voice (TTS, STT, realtime), image generation, text tools (classify, segment, describe), AI gateways, batch, web chat, account operations, cost monitoring, or observability. Routes to focused sub-skills instead of duplicating endpoint documentation. Covers the case when the AIVAX MCP is available and when only public docs are reachable.
 ---
 
 # AIVAX
 
-Use this skill as an operating manual for agents working with an authenticated AIVAX account. The goal is not to describe AIVAX passively; the goal is to help the agent choose the right account resource, call the right MCP tool in the right order, avoid common mistakes, and validate the result.
+AIVAX is an AI orchestration platform: hosted or BYOK models, RAG collections, tools, skills, gateways, chat clients, batch, agentic tests, voice, image generation, and account APIs behind a single wallet and OpenAI-compatible inference surface. The role of this skill is not to memorize endpoints; it is to help the agent pick the right capability, follow the right contract, and validate the result.
 
-## Scope Boundary
+## When To Use This Skill
 
-Use AIVAX as a platform through the Account Management MCP, account APIs, documentation, and live account resources.
+Use this skill when the task involves any of the following:
 
-Do not inspect, modify, build, deploy, or reason from the AIVAX product source code unless the user explicitly asks for a separate source-code engineering task. When this skill is active, treat MCP tools and public/account API surfaces as the operating interface.
+- Calling an AIVAX model or AI gateway (`/v1/chat/completions`).
+- Configuring or operating an AI gateway, RAG collection, batch workflow, or chat client.
+- Generating, transcribing, or describing media (speech, image, video, file).
+- Opening or designing a realtime voice session.
+- Classifying, segmenting, or extracting structure from text or media.
+- Searching and reranking a knowledge base, with or without a collection.
+- Creating, running, evaluating, or comparing agentic tests.
+- Creating, rotating, or auditing API keys; inspecting balance, usage, salt, or plan.
+- Investigating cost spikes, latency, or production errors; correlating traces.
+- Building a workflow that combines more than one AIVAX capability.
 
-## Core Behavior
+Do not use this skill to inspect, modify, build, or reason from AIVAX source code, repositories, deployment scripts, database models, or server internals unless the user explicitly asks for a separate source-code engineering task.
 
-1. Identify the AIVAX area involved:
-   - AI Gateways
-   - RAG and semantic search
-   - Batch Jobs
-   - Cost Monitoring
-   - Account Management MCP
-   - Conversation Analysis
-   - Chat Clients
-   - Account Skills
-   - Operations and debugging
-2. Before taking action:
-   - Read the relevant area README.
-   - Read the relevant situation playbook when one exists.
-   - Check `references/mcp/tool-selection.md` if a tool call is required.
-   - Prefer read-only inspection before mutation.
-3. For mutations:
-   - Explain the intended change when risk is non-trivial.
-   - Read current state first.
-   - Identify the exact target resource ID.
-   - Apply the smallest safe change.
-   - Verify the result after the change.
-4. For debugging:
-   - Inspect the failing state or reproduce with the smallest safe request.
-   - Collect conversation/resource/usage evidence.
-   - Identify the likely layer: gateway, RAG, tool, model, chat client, batch, account, or cost.
-   - Recommend or apply the smallest fix.
-   - Verify with the same path that failed.
+## How To Read This Skill
 
-## MCP Contract
+The skill is a router. The body of `SKILL.md` tells the agent which sub-skill to load for a given intent, how to discover capabilities, and what global rules apply. The sub-skills in `references/` contain the actual operating contracts.
 
-Prefer the configured AIVAX Account Management MCP whenever it is available.
+Always start with the **Router Matrix** below. Then load exactly one capability skill (or compose several) before acting.
 
-Core tools:
+## Router Matrix
 
-- `aivax_invoke_function`: invoke account-scoped AIVAX API functions. Use hostless paths such as `/api/v1/ai-gateways`; never include a host.
-- `aivax_list_models`: list integrated models, pricing, providers, context windows, capabilities, plan availability, and flags.
-- `aivax_search_context`: search AIVAX documentation and API references before using unfamiliar fields or endpoints.
+Map the user intent to a sub-skill. Load only what you need. When in doubt, prefer the more specific skill over the broader one.
 
-Read first:
+| Intent | Load |
+| --- | --- |
+| Choose a model, build chat-completion messages, stream, attach tools, retry, or swap models for cost/latency/quality | `references/text-inference/` |
+| Send images, audio, video, or files inside chat-completion messages; preprocess media to text | `references/multimodal/` |
+| Generate images from text prompts | `references/image-generation/` |
+| Synthesize speech from text (TTS) | `references/speech/` (TTS) |
+| Transcribe audio to text (STT) | `references/speech/` (STT) |
+| Open a realtime bidirectional voice session | `references/voice-realtime/` |
+| Classify documents, segment text, or describe media into text | `references/text-tools/` |
+| Build a RAG pipeline: collection, ingestion, query, answer, grounding | `references/rag/` |
+| Rerank candidate documents; choose Reflex, Cohere, Qwen, Jina, NVIDIA, or lexical reranker | `references/rerankers/` |
+| Create, run, evaluate, or compare agentic tests | `references/agentic-tests/` |
+| Create, list, rotate, or delete API keys; inspect account, plan, or salt | `references/account/` |
+| Investigate a cost spike, balance drop, or spend optimization | `references/cost-monitoring/` |
+| Correlate traces, diagnose latency/error, audit a conversation | `references/observability/` |
+| Create, edit, or operate an AI gateway (model + instructions + RAG + tools + skills) | `references/ai-gateways/` |
+| Author or attach an account-scoped skill under `/api/v1/skills` | `references/skill-development/` |
+| Operate a web chat client, session, or messaging integration | `references/web-chat/` |
+| Design or debug a batch workflow/job/items | `references/batch/` |
+| Combine multiple AIVAX capabilities into a single workflow | `references/composition/` |
+| Handle rate limits, transient errors, retries, idempotency, fallback | `references/resilience/` |
+| Anything transversal: which tool to call, how to mutate safely, how to interpret errors | `references/platform-rules/` |
 
-- `references/mcp/tools.md`
-- `references/mcp/tool-selection.md`
-- `references/mcp/safe-mutations.md`
-- `references/mcp/errors.md`
+If two skills match, prefer the one closer to the user-facing outcome. For example, "the agent's last answer was wrong" usually means `references/rag/` (grounding) or `references/text-inference/` (prompt/model); only escalate to `references/observability/` if there is telemetry evidence of a failure.
 
-## Reference Router
+## Discovery And No-MCP Mode
 
-Use only the references needed for the task.
+The skill assumes the AIVAX Account Management MCP may or may not be available. The agent must check before relying on a specific tool.
 
-Product orientation:
+### When the MCP is available
 
-- `references/overview/README.md`: what AIVAX is, product families, resource relationships, common journeys, and decision rules.
+Prefer the MCP tools over direct HTTP calls. The three core tools are:
 
-MCP and safety:
+- `aivax_invoke_function`: invoke any account-scoped AIVAX API with a hostless path such as `/api/v1/ai-gateways` and an optional JSON `body`.
+- `aivax_list_models`: list integrated models and AI gateways with capabilities, pricing, context window, modality, plan availability, and flags.
+- `aivax_search_context`: search AIVAX documentation and API reference before acting on unfamiliar fields, enums, or endpoints.
 
-- `references/mcp/README.md`: base account operations and common account surfaces.
-- `references/mcp/tools.md`: MCP tool contracts and call shapes.
-- `references/mcp/tool-selection.md`: which MCP/API call to use for common intents.
-- `references/mcp/safe-mutations.md`: mutation rules, confirmations, and validation.
-- `references/mcp/errors.md`: common API/MCP error handling patterns.
+`aivax_search_context` is the right tool to call when a sub-skill says "verify the field name with the docs" — that instruction always means a search call, not a guess.
 
-AI Gateways:
+### When the MCP is not available
 
-- `references/ai-gateways/README.md`: gateway parameters, creation, editing, and validation.
-- `references/ai-gateways/situations/debug-failed-request.md`
-- `references/ai-gateways/situations/inspect-routing.md`
-- `references/ai-gateways/situations/analyze-latency.md`
-- `references/ai-gateways/situations/analyze-cost-spike.md`
+Fall back to public AIVAX surfaces and document every call before making it:
 
-RAG:
+- API reference for agents: <https://inference.aivax.net/apidocs/llms.txt>
+- Human and agent manual: <https://docs.aivax.net/docs/overview>
+- Send the header `X-Response-Truncating: agent-optimized` on HTTP calls to get a shortened, agent-friendly response.
 
-- `references/rag/README.md`: collections, query, transactions, performance reports, and remediation.
-- `references/rag/situations/diagnose-bad-answer.md`
-- `references/rag/situations/inspect-retrieval.md`
-- `references/rag/situations/debug-missing-documents.md`
-- `references/rag/situations/evaluate-quality.md`
+In this mode, ask the user for the base URL and API key surface if the integration is not already configured. Do not infer hosts, credentials, or internal paths.
 
-Batch Jobs:
+For all sub-skills, the operating instruction is the same: **read the live source of truth (MCP or docs) before mutating, and never invent field names**.
 
-- `references/batch-jobs/README.md`: workflows, jobs, items, imports, monitoring, retry, export.
-- `references/batch-jobs/situations/debug-failed-job.md`
+## Cross-Cutting Contracts
 
-Cost Monitoring:
+Every sub-skill follows the same contract, so the agent can chain them safely.
 
-- `references/cost-monitoring/README.md`: balance, usage, model spend, resource spend, storage, reserve, optimization.
-- `references/cost-monitoring/situations/investigate-cost-spike.md`
+- **Inputs**: the data, parameters, IDs, and resources the sub-skill needs.
+- **Preconditions**: what must already be true (auth, balance, plan, model availability, gateway state, collection indexing state, etc.).
+- **Decision criteria**: how to choose between alternatives (model vs. model, reranker vs. reranker, multimodal vs. preprocess, gateway vs. direct call).
+- **Actions**: the ordered steps the agent takes, including mutations, validations, and reversibility rules.
+- **Outputs**: what the sub-skill produces for the caller (next call, resource ID, transcript, score, decision).
+- **Validation**: how to verify the result through the same user-facing or telemetry path that produced the failure.
+- **Limits**: rate limits, balance minimums, context caps, quota windows, and known failure modes.
+- **Escalation**: which other sub-skill to load if the current one cannot resolve the task.
 
-Conversations and Chat Clients:
+## Operating Principles
 
-- `references/conversations/conversation-analysis.md`: stored conversation diagnosis and exports.
-- `references/conversations/chat-clients.md`: web chat clients, sessions, origins, integrations, and channel validation.
-
-Operations:
-
-- `references/operations/debugging.md`: cross-resource debugging workflow.
-
-Account Skills:
-
-- `references/skill-development/README.md`: account skills under `/api/v1/skills`, imports, exports, allowed tools, gateway attachment.
+1. **One capability per sub-skill.** Do not re-implement a contract in two places. Compose, do not duplicate.
+2. **Discover first, mutate second.** Always read current state with `aivax_invoke_function GET` or the public equivalent before any `POST`, `PUT`, `PATCH`, or `DELETE`.
+3. **Smallest safe change.** Patch only the fields that must change. For shallow-merge endpoints, do not send a copied full object.
+4. **Validate through the same path the user will use.** A gateway change is validated by a real or test conversation. A RAG change is validated by `/api/v1/query` or a real conversation. A chat-client change is validated by a session or talk URL. A batch change is validated by item inspection or export.
+5. **Preserve secrets.** API keys, provider keys, salts, integration tokens, webhook secrets, and access keys never appear in final responses or logs.
+6. **Approval gates.** Destructive operations (delete, reset, clear, roll salt, sync imports that remove records, bulk cancellation, model swaps in production, rate-limit changes) require explicit user approval before execution.
+7. **Observability is a first-class concern.** Every multi-step workflow records request IDs, conversation IDs, transaction IDs, item IDs, balance snapshots, and a one-line cost estimate. This is what makes escalation and post-mortem analysis possible.
 
 ## Default Workflow
 
-1. Determine whether the user wants orientation, inspection, debugging, creation, mutation, or optimization.
-2. Load `references/overview/README.md` if the task is broad or the product area is unclear.
-3. Load the area README and any matching situation playbook.
-4. Use `references/mcp/tool-selection.md` to choose calls.
-5. Read current state through `aivax_invoke_function`.
-6. Search docs with `aivax_search_context` when schema, behavior, or enum values are unclear.
-7. For model changes, call `aivax_list_models` before selecting a model.
-8. For mutations, follow `references/mcp/safe-mutations.md`.
-9. Validate through the same user-facing path or telemetry path that matters for the task.
-10. Report changed resources, validation evidence, and remaining risk.
+1. Classify the intent and load the right sub-skill from the Router Matrix. Load more than one only if the task truly spans capabilities.
+2. Discover the environment: MCP available? Auth configured? Plan and balance sufficient? Model or gateway exists?
+3. Read current state for every resource you intend to touch.
+4. If the contract requires a capability that is not in the loaded sub-skill, switch to the right one — do not invent endpoints.
+5. Apply the smallest change that satisfies the request. Prefer reversible operations.
+6. Validate through the same user-facing or telemetry path.
+7. Report what changed, what was verified, the resource IDs, the cost impact, and any remaining risk or follow-up.
 
 ## Global Safety Rules
 
+These apply in addition to the rules inside each sub-skill.
+
 - Preserve secrets. Never print API keys, provider keys, integration tokens, webhook secrets, salts, chat access keys, or private credentials.
-- Do not use local AIVAX repository files, implementation details, database code, or server internals as the operating path for account tasks.
-- Treat destructive operations as explicit-only actions: delete, reset, clear, roll salt, imports that overwrite many resources, sync imports that remove missing records, and bulk cancellation.
+- Treat destructive operations as explicit-only: delete, reset, clear, roll salt, imports that overwrite many resources, sync imports that remove missing records, and bulk cancellation.
 - Export or capture current configuration before large imports, destructive edits, broad migrations, skill imports, collection resets, or gateway rewrites.
 - For shallow-merge endpoints, send only the fields that should change.
-- Keep AIVAX `systemInstruction` separate from account skills. Skills are a flat gateway-attached list; do not assume native priority, weights, or a primary skill.
-- For integrated models, prefer `baseAddress: "@integrated"` and a model name returned by `aivax_list_models`.
+- Keep AIVAX `systemInstruction` separate from account skills. Skills are a flat list attached to gateways; do not assume native priority or a primary skill.
+- For integrated models, prefer `baseAddress: "@integrated"` and a model returned by `aivax_list_models`.
 - For external providers, preserve existing `apiKey` values when patching unrelated gateway parameters.
+- Use the account API (`aivax_invoke_function`) for resource work. The Account Management MCP is the operating interface; local source code is not.
+- Do not include media payloads, full transcripts, hidden reasoning, or private user data in final responses unless the user explicitly needs that exact data.
+
+## Sub-Skill Index
+
+| Sub-skill | Purpose |
+| --- | --- |
+| `references/platform-rules/` | Cross-cutting: tool selection, safe mutations, error handling, no-MCP discovery |
+| `references/composition/` | Combine multiple AIVAX capabilities with explicit contracts and observability |
+| `references/resilience/` | Retry, fallback, idempotency, rate-limit and partial-failure handling |
+| `references/text-inference/` | Model selection, chat completions, messages, streaming, tool calls, fallbacks |
+| `references/multimodal/` | Image, audio, video, and file inputs; multimodal preprocessing to text |
+| `references/image-generation/` | Text-to-image generation and storage |
+| `references/speech/` | Text-to-speech and speech-to-text generation |
+| `references/voice-realtime/` | Realtime bidirectional voice sessions |
+| `references/text-tools/` | Document classification, text segmentation, and media description |
+| `references/rag/` | RAG pipeline design, evaluation, and grounding diagnosis |
+| `references/rerankers/` | Reranker selection, catalog, and collection-less rerank (Reflex) |
+| `references/agentic-tests/` | Test creation, runs, evaluation, comparison, and trace analysis |
+| `references/account/` | API keys, account state, plan, salt, secret hygiene |
+| `references/cost-monitoring/` | Cost spike investigation and spend optimization |
+| `references/observability/` | Trace correlation, degradation diagnosis, conversation audit |
+| `references/ai-gateways/` | Gateway design, skills and tools attachment, safe editing |
+| `references/skill-development/` | Authoring and attaching account-scoped skills |
+| `references/web-chat/` | Web chat clients, sessions, and messaging integrations |
+| `references/batch/` | Batch workflow design, job execution, and failure analysis |
