@@ -5,7 +5,9 @@ description: Create, run, inspect, cancel, schedule, and compare AIVAX Agentic T
 
 # Agentic Tests
 
-Use this skill for AIVAX Agentic Tests. A test runs one bounded simulated conversation against an AI gateway or integrated model. A simulated user pursues `goal`; the target assistant responds; an internal judge evaluates progress during the conversation. This API does not define or use an input dataset, expected-output list, custom judge model, or separate post-run evaluation request. Unknown request properties may be silently ignored, so their presence does not indicate support.
+Use this skill for AIVAX Agentic Tests. A test runs one bounded simulated conversation against an AI gateway or integrated model. A simulated user follows the role and conversational flow described by `goal`; the target assistant responds; an internal judge evaluates the complete conversation against `goal` and `validation_criteria`. One definition can exercise several related situations and acceptance criteria when they fit one coherent conversation. It is not an isolated prompt/response assertion or an input dataset.
+
+This API does not define or use an expected-output list, custom judge model, or separate post-run evaluation request. Unknown request properties may be silently ignored, so their presence does not indicate support.
 
 Before an unfamiliar or account-changing call, follow `../platform-rules/SKILL.md`. Prefer `aivax_invoke_function` when available. Otherwise use the documented HTTP API with authentication. Do not invent fields that are not listed here; use `aivax_search_context` if live documentation may be newer than this contract.
 
@@ -50,6 +52,7 @@ Both modes consume account balance. Persisted runs are asynchronous. The ephemer
 | `goal` | string, message-part object, or message-part array | required | Shared with the simulated user and judge. |
 | `validation_criteria` | string, message-part object, array, or null | `null` | Visible only to the judge. |
 | `start` | message array | `[]` | Initial OpenAI-compatible conversation messages. |
+| `resources` | external-resource array | `[]` | Up to 16 `{ "type", "data" }` objects that provide additional shared context to the simulated user and judge. Use `Text` for literal non-empty `data` or `RemoteResource` to retrieve content from the non-empty URL in `data`. Resources are not conversation messages and are not sent to the gateway under test as chat history. |
 | `max_turns` | integer | `10` | 2–64 simulated user turns. |
 | `minimum_turns` | integer | `1` | At least 1 and less than `max_turns`. |
 | `allow_user_exit` | boolean | `true` | Allows the simulator to end after `minimum_turns`. |
@@ -72,9 +75,19 @@ Both modes consume account balance. Persisted runs are asynchronous. The ephemer
 {
   "name": "Checkout regression",
   "gateway": "checkout-gateway",
-  "goal": "Complete checkout successfully",
-  "validation_criteria": "The assistant must confirm the order total before checkout.",
+  "goal": "You are shopping with the store assistant. You, the user, select two blue shirts, provide the information needed for checkout, and continue until the order is ready to be placed.",
+  "validation_criteria": "- Validate whether the assistant states the final total before placing the order.\n- Validate whether the assistant asks for explicit confirmation before checkout.\n- Validate whether the assistant does not claim the order was placed before that confirmation.",
   "start": [],
+  "resources": [
+    {
+      "type": "Text",
+      "data": "The customer has a 14-day refund window."
+    },
+    {
+      "type": "RemoteResource",
+      "data": "https://example.com/refund-policy"
+    }
+  ],
   "max_turns": 10,
   "minimum_turns": 1,
   "allow_user_exit": true,
@@ -95,6 +108,12 @@ Both modes consume account balance. Persisted runs are asynchronous. The ephemer
 }
 ```
 
+### Resources
+
+Use `resources` for stable facts, policy text, product reference material, or other context that the simulated user and judge must share but that should not be represented as a prior message. Each entry has a non-empty `data` field and a `type` of `Text` or `RemoteResource`; send no more than 16 entries.
+
+`Text` embeds `data` literally. `RemoteResource` retrieves the URL in `data` during evaluation. Use only trusted, publicly reachable URLs with content appropriate for the test. Remote content can change between runs and adds processing usage, so prefer `Text` when the test needs a fixed, reproducible reference. Do not use a remote resource to provide the assistant's previous message: put that message in `start` with its original role instead.
+
 ## Ephemeral Request Schema
 
 `POST /api/v1/generations/agentic-tests` uses the same simulation fields, except:
@@ -106,9 +125,19 @@ Both modes consume account balance. Persisted runs are asynchronous. The ephemer
 ```json
 {
   "model": "checkout-gateway",
-  "goal": "Complete checkout successfully",
-  "validation_criteria": "The assistant must confirm the order total before checkout.",
+  "goal": "You are shopping with the store assistant. You, the user, select two blue shirts, provide the information needed for checkout, and continue until the order is ready to be placed.",
+  "validation_criteria": "- Validate whether the assistant states the final total before placing the order.\n- Validate whether the assistant asks for explicit confirmation before checkout.\n- Validate whether the assistant does not claim the order was placed before that confirmation.",
   "start": [],
+  "resources": [
+    {
+      "type": "Text",
+      "data": "The customer has a 14-day refund window."
+    },
+    {
+      "type": "RemoteResource",
+      "data": "https://example.com/refund-policy"
+    }
+  ],
   "max_turns": 10,
   "minimum_turns": 1,
   "allow_user_exit": true,
@@ -161,6 +190,16 @@ A run detail adds `test_name`, `result`, and `conversation`. Each conversation i
 
 Scheduled runs follow plan concurrency: Free 1, Pro 4, Max/Reseller 8 concurrent runs per account. A run can fail before or during execution when balance is insufficient. Notifications track execution failures (`state: failed`), not low behavioral scores in otherwise succeeded runs.
 
+## Test Authoring Rules
+
+- Test the gateway that actually serves the behavior under review. Do not substitute an `eval-*` gateway merely because its name suggests evaluation; confirm the intended gateway from the live account or authoritative configuration.
+- Treat the unit under test as a complete conversation. Group related situations and multiple acceptance criteria when the simulated user can encounter them in one coherent flow.
+- Split definitions when they require incompatible user roles, mutually exclusive objectives, materially different opening contexts, or different production opening templates.
+- Write `goal` as the simulated user's identity, context, intent, and likely conversational progression. Address the simulator directly, for example: `You are speaking with Maya, the insurer's assistant. You, the user, ...` Do not use `goal` as a list of instructions for the assistant.
+- Write `validation_criteria` as observable assistant behavior. Use explicit checks such as `Validate whether the assistant...`, including required behavior, prohibited behavior, ordering constraints, and terminal behavior.
+- Ground the target, opening messages, facts, workflows, and expected behavior in live configuration or authoritative product material. Do not invent an oracle where the product contract is unclear.
+- For assistant-initiated or outbound flows, place the real configured assistant opening in `start`. Preserve its role and wording instead of paraphrasing it into `goal`.
+
 ## Important Non-Features
 
-Do not send or claim support for `target`, `instruction`, `inputs`, `expected`, `criteria`, `runId`, `judgeModel`, `temperature`, or a persisted `/evaluate` endpoint. To test multiple scenarios, create separate definitions or repeat runs deliberately; do not silently model them as a dataset.
+Do not send or claim support for `target`, `instruction`, `inputs`, `expected`, `criteria`, `runId`, `judgeModel`, `temperature`, or a persisted `/evaluate` endpoint. Several related situations may be covered by one evolving conversation, but they are not dataset rows. Repeat controlled runs when confidence across stochastic paths matters.
