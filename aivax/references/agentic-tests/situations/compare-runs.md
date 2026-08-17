@@ -1,74 +1,72 @@
 # Compare Runs
 
-Use when the agent must compare two or more runs to detect regressions, improvements, or behavior changes.
-
-## Objective
-
-Identify what changed between runs and whether the change is a regression, an improvement, or a neutral variation. The comparison should be auditable and reproducible.
+Use when comparing repeated conversational runs for regression, improvement, reliability, cost, or behavioral drift.
 
 ## Preconditions
 
-- Two or more runs are complete.
-- The runs target the same test (or compatible tests).
-- The runs were executed under the same evaluation criteria (or the criteria are aligned).
+Retrieve complete run details with:
 
-## Decision Tree
-
-1. Are the runs on the same target? If not, the comparison is across targets (model vs. model, gateway vs. gateway). Useful for swap decisions.
-2. Are the runs on the same input set? If not, the comparison is across input sets, which is harder to interpret.
-3. Are the runs on the same evaluation criteria? If not, align the criteria before comparing.
-4. Is the comparison for a regression? Compare the latest run to a known-good baseline. A drop in score is a regression.
-5. Is the comparison for an improvement? Compare the new run to the previous run. A rise in score is an improvement.
-6. Is the difference statistically meaningful? A small sample can produce noise. Run the test multiple times and inspect the variance.
-7. Is the change in one input or many? A change in many inputs is more meaningful than a change in one.
-
-## Construction
-
-```text
-1. List runs
-   GET /api/v1/agentic-tests/<test-id>/runs
-
-2. For each pair of runs (baseline, candidate):
-   - Per-input score diff
-   - Overall score diff
-   - Number of inputs that flipped (pass -> fail, fail -> pass)
-   - Cost and latency diff
-
-3. Classify the change
-   - Regression: overall score dropped, flips to fail outnumber flips to pass
-   - Improvement: overall score rose, flips to pass outnumber flips to pass
-   - Neutral: no meaningful change
-
-4. Identify the cause
-   - The target changed (model swap, gateway edit)
-   - The instruction changed
-   - The input set changed
-   - The evaluation criteria changed
-   - The model is probabilistic and the change is variance
-
-5. Report
-   - The diff per metric
-   - The classification
-   - The likely cause
-   - The recommended next step
+```http
+GET /api/v1/agentic-tests/{test-id}/runs/{run-id}
 ```
 
-## Validation
+Prefer runs from the same persisted test definition. A run does not store a snapshot of every definition field, so if the test was edited between runs, the API alone may not prove which gateway, goal, criteria, or thresholds each run used. Record definition snapshots externally when strict reproducibility matters.
 
-- The comparison is on the same test (or compatible tests).
-- The criteria are aligned.
-- The statistical significance is reported (variance, sample size, confidence).
-- The trace ID is preserved.
-- The report is reproducible.
+## Comparable Dimensions
 
-## Failure Modes
+Compare only implemented data:
 
-- The runs are not comparable: the target, input set, or criteria differ. Align before comparing.
-- The difference is variance: the model is probabilistic. Run the test multiple times and report the variance.
-- The cause is unclear: a change in the target, instruction, input set, or criteria was not recorded. The comparison is unauditable.
+- operational `state` and `error`;
+- behavioral `result.outcome`, `result.reason`, and `result.state`;
+- final top-level `score` / `result.conversation_delta`;
+- `turn_number` and `loss_streak`;
+- total `cost`;
+- retained user, assistant, and judge conversation;
+- per-message prompt, cached prompt, and completion tokens.
 
-## Escalation
+There are no per-input scores, input flips, dataset sample size, built-in variance, latency metric, or statistical-significance field.
 
-- A regression is detected: roll back the change that caused it. Load `references/platform-rules/safe-mutations.md`.
-- An improvement is detected: confirm it is not a fluke. Re-run the test and compare again.
-- The variance is high: increase the sample size or set `temperature: 0` (if supported by the target).
+## Procedure
+
+1. **List candidates**
+
+   ```http
+   GET /api/v1/agentic-tests/{test-id}/runs?limit=100&offset=0
+   ```
+
+   Optionally filter by one exact state.
+
+2. **Fetch complete details** for the selected run IDs.
+3. **Check comparability**: confirm the test definition was unchanged or disclose known changes. At minimum compare gateway, goal, criteria, start conversation, turn controls, thresholds, profile, and sampling.
+4. **Separate operational reliability from behavior**:
+   - `failed` versus terminal execution without error;
+   - `success`, `loss`, or `incomplete` among `succeeded` runs.
+5. **Compare trajectories**: inspect judge reasoning and conversation evidence, not only the final score.
+6. **Compare consumption**: report total cost and token differences. Do not claim latency unless independently measured from timestamps, and label that calculation as derived.
+7. **Classify cautiously**: one stochastic conversation is evidence, not statistical proof. Repeat a controlled definition when confidence matters.
+
+## Compact Report
+
+| Dimension | Baseline | Candidate |
+| --- | --- | --- |
+| Run ID | `{id}` | `{id}` |
+| Execution state | `succeeded` | `succeeded` |
+| Outcome / reason | `success / baseline_reached` | `incomplete / max_turns_reached` |
+| Final trajectory | `0.94` | `0.62` |
+| Turns | `4` | `10` |
+| Cost | `...` | `...` |
+| Key judge evidence | `...` | `...` |
+
+Then state whether the evidence suggests a regression, improvement, operational failure, or inconclusive variation, and name any definition change that could explain it.
+
+## Repeated Runs
+
+To estimate consistency, queue multiple runs intentionally and compare the distribution of outcomes and scores yourself. Agree on run count and cost before doing so. Do not automatically launch three or more paid runs, and do not claim statistical significance from a small unplanned sample.
+
+## Common Errors
+
+- Comparing `succeeded` counts as pass rates without reading `result.outcome`.
+- Claiming per-input regressions; each run is one simulated conversation.
+- Assuming old runs preserve the exact historical test definition.
+- Comparing a `failed` provider execution to a behavioral `loss` as if they were the same failure.
+- Recommending rollback based on one stochastic run without checking conversation evidence and repeatability.

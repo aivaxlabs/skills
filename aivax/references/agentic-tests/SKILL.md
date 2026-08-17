@@ -1,86 +1,166 @@
 ---
 name: aivax-agentic-tests
-description: Create, run, evaluate, and compare agentic tests on AIVAX — test cases, datasets, traces, criteria-based evaluation, run management, and failure analysis. Load when the agent must verify a model's behavior on a held-out set, compare models or prompts, or audit a gateway's outputs over time.
+description: Create, run, inspect, cancel, schedule, and compare AIVAX Agentic Tests using the implemented conversational simulator-and-judge schema. Covers persisted test definitions and runs, ephemeral SSE evaluations, exact request fields, thresholds, run states, results, conversations, usage, cost, and notifications.
 ---
 
 # Agentic Tests
 
-This sub-skill owns AIVAX agentic tests. An agentic test is a reusable definition of an evaluation: a name, a target (a model, a gateway, or a chat client), an instruction set, an input set, and an evaluation criteria. A run is a single execution of the test. Evaluation is a structured judgment of the outputs against the criteria.
+Use this skill for AIVAX Agentic Tests. A test runs one bounded simulated conversation against an AI gateway or integrated model. A simulated user pursues `goal`; the target assistant responds; an internal judge evaluates progress during the conversation. This API does not define or use an input dataset, expected-output list, custom judge model, or separate post-run evaluation request. Unknown request properties may be silently ignored, so their presence does not indicate support.
+
+Before an unfamiliar or account-changing call, follow `../platform-rules/SKILL.md`. Prefer `aivax_invoke_function` when available. Otherwise use the documented HTTP API with authentication. Do not invent fields that are not listed here; use `aivax_search_context` if live documentation may be newer than this contract.
 
 ## Operating Files
 
-- `situations/design-test-case.md`: design a test case that captures a specific behavior.
-- `situations/run-and-collect-traces.md`: run a test, collect traces, and inspect the output.
-- `situations/evaluate-by-criteria.md`: evaluate a run against criteria, with a judge model.
-- `situations/compare-runs.md`: compare two or more runs to detect regressions or improvements.
+- `situations/design-test-case.md`: construct a valid conversational test definition.
+- `situations/run-and-collect-traces.md`: queue or stream an evaluation and inspect its retained conversation.
+- `situations/evaluate-by-criteria.md`: write judge-only criteria and interpret judge results.
+- `situations/compare-runs.md`: compare repeated runs without assuming dataset metrics.
 
-## Endpoints
+## Choose The Execution Mode
 
-- `GET /api/v1/agentic-tests`: list tests.
-- `GET /api/v1/agentic-tests/<test-id>`: view a test.
-- `POST /api/v1/agentic-tests`: create a test.
-- `PATCH /api/v1/agentic-tests/<test-id>`: update a test.
-- `DELETE /api/v1/agentic-tests/<test-id>`: delete a test.
-- `POST /api/v1/agentic-tests/<test-id>/evaluate`: evaluate a run.
-- `POST /api/v1/agentic-tests/<test-id>/run`: run the test.
-- `GET /api/v1/agentic-tests/<test-id>/runs`: list runs.
-- `GET /api/v1/agentic-tests/<test-id>/runs/<run-id>`: view a run.
-- `POST /api/v1/agentic-tests/<test-id>/runs/<run-id>/cancel`: cancel a run.
+- **Persisted**: use `/api/v1/agentic-tests` to save a reusable definition, schedule it, queue runs, inspect history, and cancel pending or running work.
+- **Ephemeral**: `POST /api/v1/generations/agentic-tests` streams one direct evaluation as server-sent events and does not create a test or retained run. `/api/v1/generations/validations` is a compatibility alias.
 
-## When To Use Agentic Tests
+Both modes consume account balance. Persisted runs are asynchronous. The ephemeral endpoint requires positive operating balance and returns an SSE stream even when `stream` is omitted or false.
 
-Use this sub-skill when the agent must:
+## Persisted Endpoints
 
-- Verify that a model or gateway produces a specific output for a specific input.
-- Compare two models, two prompts, or two gateways on the same input set.
-- Detect regressions after a gateway, prompt, or model change.
-- Audit a gateway's outputs over time against a known-good baseline.
-- Evaluate the quality of a generation against a criteria (e.g. "answer is grounded", "answer is concise").
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/v1/agentic-tests?search=&gateway=` | List owned tests with `latest_run`. |
+| `POST` | `/api/v1/agentic-tests` | Create a definition; returns `201`. |
+| `GET` | `/api/v1/agentic-tests/{test-id}` | Get the complete definition and latest run. |
+| `PATCH` | `/api/v1/agentic-tests/{test-id}` | Partially update supplied fields. |
+| `DELETE` | `/api/v1/agentic-tests/{test-id}` | Delete the test and retained runs; returns `204`. |
+| `POST` | `/api/v1/agentic-tests/{test-id}/runs` | Queue a run from the current definition; no body; returns `202`. |
+| `GET` | `/api/v1/agentic-tests/{test-id}/runs?state=&limit=&offset=` | List run summaries, newest first. |
+| `GET` | `/api/v1/agentic-tests/{test-id}/runs/{run-id}` | Get result, conversation, usage, cost, and error. |
+| `POST` | `/api/v1/agentic-tests/{test-id}/runs/{run-id}/cancel` | Cancel pending work immediately or request cooperative cancellation; no body. |
 
-Do not use this sub-skill for:
+`state` accepts `pending`, `running`, `succeeded`, `failed`, or `cancelled`. `limit` defaults to 50 and is clamped to 1–100; `offset` defaults to 0.
 
-- A single one-off check. Use `references/text-inference/` or `references/observability/`.
-- A performance report on a RAG collection. Use `references/rag/situations/evaluate-groundedness.md`.
+## Persisted Definition Schema
 
-## Test Components
+`POST /api/v1/agentic-tests` accepts:
 
-A test has:
+| Field | Type | Required/default | Contract |
+| --- | --- | --- | --- |
+| `name` | string | required | Non-empty; maximum 200 characters. |
+| `gateway` | string | required | Available AI gateway slug or integrated model name; maximum 200 characters. |
+| `goal` | string, message-part object, or message-part array | required | Shared with the simulated user and judge. |
+| `validation_criteria` | string, message-part object, array, or null | `null` | Visible only to the judge. |
+| `start` | message array | `[]` | Initial OpenAI-compatible conversation messages. |
+| `max_turns` | integer | `10` | 2–64 simulated user turns. |
+| `minimum_turns` | integer | `1` | At least 1 and less than `max_turns`. |
+| `allow_user_exit` | boolean | `true` | Allows the simulator to end after `minimum_turns`. |
+| `judge_start_turn` | integer | `1` | At least 1 and less than `max_turns`. |
+| `loss_threshold` | number | `0.2` | 0.01–0.99; below `base_threshold`. |
+| `base_threshold` | number | `0.9` | 0.01–0.99; more than 0.1 above `loss_threshold`. |
+| `profile` | string | `medium` | `low`, `medium`, or `high`; selects internal simulator and judge profiles, not a custom judge model. |
+| `user_sampling.top_k` | number | `0.4` | 0–2. |
+| `user_sampling.max_decay` | number | `0.02` | 0–1. |
+| `metadata` | object | `{}` | Forwarded to gateway inference; use string values for compatibility with execution. |
+| `external_user_id` | string or null | `null` | Forwarded to gateway inference; maximum 200 characters. |
+| `cron` | string or null | `null` | Standard five-field cron; minimum interval is five minutes. |
+| `enabled` | boolean | `true` | Enables scheduled execution; manual runs can still be queued. |
+| `notification_threshold` | integer | `1` | Consecutive execution failures before notification; minimum 1. |
+| `recovery_notification` | boolean | `true` | Notify when a successful run follows the configured failure streak. |
 
-- A target: a model name, a gateway ID, or a chat client.
-- An instruction: the system prompt or the gateway's instruction set.
-- An input set: a list of inputs to run.
-- An evaluation criteria: a description of what makes a good output.
-- Optional: tools, expected outputs, evaluation thresholds.
+`PATCH` accepts any subset of the same fields. Omitted fields remain unchanged. Send explicit `null` to clear nullable fields such as `validation_criteria`, `external_user_id`, or `cron`.
 
-## Run Lifecycle
+```json
+{
+  "name": "Checkout regression",
+  "gateway": "checkout-gateway",
+  "goal": "Complete checkout successfully",
+  "validation_criteria": "The assistant must confirm the order total before checkout.",
+  "start": [],
+  "max_turns": 10,
+  "minimum_turns": 1,
+  "allow_user_exit": true,
+  "judge_start_turn": 1,
+  "loss_threshold": 0.2,
+  "base_threshold": 0.9,
+  "profile": "medium",
+  "user_sampling": {
+    "top_k": 0.4,
+    "max_decay": 0.02
+  },
+  "metadata": {},
+  "external_user_id": null,
+  "cron": null,
+  "enabled": true,
+  "notification_threshold": 1,
+  "recovery_notification": true
+}
+```
 
-1. **Create the test** with a target, instruction, input set, and criteria.
-2. **Run the test**. The run produces traces and outputs.
-3. **Inspect the run** to see the per-input output, the trace, and any errors.
-4. **Evaluate the run** against the criteria. The evaluation produces a per-input score and an overall score.
-5. **Compare runs** across model changes, prompt changes, or time.
-6. **Cancel a run** if it is taking too long or producing noise.
+## Ephemeral Request Schema
 
-## Cost Awareness
+`POST /api/v1/generations/agentic-tests` uses the same simulation fields, except:
 
-Tests consume balance, request quota, and possibly token-rate quota. A test with 1,000 inputs can cost more than a single inference call. Set a cost cap with the user before running large tests.
+- use `model` instead of `name` and `gateway`;
+- scheduling and notification fields are not used; the current implementation may silently ignore them and other unknown properties;
+- `stream` is read for compatibility but the response is always SSE.
 
-## Validation
+```json
+{
+  "model": "checkout-gateway",
+  "goal": "Complete checkout successfully",
+  "validation_criteria": "The assistant must confirm the order total before checkout.",
+  "start": [],
+  "max_turns": 10,
+  "minimum_turns": 1,
+  "allow_user_exit": true,
+  "judge_start_turn": 1,
+  "loss_threshold": 0.2,
+  "base_threshold": 0.9,
+  "profile": "medium",
+  "user_sampling": {
+    "top_k": 0.4,
+    "max_decay": 0.02
+  },
+  "metadata": {},
+  "external_user_id": "customer-123",
+  "stream": true
+}
+```
 
-- The test definition is valid.
-- The run completes without error (or is cancelled cleanly).
-- The evaluation produces a score for each input.
-- The trace ID is preserved.
+## Response Contract
 
-## Limits
+Normal JSON endpoints use the AIVAX response envelope; read their payload from `data`. A test detail contains all definition fields plus `id`, `next_run_at`, `consecutive_failures`, `last_notification_at`, `created_at`, `updated_at`, and `latest_run`.
 
-- A test can have many inputs but each run consumes balance per input. Set a cap.
-- The evaluation criteria is qualitative. Use LLM-as-judge with care; a small sample of human review is recommended for ground truth.
-- The run is async. Plan for the time it takes to complete.
+A run summary contains:
 
-## Escalation
+```json
+{
+  "id": "019...",
+  "test_id": "019...",
+  "state": "succeeded",
+  "created_at": "2026-08-16T03:00:00",
+  "started_at": "2026-08-16T03:00:05",
+  "finished_at": "2026-08-16T03:01:02",
+  "score": 0.94,
+  "cost": 0.0123,
+  "error": null,
+  "external_user_id": null
+}
+```
 
-- The test fails consistently: load `situations/design-test-case.md` and check the criteria.
-- The evaluation score is low: load `situations/evaluate-by-criteria.md` and consider a stronger judge model.
-- A regression is detected: load `situations/compare-runs.md` and identify the change that caused it.
-- The test is too large: load `references/batch/` and consider running the test in batch.
+A run detail adds `test_name`, `result`, and `conversation`. Each conversation item has `timestamp`, role (`user`, `assistant`, or `judge`), `content`, and `usage` with `model`, `prompt_tokens`, `cached_prompt_tokens`, `completion_tokens`, and `cost`.
+
+`state: succeeded` means execution completed without an operational error; it does not mean the goal passed. Determine behavioral outcome from `result.outcome` (`success`, `loss`, or `incomplete`) and inspect `result.reason`, `result.state`, `result.turn_number`, `result.conversation_delta`, and `result.loss_streak`. `score` is the final `conversation_delta`, not a dataset average.
+
+## Run Lifecycle And Safety
+
+1. Create or retrieve the test and verify the complete definition.
+2. For a manual persisted run, call `POST .../{test-id}/runs` with no body.
+3. Poll the run or filtered run list until `succeeded`, `failed`, or `cancelled`; use bounded waits and do not repeatedly queue duplicates.
+4. Inspect the complete run. Separate execution state, behavioral outcome, retained judge reasoning, error, and cost.
+5. Cancel only when the user requests it or an agreed limit is exceeded. Completed inference remains billable.
+
+Scheduled runs follow plan concurrency: Free 1, Pro 4, Max/Reseller 8 concurrent runs per account. A run can fail before or during execution when balance is insufficient. Notifications track execution failures (`state: failed`), not low behavioral scores in otherwise succeeded runs.
+
+## Important Non-Features
+
+Do not send or claim support for `target`, `instruction`, `inputs`, `expected`, `criteria`, `runId`, `judgeModel`, `temperature`, or a persisted `/evaluate` endpoint. To test multiple scenarios, create separate definitions or repeat runs deliberately; do not silently model them as a dataset.

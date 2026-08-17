@@ -1,60 +1,81 @@
-# Design Test Case
+# Design A Test Case
 
-Use when the agent must design a new agentic test that captures a specific behavior.
+Use when defining a persisted or ephemeral Agentic Test.
 
 ## Objective
 
-Produce a test that is reproducible, isolated, and discriminating — a test that fails when the behavior is broken and passes when it is correct.
+Describe one realistic simulated conversation with a measurable goal and judge-only criteria, using only fields accepted by the API.
 
-## Preconditions
+## Design Decisions
 
-- The behavior to test is clear (e.g. "the model should refuse to answer", "the model should cite the source", "the model should use the tool").
-- A target is known: a model, a gateway, or a chat client.
-- A representative input set can be built or is available.
+1. **Target**: choose an available AI gateway slug or integrated model name. Persisted requests use `gateway`; ephemeral requests use `model`. Chat-client IDs are not targets.
+2. **Goal**: state what the simulated user must accomplish. The simulator and judge both see it. Do not write assistant instructions here.
+3. **Validation criteria**: add observable constraints that only the judge should see. Keep them compatible with the goal and avoid hidden facts the conversation cannot establish.
+4. **Initial conversation**: use `start` only when prior messages are materially part of the scenario. It is an array of OpenAI-compatible messages, not an input dataset.
+5. **Turn budget**: `max_turns` is 2–64. `minimum_turns` and `judge_start_turn` are each at least 1 and less than `max_turns`.
+6. **Thresholds**: `loss_threshold` and `base_threshold` are each 0.01–0.99; loss must be lower and the distance must be greater than 0.1.
+7. **Profile**: `low`, `medium`, or `high` selects the platform's simulator and judge profile. There is no `judgeModel` field.
+8. **Persistence**: add cron and notification fields only to persisted definitions.
 
-## Decision Tree
+## Minimal Persisted Request
 
-1. Is the behavior deterministic or probabilistic? Deterministic behaviors (e.g. "the model should always refuse this prompt") need fewer inputs; probabilistic behaviors (e.g. "the model should be helpful") need more.
-2. What is the unit of evaluation? Per-input score, per-run score, or both.
-3. What is the criteria? A short description of what makes a good output. The criteria is the input to the judge model.
-4. What is the input set? Real user queries, synthetic queries, or a mix. Real is best; synthetic is faster to build.
-5. What is the target? A model name, a gateway ID, or a chat client. A gateway is the right target when the test should cover the full production configuration.
-6. What is the expected output? A literal string, a JSON schema, or a description. The expected output is optional but helps the judge.
-
-## Construction
-
-```text
+```http
 POST /api/v1/agentic-tests
+Content-Type: application/json
+```
+
+```json
 {
-  "name": "<test-name>",
-  "target": "<model-name-or-gateway-id>",
-  "instruction": "<system-prompt-or-instruction-set>",
-  "inputs": [
-    { "input": "<input-1>", "expected": "<expected-output-1>" },
-    { "input": "<input-2>", "expected": "<expected-output-2>" }
-  ],
-  "criteria": "<evaluation-criteria>",
-  "metadata": { "trace_id": "tr_..." }
+  "name": "Checkout confirms total",
+  "gateway": "checkout-gateway",
+  "goal": "Place an order for two blue shirts",
+  "validation_criteria": "Success requires the assistant to state the final total and ask for confirmation before placing the order."
 }
 ```
 
-The exact field shape depends on the AIVAX version. Verify with `aivax_search_context` before relying on a field.
+Defaults fill `start`, turn controls, thresholds, profile, sampling, metadata, scheduling, and notifications. Use the full field table in `../SKILL.md` before overriding them.
+
+## Initial Conversation Example
+
+```json
+{
+  "start": [
+    {
+      "role": "assistant",
+      "content": "Welcome. How can I help with your order?"
+    },
+    {
+      "role": "user",
+      "content": "I need shirts for an event."
+    }
+  ]
+}
+```
+
+`goal` and `validation_criteria` may also be one OpenAI-compatible message-part object or an array of message parts for multimodal evaluation. Verify the target model supports every supplied modality.
+
+## Scheduling Example
+
+```json
+{
+  "cron": "*/15 * * * *",
+  "enabled": true,
+  "notification_threshold": 2,
+  "recovery_notification": true
+}
+```
+
+Cron uses standard five-field syntax and cannot schedule more frequently than every five minutes. `enabled` controls scheduling, not whether a manual run endpoint exists.
 
 ## Validation
 
-- The test definition is valid.
-- A small smoke run produces a sensible output for a representative input.
-- The criteria is unambiguous.
-- The trace ID is preserved.
+After creation, confirm the `201` response's `data` contains the intended `gateway`, goal, criteria, thresholds, schedule, and defaults. Do not queue a paid run merely to validate schema unless the user asked for execution.
 
-## Failure Modes
+## Common Errors
 
-- The test definition is rejected: the target is invalid, the instruction is too long, or the inputs are not in the right shape. Inspect the error.
-- The smoke run produces a wrong output: the instruction is wrong or the target is the wrong model. Adjust.
-- The criteria is too vague: the judge model will produce inconsistent scores. Tighten the criteria.
-
-## Escalation
-
-- The behavior is not testable as a single test: split into multiple tests, each with a narrower behavior.
-- The input set is too small: load `situations/evaluate-by-criteria.md` and consider a held-out set.
-- The target is a chat client: load `references/web-chat/` for the chat client lifecycle.
+- Sending `target`, `instruction`, `inputs`, `expected`, or `criteria`: these are not consumed by this API. Unknown properties may be silently ignored rather than rejected, so do not treat a successful request as evidence that they are supported.
+- Designing several independent prompts as one test: a test represents one evolving conversation.
+- Setting `minimum_turns` or `judge_start_turn` equal to `max_turns`.
+- Setting thresholds 0.1 or less apart, or placing loss at/above base.
+- Putting success requirements only in `goal` when they should be hidden from the simulator: use `validation_criteria`.
+- Using arbitrary values inside `metadata`: execution forwards metadata as strings, so prefer string values.

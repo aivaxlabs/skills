@@ -1,55 +1,87 @@
 # Evaluate By Criteria
 
-Use when the agent must evaluate a run against a criteria with a judge model, or when the user wants a structured score for a test.
+Use when writing `validation_criteria` or interpreting the internal judge's turn-by-turn and final evaluation.
 
-## Objective
+## Mental Model
 
-Produce a per-input score and an overall score for a run, with the judge's reasoning recorded for audit.
+Evaluation is part of every Agentic Test run. There is no persisted `POST /agentic-tests/{test-id}/evaluate`, no `runId` evaluation body, and no caller-selected judge model or score scale.
 
-## Preconditions
+The platform judge sees:
 
-- A run is complete.
-- A criteria is defined (either in the test or as a separate evaluation call).
-- A judge model is available. A stronger judge model produces more consistent scores; a cheaper judge model saves cost.
+- the `goal`;
+- optional `validation_criteria`, hidden from the simulated user;
+- the complete simulated conversation;
+- current and remaining turn counts.
 
-## Decision Tree
+The judge emits a normalized score and reasoning during eligible turns. The platform combines turn scores into `conversation_delta`, applies loss persistence, and emits the final `chat.validation.end` result.
 
-1. Is the criteria already in the test? Use it. The evaluation call uses the test's criteria.
-2. Is the criteria a new one? Define it on the evaluation call.
-3. Which judge model? A reasoning model with strong instruction following is best. A small model can be a judge for narrow criteria.
-4. What is the score scale? Binary (pass / fail), 1-5, or 0-1. The scale must be consistent across runs.
-5. Is the evaluation deterministic? Set `temperature: 0` on the judge (or the judge's equivalent).
-6. How is the reasoning recorded? The judge produces a per-input score and a reasoning. Store the reasoning for audit.
+## Write Effective Criteria
 
-## Construction
+Criteria should describe observable evidence in the conversation, not implementation details the judge cannot see.
+
+Prefer:
 
 ```text
-POST /api/v1/agentic-tests/<test-id>/evaluate
+Success requires the assistant to state the final order total, identify the delivery address, and obtain explicit user confirmation before placing the order. A suggestion or draft order is not completion.
+```
+
+Avoid:
+
+```text
+The assistant should be good, helpful, and use the correct tool.
+```
+
+Unless tool activity is represented in the conversation visible to the judge, do not require hidden tool-call internals. Put the user's objective in `goal`; put hidden pass constraints and disqualifiers in `validation_criteria`.
+
+## Threshold Contract
+
+- `loss_threshold`: 0.01–0.99, default 0.2.
+- `base_threshold`: 0.01–0.99, default 0.9.
+- Loss must be below base and the distance must be greater than 0.1.
+- `judge_start_turn`: first turn the judge evaluates; at least 1 and less than `max_turns`.
+
+A per-turn judge score at or above `base_threshold` reaches the goal. Low scores contribute to a loss streak and trajectory; a single low score does not necessarily produce `loss`. The retained run's top-level `score` is the final `conversation_delta`.
+
+## Judge Result Shape
+
+Retained `conversation` items with `role: "judge"` contain fields such as:
+
+```json
 {
-  "runId": "<run-id>",
-  "criteria": "<evaluation-criteria>",
-  "judgeModel": "<judge-model>",
-  "metadata": { "trace_id": "tr_..." }
+  "reasoning": "The assistant confirmed the total and obtained approval.",
+  "score": 0.94,
+  "pass": true,
+  "should_continue": false,
+  "state": "success",
+  "turn_delta": 0.88,
+  "conversation_delta": 0.94,
+  "loss_streak": 0,
+  "required_loss_streak": 2
 }
 ```
 
-The exact field shape depends on the AIVAX version. Verify with `aivax_search_context` before relying on a field.
+Intermediate judge states include `active`, `at_risk`, `success`, and `loss`. The final result can also have `state: "max_turns"`.
 
-## Validation
+Final `result` has:
 
-- The evaluation produces a per-input score and an overall score.
-- The judge's reasoning is recorded for audit.
-- The trace ID is preserved.
-- The score is consistent across re-runs (when the judge is deterministic).
+- `outcome`: `success`, `loss`, or `incomplete`;
+- `reason`: `baseline_reached`, `loss_threshold_persisted`, `simulated_user_ended_conversation`, or `max_turns_reached`;
+- `state`, `turn_number`, `conversation_delta`, and `loss_streak`;
+- `score` when the run ended from a judged turn; it can be absent when maximum turns are reached without another terminal score.
 
-## Failure Modes
+## Evaluation Procedure
 
-- The judge produces inconsistent scores: the criteria is vague or the judge is probabilistic. Tighten the criteria and set `temperature: 0`.
-- The judge's score disagrees with a human review: the judge is not strong on the domain or the criteria is wrong. Spot-check.
-- The evaluation is too expensive: the judge model is too large or the criteria is too long. Use a smaller judge or a shorter criteria.
+1. Retrieve the complete run, not only its summary.
+2. Confirm `state`; if `failed`, diagnose `error` before discussing quality.
+3. Read `result.outcome` and `result.reason` rather than inferring pass/fail from `state`.
+4. Review judge entries alongside the user/assistant messages they evaluated.
+5. Explain the outcome using concrete conversation evidence and retained judge reasoning.
+6. If criteria changed, update the definition and queue a new run. Existing runs are not retroactively re-evaluated.
 
-## Escalation
+## Common Errors
 
-- The criteria is too vague: load `situations/design-test-case.md` and tighten the criteria.
-- The judge model is too small: load `references/text-inference/situations/choose-model.md` and pick a stronger judge.
-- The run needs to be re-evaluated: load `situations/run-and-collect-traces.md` and re-run the test.
+- Treating `state: succeeded` as a passing behavior.
+- Treating the top-level score as a per-input or dataset score.
+- Sending `criteria`, `judgeModel`, `temperature`, or a custom scale.
+- Retrofitting new criteria onto an old run without re-running the conversation.
+- Making criteria so prescriptive that they reveal the desired assistant response when placed in `goal`.

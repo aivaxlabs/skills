@@ -1,56 +1,91 @@
-# Run And Collect Traces
+# Run And Inspect Results
 
-Use when the agent must run an agentic test, collect the per-input outputs, and inspect the traces.
+Use when executing an Agentic Test and collecting its result, retained conversation, usage, error, and cost.
 
-## Objective
+## Choose Persisted Or Ephemeral
 
-Run a test end to end, capture the outputs and traces for analysis, and surface the cost and the duration of the run.
+- Use a persisted run when history, scheduling, cancellation, or later comparison matters.
+- Use ephemeral SSE for one direct evaluation whose progress must be streamed and does not need to be retained as an Agentic Test run.
 
-## Preconditions
+Both modes call paid models. Establish a reasonable turn budget before execution. One test run is one simulated conversation, not a batch of inputs.
 
-- A test is created and is in a runnable state.
-- The cost cap is set with the user.
-- The trace ID is generated.
-
-## Decision Tree
-
-1. Is the test small (fewer than 50 inputs)? Run it directly. Inspect the run while it is in progress.
-2. Is the test large? Consider running it in batch through `references/batch/`. The async nature of batch matches the async nature of long tests.
-3. Is the test flaky? Run it three times and inspect the variance.
-4. Is the test taking too long? Cancel the run and split the test into smaller pieces.
-5. Is the test producing noise? Inspect a few representative inputs and decide whether to abort.
-
-## Construction
+## Persisted Procedure
 
 ```text
-1. Run the test
-   POST /api/v1/agentic-tests/<test-id>/run
-   { "metadata": { "trace_id": "tr_..." } }
+1. Verify the definition
+   GET /api/v1/agentic-tests/{test-id}
 
-2. List runs
-   GET /api/v1/agentic-tests/<test-id>/runs
+2. Queue exactly one run (no request body)
+   POST /api/v1/agentic-tests/{test-id}/runs
 
-3. View a run
-   GET /api/v1/agentic-tests/<test-id>/runs/<run-id>
+3. Save data.id from the 202 response as run-id
 
-4. Inspect per-input outputs, traces, errors, cost
+4. Poll one run, or list with bounded pagination
+   GET /api/v1/agentic-tests/{test-id}/runs/{run-id}
+   GET /api/v1/agentic-tests/{test-id}/runs?state=running&limit=50&offset=0
+
+5. Stop polling at succeeded, failed, or cancelled
+
+6. Inspect data.result, data.conversation, data.cost, and data.error
 ```
+
+Do not call `/run`; the implemented queue endpoint is plural `/runs`. Do not send run metadata in the queue request. `metadata` and `external_user_id` are copied from the saved test definition.
+
+## Interpret The Result
+
+Keep these dimensions separate:
+
+- `state`: operational lifecycle — `pending`, `running`, `succeeded`, `failed`, or `cancelled`.
+- `result.outcome`: behavioral result — `success`, `loss`, or `incomplete`.
+- `score`: final normalized conversation trajectory (`conversation_delta`), not an average over inputs.
+- `error`: safe operational failure text, usually relevant when state is `failed`.
+- `conversation`: timestamped `user`, `assistant`, and `judge` entries with per-message token usage and cost.
+- `cost`: total billed cost attributed to the run.
+
+A `succeeded` run may have `result.outcome: loss` or `incomplete`; succeeded only means the runner completed without an execution error.
+
+Expected final reasons include:
+
+- `baseline_reached`: judge score reached `base_threshold`.
+- `loss_threshold_persisted`: the low trajectory persisted long enough to be considered lost.
+- `simulated_user_ended_conversation`: the simulated user exited without success or loss.
+- `max_turns_reached`: the turn budget ended without a terminal judge outcome.
+
+## Ephemeral SSE Procedure
+
+```http
+POST /api/v1/generations/agentic-tests
+Content-Type: application/json
+Accept: text/event-stream
+```
+
+Use the request schema in `../SKILL.md`. Consume events until `chat.validation.end` or a terminal `unhandled_error`. Relevant event families are:
+
+- `chat.user_message.*`
+- `chat.assistant_message.*`
+- `chat.judge.*`
+- `usage_updated`
+- `chat.validation.end`
+- `unhandled_error`
+
+The direct evaluation is not available later through the persisted run endpoints. If auditability matters, capture the SSE stream on the client or use a persisted test.
+
+## Cancellation
+
+```http
+POST /api/v1/agentic-tests/{test-id}/runs/{run-id}/cancel
+```
+
+The endpoint has no body. Pending work is cancelled immediately; running work is cooperatively stopped. Calling it for a terminal run leaves that run unchanged. Already completed model calls remain billable.
+
+## Failure Handling
+
+- `400`: correct the model/gateway, goal, initial messages, profile, thresholds, sampling, or cron values; do not retry unchanged.
+- `402` on ephemeral evaluation: stop and report insufficient operating balance.
+- Persisted `failed` with insufficient-balance error: stop; do not repeatedly requeue.
+- Retryable provider events in SSE may be retried internally (`will_retry: true`). Do not start a duplicate evaluation while the existing stream is active.
+- A long run is not evidence of a hang while its state remains `running`; use bounded polling and cancel only under an agreed limit.
 
 ## Validation
 
-- The run completes without error.
-- The cost is within the cap.
-- The trace ID is preserved.
-- The per-input outputs and traces are inspectable.
-
-## Failure Modes
-
-- The run is cancelled: the cost is still charged for the completed inputs. There is no rollback.
-- The run produces no output for an input: the target is wrong, the input is invalid, or the target is rate-limited. Inspect the trace.
-- The run is flaky: the target is probabilistic. Run it multiple times and inspect the variance.
-
-## Escalation
-
-- The run is too slow: load `references/batch/` and consider running the test in batch.
-- The run is too expensive: load `references/cost-monitoring/situations/optimize-spend.md`.
-- The run is producing poor outputs: load `situations/design-test-case.md` and check the instruction.
+Report the test ID, run ID or ephemeral mode, operational state, behavioral outcome, final score when present, reason, turns, cost, and any error. Quote retained judge reasoning when explaining why a run passed or failed.
