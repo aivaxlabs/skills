@@ -15,7 +15,7 @@ Get the model's reasoning over audio content with the right fidelity/cost trade-
 ## Decision Tree
 
 1. Does the model support `input_audio`? If yes, send the audio directly. Lower cost for short audio; higher fidelity for tone, timing, and non-speech signals.
-2. Does the model not support audio, or is the audio primarily speech? Transcribe first with `POST /api/v1/generations/transcribe-audio` and pass the transcript as text. The model can reason over the transcript without seeing the audio.
+2. Does the model not support audio, or is the audio primarily speech? Transcribe first with `POST /api/v1/generations/audio/transcriptions` and pass the transcript as text. The model can reason over the transcript without seeing the audio.
 3. Is the audio long (>10 minutes)? Transcription is usually cheaper. Compare the per-minute transcription cost against the per-token audio cost of the multimodal model.
 4. Is the audio non-speech (music, environmental sound, sound effects)? Direct audio is usually the only path. Text transcription of these is lossy.
 5. Is the audio a recording that must be re-summarized? Direct audio is usually better; the model can pick up tone and emphasis.
@@ -37,7 +37,7 @@ Direct:
 Transcribe-then-reason:
 
 ```text
-1. POST /api/v1/generations/transcribe-audio with the audio
+1. POST /api/v1/generations/audio/transcriptions with the audio
 2. Receive transcript
 3. POST /v1/chat/completions with the transcript in a user message
 ```

@@ -1,6 +1,6 @@
 # Segment Text
 
-Use when the agent must segment a long text into chunks through `POST /api/v1/generations/segment-text`. Common uses: preparing text for RAG indexing, splitting a long document for display, or chunking for downstream classification.
+Use when the agent must segment a long text into chunks through `POST /api/v1/generations/segment`. Common uses: preparing text for RAG indexing, splitting a long document for display, or chunking for downstream classification.
 
 ## Objective
 

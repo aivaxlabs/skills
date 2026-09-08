@@ -5,7 +5,7 @@ description: Open and operate realtime bidirectional voice sessions on AIVAX. Lo
 
 # Voice Realtime
 
-This sub-skill owns realtime bidirectional voice sessions on AIVAX. The endpoint is `GET /v1/realtime-voice/sessions`. The discipline is opening a session with the right model, voice, and instructions, and then managing the lifecycle (connect, send audio, receive audio, handle interruptions, close).
+This sub-skill owns realtime bidirectional voice sessions on AIVAX. The endpoint is `GET /api/v1/voice-session`. The discipline is opening a session with the right model, voice, and instructions, and then managing the lifecycle (connect, send audio, receive audio, handle interruptions, close).
 
 ## Operating Files
 
@@ -30,7 +30,9 @@ Do not use this sub-skill for:
 
 ## Endpoint
 
-`GET /v1/realtime-voice/sessions` opens a session. The response includes the session ID, the model, the voice, and the connection details (transport, sample rate, encoding). The exact fields depend on the model and the AIVAX version; verify with `aivax_search_context` before relying on a field.
+`GET /api/v1/voice-session` upgrades an authenticated connection to WebSocket (`101 Switching Protocols`), using the OpenAI-compatible Realtime event protocol. It does not return a JSON session descriptor or separate connection credentials. A private API key and sufficient account balance are required; public keys are rejected.
+
+The first client message must be a JSON `session.update` event containing a `session` object. Optional `gateway` and `model` selectors may be supplied at the event level or inside `session`; event-level selectors take precedence and are removed before forwarding. If omitted, server defaults apply. Configure standard realtime fields such as `audio.output.voice`, `reasoning.effort`, `instructions`, and `tools` inside `session`, not in URL query parameters.
 
 ## Models
 
@@ -43,12 +45,12 @@ Realtime models are tuned for low-latency two-way audio. They differ in language
 
 ## Session Lifecycle
 
-1. Open the session: `GET /v1/realtime-voice/sessions` with the model, voice, instructions, and any tools.
-2. Connect: the response includes the transport (WebSocket, WebRTC, or another). Connect with the credentials from the response.
-3. Send audio: stream the user's microphone audio to the session.
-4. Receive audio: stream the model's response audio to the user.
-5. Handle events: tool calls, interruptions, errors, and end-of-turn signals.
-6. Close: send the close event or close the transport.
+1. Connect to `GET /api/v1/voice-session` using a WebSocket upgrade authenticated with a private API key. Keep that key server-side.
+2. Send `session.update` as the first client message, with a `session` object and the desired selectors and settings.
+3. Send audio using OpenAI-compatible Realtime events and the configured audio format.
+4. Receive and process session, response, and audio events on the same WebSocket.
+5. Handle tool calls, interruptions, and errors through the Realtime protocol. End-of-turn is not a session-close signal.
+6. Close the WebSocket when the user ends the session. A new connection must send its own initial `session.update`.
 
 ## Cost Awareness
 
@@ -66,11 +68,11 @@ Realtime voice is priced per second of audio. A long conversation can cost more 
 
 - Realtime voice has a per-account quota. Long sessions can hit the quota.
 - Some models support only a subset of voices or languages.
-- The session token is short-lived. Do not store it; reconnect when it expires.
+- This endpoint does not issue a separate session token or offer a WebRTC negotiation flow.
 
 ## Escalation
 
-- The latency is too high: switch to a faster model, reduce the audio quality, or use a lower-latency transport.
+- The latency is too high: switch to a faster model, reduce the audio quality, or inspect network latency on the WebSocket connection.
 - The cost is too high: lower the audio quality, shorten the session, or switch to a cheaper model.
 - The user wants a one-way TTS or STT: load `references/speech/`.
 - The user wants to combine voice with web chat: load `references/web-chat/`.

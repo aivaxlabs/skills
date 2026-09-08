@@ -1,6 +1,6 @@
 # Classify Documents
 
-Use when the agent must classify one or many documents through `POST /api/v1/generations/classify-documents`.
+Use when the agent must classify one or many documents through `POST /api/v1/generations/classify`.
 
 ## Objective
 

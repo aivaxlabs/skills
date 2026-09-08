@@ -27,7 +27,7 @@ Keep credentials fresh, scoped, and auditable, without disrupting running servic
 ## Construction
 
 ```text
-POST /api/v1/keys
+POST /api/v1/accounts/api-key
 {
   "label": "<application-or-user>",
   "type": "private" | "public",
@@ -50,7 +50,7 @@ The response includes the full key. Store it in a secret manager; do not echo it
 The salt roll is a separate, destructive operation. Use it only when the salt is suspected to be compromised.
 
 ```text
-POST /api/v1/account/salt/roll
+POST /api/v1/accounts/roll-salt
 ```
 
 The operation is irreversible. All existing worker and integration validation secrets are invalidated. Coordinate the roll with the services that validate the nonce.

@@ -36,7 +36,7 @@ AIVAX errors fall into a small number of classes. The agent should classify befo
 
 - Inspect `GET /api/v1/information/balance` and the relevant `usage` period.
 - Quotas may be per-minute request, token-rate, or storage. Plans have commission multipliers (Free 1.25x, Pro 1.05x, Max 1.00x) that affect how balance translates to capacity.
-- Do not start large jobs, performance reports, or media-heavy inference until cost is understood.
+- Do not start large jobs or media-heavy inference until cost is understood.
 - For 429 specifically, load `references/resilience/situations/rate-limit-429.md`.
 
 ### Provider or Model Error (5xx with provider in the message)

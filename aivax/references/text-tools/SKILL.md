@@ -15,9 +15,9 @@ This sub-skill owns AIVAX's non-chat text tools: document classification, text s
 
 ## Endpoints
 
-- Classification: `POST /api/v1/generations/classify-documents`.
-- Segmentation: `POST /api/v1/generations/segment-text`.
-- Media description: `POST /api/v1/generations/describe-media`.
+- Classification: `POST /api/v1/generations/classify`.
+- Segmentation: `POST /api/v1/generations/segment`.
+- Media description: `POST /api/v1/generations/descriptions`.
 
 All three accept a list of items and return a list of results. The model and parameters are part of the request body. Verify the model and parameter shape with `aivax_search_context` before relying on a field.
 

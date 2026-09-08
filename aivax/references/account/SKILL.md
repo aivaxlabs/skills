@@ -24,13 +24,13 @@ When the agent writes a server-side integration, use a private key. When the age
 
 ## Endpoints
 
-- `GET /api/v1/keys`: list keys (masked).
-- `POST /api/v1/keys`: create a key with a label, expiration, and type.
-- `DELETE /api/v1/keys/<key-id>`: delete a key.
+- `GET /api/v1/accounts/api-key`: list keys (masked).
+- `POST /api/v1/accounts/api-key`: create a key with a label, expiration, and type.
+- `DELETE /api/v1/accounts/api-key/<key-id>`: delete a key.
 - `GET /api/v1/information/balance`: get the current balance, plan, storage usage, and reserve consumption.
 - `GET /api/v1/information/usage?timeStart=<iso>&timeEnd=<iso>`: get usage details for a period.
-- `PUT /api/v1/account`: update account metadata.
-- `POST /api/v1/account/salt/roll`: roll the hook salt. Destructive: invalidates existing worker and integration validation secrets.
+- `PUT /api/v1/accounts`: update account metadata.
+- `POST /api/v1/accounts/roll-salt`: roll the hook salt. Destructive: invalidates existing worker and integration validation secrets.
 
 ## Public Key Restrictions
 
@@ -39,7 +39,7 @@ Public keys can call only the following routes:
 - RAG semantic search (`/api/v1/query`).
 - RAG answer generation (`/api/v1/answer`).
 - Speech generation (`/api/v1/generations/speech`).
-- Media descriptions (`/api/v1/generations/describe-media`).
+- Media descriptions (`/api/v1/generations/descriptions`).
 - Image generation (`/api/v1/generations/images`).
 - Chat completions with stripped tool surfaces (no MCP sources, no protocol functions, no built-in tools, no Bash, no skills, no sentinel options).
 

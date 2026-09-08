@@ -47,15 +47,10 @@ Do not use this sub-skill for:
 - `GET /api/v1/collections/<id>`: view a collection.
 - `GET /api/v1/collections/<id>/documents`: browse documents.
 - `GET /api/v1/collections/<id>/transactions`: list recent, low-quality, or high-quality transactions.
-- `POST /api/v1/collections/<id>/performances`: queue a performance report.
 - `PUT /api/v1/collections/<id>`: edit collection metadata.
 - `PUT /api/v1/collections/<id>/documents`: upsert one document.
-- `POST /api/v1/collections/<id>/documents`: import many documents as JSONL.
+- `POST /api/v1/collections/<id>/documents`: import JSONL through the multipart file field `documents` (route name: `system.v1.documents.index-jsonl`, not a URL suffix). The optional `insert-mode=sync` also deletes documents absent from the upload; use only with explicit authorization.
 - `DELETE /api/v1/collections/<id>/vectors-only`: rebuild vectors without deleting documents.
-
-## Cost Awareness
-
-A performance report can spend account balance. Queue it intentionally, then review `OverallScore`, `OverallReadiness`, findings, and remediation plan before editing documents.
 
 ## Validation
 
@@ -68,7 +63,6 @@ A performance report can spend account balance. Queue it intentionally, then rev
 
 - Per-collection and per-account quotas exist. Plan limits control collection count, search rate, insertion rate, and JSONL import size.
 - Some query strategies are more expensive than others. `FullRewrite` and `UserRewrite` consume tokens; `Plain` does not.
-- Performance reports are not free. Confirm the cost with the user before queueing.
 
 ## Escalation
 

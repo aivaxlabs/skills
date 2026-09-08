@@ -15,7 +15,7 @@ This sub-skill owns text-to-speech and speech-to-text generation through AIVAX. 
 ## Endpoints
 
 - Text-to-speech: `POST /api/v1/generations/speech`.
-- Speech-to-text: `POST /api/v1/generations/transcribe-audio`.
+- Speech-to-text: `POST /api/v1/generations/audio/transcriptions`.
 
 Both endpoints accept AIVAX API keys (private or public, depending on the workflow). The model and parameters are part of the request body. Verify the model and parameter shape with `aivax_search_context` or the public docs before relying on a field.
 

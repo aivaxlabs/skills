@@ -42,7 +42,7 @@ Produce a session that feels natural to the user, that handles interruptions and
 ## Session Close
 
 - The user says "goodbye" or pushes a close button.
-- The model signals end-of-turn and the session closes.
+- An end-of-turn event finishes a response, not the session. Keep the WebSocket open until the user or application explicitly ends the session.
 - A timeout is reached.
 - A cost cap is reached.
 

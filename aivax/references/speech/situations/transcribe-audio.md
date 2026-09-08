@@ -1,6 +1,6 @@
 # Transcribe Audio
 
-Use when the agent must transcribe an audio file to text through `POST /api/v1/generations/transcribe-audio`.
+Use when the agent must transcribe an audio file to text through `POST /api/v1/generations/audio/transcriptions`.
 
 ## Objective
 

@@ -40,7 +40,7 @@ Do not use this sub-skill for:
 
 ## Listing Filters
 
-The conversations listing accepts filters such as `--gateway <id>`, `--chat-client <id>`, `--chat-session <id>`, `--model <name>`, `--user <external-user-id>`, `--api-key <id>`. URL-encode values that include spaces or flags.
+The conversations listing accepts command-line-style expressions in the `filter` query parameter: `--gateway <id>`, `--chat-client <id>`, `--chat-session <id>`, `--model <name>`, `--user <external-user-id>`, `--api-key <id>`. URL-encode the complete expression, for example `?filter=--gateway%20<id>`. The listing window uses `timeStart` and `timeEnd` (ISO 8601), or `offsetminutes` when `timeStart` is omitted; `period` belongs to export, not listing.
 
 ## Bulk Export Options
 

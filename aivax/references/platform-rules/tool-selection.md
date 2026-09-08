@@ -18,7 +18,7 @@ How to map an intent to a tool call. This file is a decision guide, not an endpo
 | Discover or compare models | `aivax_list_models` (with `name_filter` for focus) | `GET https://inference.aivax.net/v1/models` |
 | Verify field, enum, or behavior | `aivax_search_context` with `search_type: "all"` or `"api-function-reference"` | Fetch `https://inference.aivax.net/apidocs/llms.txt` or `https://docs.aivax.net/docs/<topic>` |
 | Direct chat completion | Not available via MCP; use HTTP or OpenAI SDK with `base_url: https://inference.aivax.net/v1` | Same |
-| Realtime voice | Not available via MCP; use HTTP `GET /v1/realtime-voice/sessions` | Same |
+| Realtime voice | Not available via MCP; use authenticated WebSocket upgrade `GET /api/v1/voice-session`, then send `session.update` | Same |
 
 ## Resource Path Map
 
@@ -38,7 +38,6 @@ GET  /api/v1/collections
 GET  /api/v1/collections/<collection-id>
 GET  /api/v1/collections/<collection-id>/documents
 GET  /api/v1/collections/<collection-id>/transactions
-GET  /api/v1/collections/<collection-id>/performances
 PUT  /api/v1/collections/<collection-id>
 PUT  /api/v1/collections/<collection-id>/documents
 POST /api/v1/collections/<collection-id>/documents (JSONL import)
@@ -89,21 +88,21 @@ GET  /api/v1/agentic-tests/<test-id>/runs/<run-id>
 POST /api/v1/agentic-tests/<test-id>/runs/<run-id>/cancel
 
 POST /api/v1/generations/rerank
-POST /api/v1/generations/segment-text
-POST /api/v1/generations/classify-documents
-POST /api/v1/generations/describe-media
+POST /api/v1/generations/segment
+POST /api/v1/generations/classify
+POST /api/v1/generations/descriptions
 POST /api/v1/generations/speech
 POST /api/v1/generations/images
-POST /api/v1/generations/transcribe-audio
+POST /api/v1/generations/audio/transcriptions
 
-GET  /v1/realtime-voice/sessions
+GET  /api/v1/voice-session
 
-GET  /api/v1/keys
-POST /api/v1/keys
-DELETE /api/v1/keys/<key-id>
+GET  /api/v1/accounts/api-key
+POST /api/v1/accounts/api-key
+DELETE /api/v1/accounts/api-key/<key-id>
 
-PUT  /api/v1/account
-POST /api/v1/account/salt/roll
+PUT  /api/v1/accounts
+POST /api/v1/accounts/roll-salt
 ```
 
 ## When To Use The MCP And When To Use Direct HTTP

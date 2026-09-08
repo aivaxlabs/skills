@@ -62,4 +62,3 @@ Quantify the groundedness of the RAG answers and identify the failure mode (retr
 - The groundedness score is low: load `situations/debug-bad-answer.md`.
 - The recall is low: load `situations/debug-missing-evidence.md`.
 - The collection is consistently failing: load `situations/design-rag-pipeline.md` and consider redesigning.
-- The user wants a built-in performance report: queue one with `POST /api/v1/collections/<id>/performances`. Confirm the cost with the user first.

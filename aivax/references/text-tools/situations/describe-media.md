@@ -1,6 +1,6 @@
 # Describe Media
 
-Use when the agent must produce a textual description of a media file through `POST /api/v1/generations/describe-media`. Common uses: describing an image for a downstream text model, describing an audio for accessibility, describing a video for a transcript.
+Use when the agent must produce a textual description of a media file through `POST /api/v1/generations/descriptions`. Common uses: describing an image for a downstream text model, describing an audio for accessibility, describing a video for a transcript.
 
 ## Objective
 
