@@ -17,7 +17,7 @@ This sub-skill owns rerankers on AIVAX. A reranker takes a query and a list of c
 
 `POST /api/v1/generations/rerank`. The endpoint accepts a query, a list of candidate document strings, a model name, an optional `top_n`, and an optional `min_score`. The response is a list of results in descending relevance order, each with the original zero-based index, the relevance score, and the document text.
 
-The legacy `/api/v1/generations/reflex/rerank` route is an alias for the same endpoint. Use the generic route for new integrations.
+The legacy `/api/v1/generations/reflex/rerank` route is a deprecated alias for the same endpoint. Use the generic route for new integrations.
 
 ## When To Use A Reranker
 
@@ -46,7 +46,7 @@ The rerank endpoint accepts only models with `autonomousUse: true`. `rrf` and `n
 
 ## Cost Awareness
 
-Rerankers are priced per million tokens (most models) or per search unit (Cohere). Reflex has a separate cache-miss and cache-hit price. Reusing the same query or document strings can produce a cache hit, which is typically 5x cheaper. The usage object reports `input_tokens`, `cached_input_tokens`, `total_tokens`, and `cost`.
+Rerankers are priced per million tokens (most models) or per search unit (Cohere). Reflex has a separate cache-miss and cache-hit price. Reusing the same query or document strings can produce a cache hit. Cache hits cost less than cache misses; see the usage object, which reports `input_tokens`, `cached_input_tokens`, `total_tokens`, and `cost`.
 
 ## Validation
 

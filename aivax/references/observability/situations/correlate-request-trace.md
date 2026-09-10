@@ -37,7 +37,7 @@ Build a complete picture of a single request: who initiated it, which gateway ha
    gateway: GET /api/v1/ai-gateways/<id>
    collection: GET /api/v1/collections/<id>
    chat client: GET /api/v1/web-chat-client/<id>
-   session: GET /api/v1/web-chat-client/<id>/sessions/<session-id>
+   session: GET /api/v1/web-chat-client/<id>/sessions (list; delete with DELETE /api/v1/web-chat-client/<id>/sessions/<session-id>)
    batch job: GET /api/v1/batch/workflows/<id>/jobs/<id>
    agentic test: GET /api/v1/agentic-tests/<id>/runs/<run-id>
 

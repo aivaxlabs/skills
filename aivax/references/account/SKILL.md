@@ -72,3 +72,4 @@ Balance, usage, and plan drive the cost of every operation. Inspect them before 
 - A secret leaked in a log or final response: load `situations/secret-hygiene.md` and rotate the affected credentials.
 - Balance is low: load `references/cost-monitoring/situations/optimize-spend.md`.
 - The salt must be rolled: load `situations/create-and-rotate-keys.md` (the salt section) and confirm approval.
+- The request fails with 429 or a transient error: load `references/resilience/situations/rate-limit-429.md`.

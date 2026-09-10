@@ -64,3 +64,4 @@ Both endpoints have per-account quotas. Verify before running large jobs. For ba
 - The STT output is wrong: load `situations/transcribe-audio.md` for language and diarization parameters.
 - The task needs realtime two-way voice: load `references/voice-realtime/`.
 - The task is batch transcription: load `references/batch/`.
+- The request fails with 429 or a transient error: load `references/resilience/situations/rate-limit-429.md`.

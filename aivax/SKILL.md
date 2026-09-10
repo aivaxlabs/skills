@@ -52,6 +52,10 @@ Map the user intent to a sub-skill. Load only what you need. When in doubt, pref
 | Create, edit, or operate an AI gateway (model + instructions + RAG + tools + skills) | `references/ai-gateways/` |
 | Author or attach an account-scoped skill under `/api/v1/skills` | `references/skill-development/` |
 | Operate a web chat client, session, or messaging integration | `references/web-chat/` |
+| Inspect or cancel scheduled hook activations for a web chat client | `references/hook-schedules/` |
+| Read or mutate files inside the shell sandbox (account + X-Shell-User-Id) | `references/shell-io/` |
+| Inspect, migrate, or delete persisted user memories by external user ID | `references/memories/` |
+| Check account notifications or the unread count | `references/notifications/` |
 | Design or debug a batch workflow/job/items | `references/batch/` |
 | Combine multiple AIVAX capabilities into a single workflow | `references/composition/` |
 | Handle rate limits, transient errors, retries, idempotency, fallback | `references/resilience/` |
@@ -154,4 +158,8 @@ These apply in addition to the rules inside each sub-skill.
 | `references/ai-gateways/` | Gateway design, skills and tools attachment, safe editing |
 | `references/skill-development/` | Authoring and attaching account-scoped skills |
 | `references/web-chat/` | Web chat clients, sessions, and messaging integrations |
+| `references/hook-schedules/` | Scheduled hook activations and recurring tasks for a web chat client |
+| `references/shell-io/` | Shell sandbox file operations scoped by account and shell user ID |
+| `references/memories/` | Persisted user memories by external user ID |
+| `references/notifications/` | Account notifications and unread count (read-only) |
 | `references/batch/` | Batch workflow design, job execution, and failure analysis |

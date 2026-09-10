@@ -76,7 +76,7 @@ contracts:
     map: documents -> rerank.input.documents
 substitutable:
   - stage: generate
-    alternatives: [ @openai/gpt-5-mini, @google/gemini-2.5-flash, <gateway-id> ]
+    alternatives: [ <model-or-gateway>, <gateway-id> ]
     cost_delta: typical_2x_to_10x
 failure:
   - stage: retrieve

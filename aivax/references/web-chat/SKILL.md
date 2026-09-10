@@ -34,7 +34,7 @@ Do not use this sub-skill to tune the model, tools, RAG, or instructions behind 
 - `GET /api/v1/web-chat-client/<id>/sessions`: list sessions.
 - `POST /api/v1/web-chat-client/<id>/sessions`: create or refresh a session.
 - `PUT /api/v1/web-chat-client/<id>/integrations`: configure a messaging integration.
-- `DELETE /api/v1/web-chat-client/<id>/integrations/<type>`: remove one integration (destructive).
+- `DELETE /api/v1/web-chat-client/<id>/integrations/<name>`: remove one integration (destructive).
 
 Read the client before changing it. For unfamiliar integration payloads, scheduled-continuation fields, or audio-synthesis options, use `aivax_search_context` before mutating.
 

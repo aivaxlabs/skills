@@ -57,6 +57,33 @@ The endpoint accepts OpenAI-compatible payloads plus AIVAX extensions:
 - `metadata`: a JSON object of string key/value pairs, stored with the conversation record for correlation.
 - `tool_invocation_explanations`: when supported, expose tool-call explanations in the response.
 
+## Minimal Tool-Call Loop
+
+```json
+{
+  "model": "<model-or-gateway>",
+  "messages": [{ "role": "user", "content": "Find the order status for 123." }],
+  "tools": [{
+    "type": "function",
+    "function": {
+      "name": "get_order_status",
+      "description": "Return current status for one order ID.",
+      "parameters": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["orderId"],
+        "properties": { "orderId": { "type": "string" } }
+      }
+    }
+  }]
+}
+```
+
+1. Validate each requested function name against the offered `tools` and validate arguments against the function schema.
+2. Execute the handler with the least required data.
+3. Resend the tool result as a `tool` message carrying the original tool-call identifier.
+4. Call `/v1/chat/completions` again with the appended result so the model produces the final answer. See `situations/inference-with-tools.md` for the full pattern.
+
 ## Direct Call vs. Gateway
 
 Decide explicitly:

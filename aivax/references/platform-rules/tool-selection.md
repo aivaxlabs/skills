@@ -27,8 +27,8 @@ Hostless paths, used through `aivax_invoke_function` or as the suffix of `https:
 ```text
 GET  /api/v1/information/balance
 GET  /api/v1/information/usage?timeStart=<iso>&timeEnd=<iso>
-GET  /api/v1/information/rerankers
-GET  /api/v1/information/audio-transcription
+GET  /api/v1/information/rerankers-models.json
+GET  /api/v1/information/audio-transcription-models.json
 
 GET  /api/v1/ai-gateways
 GET  /api/v1/ai-gateways/<gateway-id>
@@ -81,8 +81,7 @@ GET  /api/v1/agentic-tests/<test-id>
 POST /api/v1/agentic-tests
 PATCH /api/v1/agentic-tests/<test-id>
 DELETE /api/v1/agentic-tests/<test-id>
-POST /api/v1/agentic-tests/<test-id>/evaluate
-POST /api/v1/agentic-tests/<test-id>/run
+POST /api/v1/agentic-tests/<test-id>/runs
 GET  /api/v1/agentic-tests/<test-id>/runs
 GET  /api/v1/agentic-tests/<test-id>/runs/<run-id>
 POST /api/v1/agentic-tests/<test-id>/runs/<run-id>/cancel

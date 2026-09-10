@@ -35,12 +35,7 @@ External links must be reachable by AIVAX without authentication, firewall restr
 
 ## Balance Minimums
 
-AIVAX requires a minimum account balance for media-heavy inference:
-
-- Files and videos: $0.50 minimum.
-- Images and audio: $0.10 minimum.
-
-These are minimums, not costs. The actual cost is model-dependent and is reported in `usage`.
+Media-heavy inference requires a positive account balance. The balance gate is not a price: it only checks that the account holds enough balance before the request proceeds. The actual cost is model-dependent and is reported in `usage`.
 
 ## Pre-Processing
 
@@ -72,7 +67,7 @@ Multimodal calls can be expensive. Compare the cost of a multimodal-capable mode
 
 - The Free plan has a context cap. Multimodal content counts against the context.
 - Some models support a subset of modalities. Verify with `aivax_list_models`.
-- File and video minimum balance is $0.50; image and audio is $0.10. Insufficient balance returns 402.
+- Insufficient balance returns 402.
 
 ## Escalation
 

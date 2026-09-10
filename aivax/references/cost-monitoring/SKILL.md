@@ -74,3 +74,4 @@ The multiplier is applied to the per-unit cost; the public `usage.cost` is the f
 - A cost optimization is requested: load `situations/optimize-spend.md`.
 - A new resource is unusually expensive: load `references/observability/situations/diagnose-degradation.md` and confirm the resource is not in a failure loop.
 - A subscription reserve is exhausted: identify the dominant consumer and reduce its consumption. Confirm with the user.
+- The request fails with 429 or a transient error: load `references/resilience/situations/rate-limit-429.md`.

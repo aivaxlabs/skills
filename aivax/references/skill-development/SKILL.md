@@ -99,3 +99,4 @@ Skills are injected into the conversation context when active. Long skill instru
 - A skill must be attached to a gateway: load `situations/attach-skill-to-gateway.md`.
 - A skill is wrong or stale: load `situations/author-skill.md` and update the instructions.
 - A skill is leaking: load `references/account/situations/secret-hygiene.md` and rotate the affected credentials.
+- The request fails with 429 or a transient error: load `references/resilience/situations/rate-limit-429.md`.

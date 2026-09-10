@@ -52,6 +52,27 @@ Do not use this sub-skill for:
 - `POST /api/v1/collections/<id>/documents`: import JSONL through the multipart file field `documents` (route name: `system.v1.documents.index-jsonl`, not a URL suffix). The optional `insert-mode=sync` also deletes documents absent from the upload; use only with explicit authorization.
 - `DELETE /api/v1/collections/<id>/vectors-only`: rebuild vectors without deleting documents.
 
+## Minimal Examples
+
+```json
+POST /api/v1/query
+{
+  "collections": ["<collection-id>"],
+  "terms": "how do refunds work?",
+  "top": 5
+}
+```
+
+```json
+POST /api/v1/answer
+{
+  "collections": ["<collection-id>"],
+  "prompt": "how do refunds work?"
+}
+```
+
+Chunking is controlled at ingestion time; bulk document loads use the JSONL documents import (route name: `system.v1.documents.index-jsonl`).
+
 ## Validation
 
 - The retrieved documents match the expected evidence.
@@ -70,3 +91,4 @@ Do not use this sub-skill for:
 - The answer is wrong: load `situations/debug-bad-answer.md`.
 - The user wants a custom reranker: load `references/rerankers/`.
 - The task is to design a new pipeline: load `situations/design-rag-pipeline.md`.
+- The request fails with 429 or a transient error: load `references/resilience/situations/rate-limit-429.md`.

@@ -1,6 +1,6 @@
 # Reranker Catalog
 
-The current AIVAX reranking catalog. The list is a moving target; treat the live `aivax_list_models` or `GET /api/v1/information/rerankers` as the source of truth. This file is the shape and the selection criteria.
+The current AIVAX reranking catalog. The list is a moving target; treat the live `aivax_list_models` or `GET /api/v1/information/rerankers-models.json` as the source of truth. This file is the shape and the selection criteria.
 
 ## Catalog Snapshot
 
@@ -37,7 +37,7 @@ The current AIVAX reranking catalog. The list is a moving target; treat the live
 | Multilingual retrieval | `@qwen/qwen3-reranker-4b` or `8b` | Strong multilingual coverage. |
 | Vision-language candidates | `@nvidia/llama-nemotron-rerank-vl-1b-v2` | Accepts image-based candidates. |
 | High-volume, low-cost | `lexical` | No cost, no quota, word-aware. |
-| High-volume with semantic quality | `@aivax/reflex-v1` (cache) | Cache hit is 5x cheaper than miss. |
+| High-volume with semantic quality | `@aivax/reflex-v1` (cache) | Cache hits cost less than misses. |
 | High precision, low volume | `@cohere/rerank-4-pro` | High quality, search-unit pricing. |
 | High speed, lower precision | `@cohere/rerank-4-fast` or `@qwen/qwen3-reranker-0.6b` | Smaller models, faster output. |
 | RAG-only rank fusion | `rrf` | Combines vector and lexical ranks. |

@@ -57,6 +57,25 @@ A gateway has:
 - `parameters.userPromptTemplate`, `parameters.assistantPrefill`, `parameters.includePrefillingInMessages`: prompt shaping.
 - `parameters.systemInstructionsSources`: external text resources appended to the system prompt.
 
+## Endpoints
+
+- `POST /api/v1/ai-gateways`: create a gateway.
+- `PATCH /api/v1/ai-gateways/<id>`: edit a gateway. Top-level gateway fields and top-level `parameters` fields are shallow-merged; send only the fields that should change.
+- `GET /api/v1/ai-gateways`: list gateways.
+- `GET /api/v1/ai-gateways/<id>`: view one gateway.
+- `DELETE /api/v1/ai-gateways/<id>`: delete a gateway. Requires explicit approval.
+
+Attach a skill with a minimal patch:
+
+```json
+PATCH /api/v1/ai-gateways/<id>
+{
+  "parameters": { "skills": ["<skill-id>"] }
+}
+```
+
+Arrays are usually replacements during patching; include the complete intended list rather than only the new entry.
+
 ## Public vs Private Keys
 
 Public keys (`pk-aiv-`) can call chat completions with the full AI Gateway UUID. Direct integrated-model calls and gateway slug lookup are disabled. MCP sources, protocol functions, built-in tools, Bash, skills, and sentinel options are stripped from the request. Only these parameters are accepted: `model`, `messages`, `prompt`, `temperature`, `top_p`, `top_k`, `seed`, `tools`, `reasoning_effort`, `max_completion_tokens`, and `stream`.
