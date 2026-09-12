@@ -85,6 +85,10 @@ POST /api/v1/answer
 
 Chunking is controlled at ingestion time; bulk document loads use the JSONL documents import (route name: `system.v1.documents.index-jsonl`).
 
+## Media Injector
+
+Use Media Injector when the useful knowledge sits inside a source file (PDF report, manual, policy, image, scan, audio, video) that has not already been split into retrieval-ready text. Upload the file through the collection's Import from files flow (`media/chunk` then `media/complete`); each file spawns a media-processing job tracked under Batch, with states `queued`, `processing`, `completed`, `failed`, or `cancelled`. The job writes concise factual documents in the source's predominant language and queues them for indexing; it does not preserve the source as one searchable document. Optional processing context steers which facts matter but cannot add absent facts. After completion, review the generated documents (wording, coverage, sensitive data) and wait for indexing before testing search. Prefer direct document upsert or JSONL import when exact wording, deterministic boundaries, stable names, or application-controlled metadata are required.
+
 ## Validation
 
 - The retrieved documents match the expected evidence.

@@ -9,6 +9,10 @@ This sub-skill owns the shell file sandbox. The sandbox is an isolated filesyste
 
 All routes share the prefix `/api/v1/shell/io` and require the `X-Shell-User-Id` header. All file and directory operations take a required `path` query parameter naming a path inside the sandbox.
 
+## Operating Files
+
+- `situations/publish-and-share.md`: upload content and optionally generate a temporary public download URL.
+
 ## Discovery Workflow
 
 ```text

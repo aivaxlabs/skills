@@ -9,6 +9,10 @@ This sub-skill owns scheduled hook activations for a web chat client: one-time s
 
 There is no POST on this module: schedules are created by the model through gateway tools during a conversation, not through a direct API call. This sub-skill inspects and cancels; it never creates.
 
+## Operating Files
+
+- `situations/review-and-cancel.md`: resolve the exact schedule or recurring task and cancel it with approval.
+
 ## When To Use Hook Schedules
 
 Use this sub-skill to:

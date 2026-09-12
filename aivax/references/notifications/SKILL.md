@@ -7,6 +7,10 @@ description: Read AIVAX account notifications and the unread count. Load when th
 
 This sub-skill owns access to AIVAX account notifications. Notifications are account-level alerts returned as minimal summaries ordered from newest to oldest. Listing notifications has a read-state side effect.
 
+## Operating Files
+
+- `situations/triage-notifications.md`: check alerts while preserving the pre-list unread count.
+
 ## When To Use Notifications
 
 Use this sub-skill to:

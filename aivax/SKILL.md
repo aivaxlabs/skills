@@ -1,6 +1,6 @@
 ---
 name: aivax
-description: Operate AIVAX as a unified agent platform. Use when an agent needs to plan, execute, or validate work that touches AIVAX inference, RAG, rerankers, agentic tests, voice (TTS, STT, realtime), image generation, text tools (classify, segment, describe), AI gateways, batch, web chat, account operations, cost monitoring, or observability. Routes to focused sub-skills instead of duplicating endpoint documentation. Covers the case when the AIVAX MCP is available and when only public docs are reachable.
+description: Operate AIVAX as a unified agent platform. Use when an agent needs to plan, execute, or validate work that touches AIVAX inference, RAG, rerankers, agentic tests, voice (TTS, STT, realtime), image generation, text tools (classify, segment, describe), AI gateways, gateway workers, protocol functions, batch, web chat, account operations, cost monitoring, or observability. Routes to focused sub-skills instead of duplicating endpoint documentation. Covers the case when the AIVAX MCP is available and when only public docs are reachable.
 ---
 
 # AIVAX
@@ -50,6 +50,8 @@ Map the user intent to a sub-skill. Load only what you need. When in doubt, pref
 | Investigate a cost spike, balance drop, or spend optimization | `references/cost-monitoring/` |
 | Correlate traces, diagnose latency/error, audit a conversation | `references/observability/` |
 | Create, edit, or operate an AI gateway (model + instructions + RAG + tools + skills) | `references/ai-gateways/` |
+| Implement or debug a gateway worker (message.received, tool.called) | `references/gateway-workers/` |
+| Define or serve a protocol function (server-side tool with HTTP callback) | `references/protocol-functions/` |
 | Author or attach an account-scoped skill under `/api/v1/skills` | `references/skill-development/` |
 | Operate a web chat client, session, or messaging integration | `references/web-chat/` |
 | Inspect or cancel scheduled hook activations for a web chat client | `references/hook-schedules/` |
@@ -156,6 +158,8 @@ These apply in addition to the rules inside each sub-skill.
 | `references/cost-monitoring/` | Cost spike investigation and spend optimization |
 | `references/observability/` | Trace correlation, degradation diagnosis, conversation audit |
 | `references/ai-gateways/` | Gateway design, skills and tools attachment, safe editing |
+| `references/gateway-workers/` | Gateway worker implementation (message.received, tool.called) |
+| `references/protocol-functions/` | Protocol function definition and callback serving |
 | `references/skill-development/` | Authoring and attaching account-scoped skills |
 | `references/web-chat/` | Web chat clients, sessions, and messaging integrations |
 | `references/hook-schedules/` | Scheduled hook activations and recurring tasks for a web chat client |

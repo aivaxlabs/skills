@@ -47,6 +47,8 @@ GET /api/v1/ai-gateways/<gateway-id>
 
 ## Skill Design Workflow
 
+0. When tutorial videos exist, optionally bootstrap from `POST /api/v1/generations/teach-skill`: send `videos` as OpenAI-compatible `video_url` content parts (URL or `data:video/...` base64) and use the returned Markdown tutorial (`data.resultText`) as the draft for `instructions`. The endpoint rejects non-video content with 400 and may take a while; prefer the long inference endpoint. Refine the draft with the steps below before creating the skill.
+
 1. Define the user task the skill should improve.
 2. Identify concrete trigger phrases and negative cases.
 3. Decide what context belongs in the skill versus gateway `systemInstruction`.

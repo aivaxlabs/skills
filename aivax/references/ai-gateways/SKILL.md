@@ -104,6 +104,8 @@ A gateway is the dominant cost driver for most accounts. The model choice, the R
 
 - A new gateway is needed: load `situations/design-gateway.md`.
 - A skill or tool must be attached: load `situations/attach-skills-and-tools.md`.
+- A worker endpoint must be implemented or debugged: load `references/gateway-workers/`.
+- A protocol function must be defined or served: load `references/protocol-functions/`.
 - A parameter must be edited: load `situations/edit-gateway-safely.md`.
 - A gateway is failing: load `references/observability/situations/diagnose-degradation.md`.
 - A gateway is expensive: load `references/cost-monitoring/situations/optimize-spend.md`.

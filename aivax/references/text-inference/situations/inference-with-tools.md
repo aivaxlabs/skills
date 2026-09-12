@@ -57,6 +57,12 @@ For each requested tool call:
 
 Use `builtin_tools` only for documented AIVAX built-in tools such as `WebSearch`, `AdvancedWebUsage`, `OpenUrl`, `Code`, `Request`, `Calendar`, and `Remember`. Verify supported tools and options with `aivax_search_context`.
 
+## Web Research Depth
+
+- `WebSearch` answers quick current-fact questions (weather, news, scores). Tune with `web_search_max_results` and `web_search_mode` (`full` inserts whole result contents at higher token cost; `summarized` inserts provider summaries). Prefer it for routine lookups.
+- `advanced_web_search(prompt)` runs a deeper multi-source research pass for complex questions needing synthesis. It takes a single `prompt` argument, costs usage, and is overkill for single-fact lookups.
+- `OpenUrl` reads a user-provided URL; use it instead of search when the source is already known.
+
 ## Validation
 
 - Every invoked function was offered in the request and received schema-valid arguments.
