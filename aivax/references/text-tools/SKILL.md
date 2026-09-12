@@ -19,7 +19,11 @@ This sub-skill owns AIVAX's non-chat text tools: document classification, text s
 - Segmentation: `POST /api/v1/generations/segment`.
 - Media description: `POST /api/v1/generations/descriptions`.
 
-All three accept a list of items and return a list of results. The model and parameters are part of the request body. Verify the model and parameter shape with `aivax_search_context` before relying on a field.
+None of these endpoints accepts a `model` field. Their request bodies and response shapes are distinct:
+
+- Classification accepts `documents` and `labels`; the response envelope contains `{ "results": [...] }` in `data` (`OpenIndexer.Alpha2/Api/Modules/Generations/ClassificationsApi.cs:39-64,74-81`).
+- Segmentation accepts `documents` and optional `sanitize`; the response envelope contains `{ "result": [...], "usage": {...} }` in `data` (`OpenIndexer.Alpha2/Api/Modules/Generations/SegmenterApi.cs:57-61,154-160`).
+- Media description accepts `input`, optional `extractionGuidance`, and optional `preset`; `preset` is `auto` (default) or `high`. The response envelope's `data` is an array with one resolver-generated object per input item (`OpenIndexer.Alpha2/Api/Modules/Generations/MediaDescriptionsApi.cs:117-121,174`).
 
 ## When To Use Text Tools
 
@@ -40,29 +44,25 @@ Do not use this sub-skill for:
 
 Text-classification and text-segmentation quotas each count every item in the request's `documents` array, not each HTTP request. A request that sends 100 documents consumes 100 quota items. Plan accordingly; for large jobs, load `references/batch/`.
 
-## Models
-
-Verify with `aivax_list_models`. Each tool has a catalog of supported models. The choice of model affects cost, quality, and language coverage.
-
 ## Cost Awareness
 
 These tools are priced per item, not per token. A request that sends 1,000 documents can cost more than a long chat completion. Set a cost cap with the user before running large jobs.
 
 ## Validation
 
-- The response is a list of results, one per input item.
-- The results match the input order (when the model preserves order; verify with `aivax_search_context`).
-- The trace ID is preserved through `metadata`.
+- Classification returns `data.results`, with one indexed result per document and every label ordered by score.
+- Segmentation returns `data.result`, with indexed segments per document, plus `data.usage`.
+- Media description returns an array directly in `data`, preserving input order.
 
 ## Limits
 
-- Per-request item count limits exist. Verify with `aivax_search_context` for the model.
-- Some models support only a subset of languages. Verify before sending multilingual content.
+- Per-request item count limits exist. Verify them with `aivax_search_context`.
+- Language support varies by tool. Verify before sending multilingual content.
 - Per-account quotas exist. Large jobs can hit the quota. Load `references/resilience/situations/rate-limit-429.md` when they do.
 
 ## Escalation
 
-- The classification is wrong: the labels are ambiguous, the model is not strong on the domain, or the input is noisy. Adjust the labels or switch the model.
-- The segmentation is wrong: the chunk size is too small or too large, the model is not strong on the language, or the input is structured in a way the model does not understand. Adjust the parameters or switch the model.
-- The description is wrong: the model is not strong on the modality, the input is too noisy, or the prompt is too vague. Adjust the parameters or switch the model.
+- The classification is wrong: clarify the labels or clean noisy documents.
+- The segmentation is wrong: adjust `sanitize` or the source document structure.
+- The description is wrong: adjust `extractionGuidance` or `preset`, or improve the input quality.
 - The task is large: load `references/batch/`.

@@ -48,14 +48,21 @@ The endpoint accepts OpenAI-compatible payloads plus AIVAX extensions:
 - `stream`: `true` to receive SSE; `false` for a single response.
 - `temperature`, `top_p`, `top_k`, `seed`, `max_completion_tokens`, `reasoning_effort`, `stop`: standard sampling parameters.
 - `tools`: an array of OpenAI-compatible tool definitions (function calling).
-- `builtin_tools`: AIVAX-specific on-demand built-in tools (`WebSearch`, `AdvancedWebUsage`, `OpenUrl`, `Code`, `Request`, `Calendar`, `Remember`).
+- `tool_choice`: optional tool-selection behavior forwarded to compatible gateways.
+- `builtin_tools`: AIVAX-specific on-demand built-in tools (`WebSearch`, `Code`, `OpenUrl`, `Remember`, `ImageGeneration`, `XPostsSearch`, `GenerateDocument`, `GenerateWebPage`, `AdvancedWebUsage`, `Request`, `Calendar`).
+- `user`: optional external user identifier attached to the gateway inference context.
+- `extra_body`: provider-specific request fields, supported only with BYOK AI Gateways.
+- `routing_preset`: private-key-only per-request routing override. Accepted values are `Balanced`, `Cheapest`, `Fastest`, and `Quality`; it does not change the saved gateway configuration.
+- `rendering_mode`: set to `textual_blocks` to normalize reasoning into textual think blocks.
 - `response_format` with `json_schema`: provider-compatible structured output.
 - `response_schema`: AIVAX-specific structured output with JSON Healing.
 - `json_only`: when the caller expects only the generated JSON, not the chat-completion envelope.
 - `multimodal_preprocess`: AIVAX-specific flag to convert media into a text description before the main call.
-- `idempotency_key`: string up to 128 characters. Reuse the same value to update the same stored conversation record.
+- `idempotency_key`: string up to 128 characters, mapped to `ConversationToken` for stored-conversation correlation. Reusing it may update the same stored conversation record, but does not deduplicate inference execution; each request still executes.
 - `metadata`: a JSON object of string key/value pairs, stored with the conversation record for correlation.
 - `tool_invocation_explanations`: when supported, expose tool-call explanations in the response.
+
+These fields are implemented in `OpenIndexer.Alpha2/Api/Modules/OpenAi.cs`; `routing_preset` is applied at lines 630-631, and `rendering_mode` at line 656. The built-in names come from `OpenIndexer.Alpha2/Inference/ReasoningChainResolverOptions.cs`.
 
 ## Minimal Tool-Call Loop
 

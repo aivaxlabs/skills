@@ -17,7 +17,10 @@ This sub-skill owns text-to-speech and speech-to-text generation through AIVAX. 
 - Text-to-speech: `POST /api/v1/generations/speech`.
 - Speech-to-text: `POST /api/v1/generations/audio/transcriptions`.
 
-Both endpoints accept AIVAX API keys (private or public, depending on the workflow). The model and parameters are part of the request body. Verify the model and parameter shape with `aivax_search_context` or the public docs before relying on a field.
+Both endpoints accept AIVAX API keys (private or public, depending on the workflow).
+
+- TTS accepts `model`, `input`, optional `voice`, optional `format`, and optional `raw`. With the default `raw=false`, it returns the standard JSON envelope whose `data` contains `{ "format", "mimeType", "data" }`, with audio base64 in `data`. Binary audio is returned only with `raw=true` (`OpenIndexer.Alpha2/Api/Modules/Generations/SpeechGenerationsApi.cs:59-126`).
+- STT accepts only optional `model`, required `input_audio.data`, required `input_audio.format`, and optional `language`; diarization is not a request parameter (`OpenIndexer.Alpha2/Api/Modules/Generations/AudioTranscriptionsApi.cs:58-76`). Use `GET /api/v1/information/audio-transcription-models.json` for the live STT catalog (`OpenIndexer.Alpha2/Api/Modules/InformationApi.cs:63`).
 
 ## When To Use Speech
 
@@ -35,7 +38,7 @@ Do not use this sub-skill for:
 
 ## Models
 
-Speech models vary by language coverage, voice quality, latency, and cost. Verify with `aivax_list_models`. Common axes:
+Speech models vary by language coverage, voice quality, latency, and cost. Verify TTS models with `aivax_list_models` and STT models with `GET /api/v1/information/audio-transcription-models.json`. Common axes:
 
 - Language coverage: multilingual models cover more languages but may be weaker per language than a monolingual model.
 - Voice quality: some models are tuned for natural-sounding speech, others for clarity or speed.
@@ -48,9 +51,9 @@ Both endpoints have per-account quotas. Verify before running large jobs. For ba
 
 ## Validation
 
-- TTS: the response is a valid audio file in the requested format. The audio matches the input text.
+- TTS with `raw=false`: decode the base64 `data.data` and verify that its format matches `data.format` and `data.mimeType`.
+- TTS with `raw=true`: verify the binary response and its content type.
 - STT: the response is a transcript that is faithful to the audio. Sample a few segments.
-- The trace ID is preserved through `metadata`.
 
 ## Limits
 
@@ -61,7 +64,7 @@ Both endpoints have per-account quotas. Verify before running large jobs. For ba
 ## Escalation
 
 - The TTS output sounds wrong: try a different model or voice. Load `situations/text-to-speech.md` for the voice parameter.
-- The STT output is wrong: load `situations/transcribe-audio.md` for language and diarization parameters.
+- The STT output is wrong: load `situations/transcribe-audio.md` for the optional language hint.
 - The task needs realtime two-way voice: load `references/voice-realtime/`.
 - The task is batch transcription: load `references/batch/`.
 - The request fails with 429 or a transient error: load `references/resilience/situations/rate-limit-429.md`.

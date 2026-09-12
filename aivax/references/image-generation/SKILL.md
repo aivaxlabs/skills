@@ -30,60 +30,64 @@ Do not use this sub-skill for:
 
 `POST /api/v1/generations/images`.
 
-The request accepts:
+The request accepts only:
 
-- `model`: an image generation model from `aivax_list_models`. Verify the model supports the intended task (text-to-image, image-to-image, inpainting, etc.).
-- `prompt`: a textual description of the desired image.
-- `negative_prompt` (when supported): a description of what to avoid.
-- `size` or `aspect_ratio`: the output dimensions or aspect ratio. Verify the model's supported sizes.
-- `quality`: the quality tier (e.g. `standard`, `high`). Higher quality costs more.
-- `n`: the number of images to generate. Each image costs.
-- `seed`: a deterministic seed for reproducibility.
-- `reference_image` (when supported): a base image for editing or style transfer.
-- `mask` (when supported): a mask for inpainting.
-- `metadata`: a JSON object of string key/value pairs for trace correlation.
+- `input` (required): a non-empty prompt string or a non-empty array of prompt strings.
+- `count` (optional): an integer from 1 to 4; defaults to 1 and applies to each prompt.
+- `model` (required): an image model identifier from `GET /api/v1/information/image-models.json`.
+- `referenceImages` (optional): up to four safe absolute HTTP(S) image URLs. Use this only when the selected model has the reference-image capability flag in the catalog.
 
-The response is a JSON object with one or more images. Each image has a URL, a base64 representation, or a hosted location depending on the model. The hosted location is a short-lived URL — download the image promptly.
+```json
+{
+  "input": ["<prompt-1>", "<prompt-2>"],
+  "count": 1,
+  "model": "<image-model>",
+  "referenceImages": ["https://example.com/reference.jpg"]
+}
+```
+
+The response groups generated image URLs by input prompt:
+
+```json
+{
+  "data": [
+    {
+      "input": "<prompt-1>",
+      "images": ["https://example.com/generated-image.jpg"]
+    }
+  ]
+}
+```
+
+Do not assume a base64 response or a URL expiration policy not stated by the endpoint.
 
 ## Models
 
-Models vary widely in style, fidelity, latency, and cost. Verify with `aivax_list_models`. Common axes:
-
-- Photorealism vs. illustration.
-- Text rendering inside images (some models are better).
-- Aspect ratio support.
-- Cost per image at each quality tier.
-- Whether the model supports image-to-image, inpainting, or reference images.
+Use `GET /api/v1/information/image-models.json` as the image model catalog. Check the selected model's flags before sending `referenceImages`, and expose only models returned by this public catalog.
 
 ## Cost Awareness
 
-Image generation is priced per image, not per token. A single high-quality image can cost more than a long text inference. Set a cost cap with the user before generating many images in batch. For batch use, load `references/batch/situations/design-batch-workflow.md`.
+Image generation is priced per image, not per token. Set a cost cap with the user before increasing `count` or sending many prompts. For batch use, load `references/batch/situations/design-batch-workflow.md`.
 
 ## Storage And Delivery
 
-AIVAX does not store generated images indefinitely. The response includes a hosted location that is short-lived. The agent must:
-
-1. Download the image promptly.
-2. Store it in the user's storage of choice (S3, GCS, local disk).
-3. Pass the stable URL to the user or the downstream system.
-4. Never paste the image bytes or a long data URL in the final response.
+Treat each returned image URL as endpoint output. Download or persist it only when the user's delivery or storage requirements call for that step; do not infer undocumented URL lifetime guarantees.
 
 ## Validation
 
-- The response includes at least one image.
-- The image matches the prompt at the expected fidelity tier.
-- The hosted location was downloaded and stored before the URL expired.
-- The trace ID is preserved.
+- `data` contains one `{input, images}` group for each supplied prompt.
+- Each `images` value is an array of generated image URLs.
+- The generated images match their corresponding prompts.
 
 ## Limits
 
 - Image generation has a per-account quota. High-volume generation can hit the quota. Load `references/cost-monitoring/` and `references/resilience/situations/rate-limit-429.md` for the rate-limit response.
-- Some models support only a subset of the parameters. Verify with `aivax_search_context` before assuming a parameter is supported.
+- `referenceImages` is accepted only for models whose catalog flags declare that capability.
 - Public keys (`pk-aiv-`) can call image generation. They cannot call integrated text models.
 
 ## Escalation
 
 - The model is producing poor results: load `situations/choose-image-model.md` and try a different model.
-- The cost is too high: lower the quality, reduce `n`, or switch to a cheaper model.
+- The cost is too high: reduce `count`, send fewer prompts, or switch to a cheaper model.
 - The task is to produce many images: load `references/batch/`.
 - The user wants the model to reason about an image, not generate one: load `references/multimodal/situations/image-input.md`.

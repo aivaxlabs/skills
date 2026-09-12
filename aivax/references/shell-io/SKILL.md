@@ -57,7 +57,7 @@ Do not use this sub-skill for:
 
 ## Limits
 
-- Uploads are capped at 100 MB per request.
+- The upload endpoint declares a 100 MB request cap, but `Api/Modules/IoShellApi.cs:217-236` shows no local size validation in the handler; global enforcement may still apply.
 - The sandbox root cannot be deleted; root delete attempts return 400.
 - Nonexistent files and directories return 404 on read, details, public-address, and delete calls.
 

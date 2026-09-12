@@ -44,13 +44,25 @@ Do not use this sub-skill for:
 - `POST /api/v1/query`: semantic search. Returns a list of documents with scores.
 - `POST /api/v1/answer`: answer generation. Returns a generated answer that cites the evidence.
 - `GET /api/v1/collections`: list collections.
+- `POST /api/v1/collections`: create an empty collection from `collectionName` with optional `context` and `tags`.
 - `GET /api/v1/collections/<id>`: view a collection.
+- `GET /api/v1/collections/<id>/export.jsonl`: export all documents as JSONL.
 - `GET /api/v1/collections/<id>/documents`: browse documents.
+- `GET /api/v1/collections/<id>/documents/<document-id>`: view one document.
 - `GET /api/v1/collections/<id>/transactions`: list recent, low-quality, or high-quality transactions.
+- `GET /api/v1/collections/<id>/transactions/<transaction-id>`: view one transaction in detail.
+- `GET /api/v1/collections/<id>/transactions/export/jsonl?view=<mode>`: export the selected transaction view as JSONL.
+- `GET /api/v1/collections/<id>/deduplication/estimate?delta=<level>`: estimate exact and semantic duplicate removal; `delta` accepts `low`, `medium`, or `high` and defaults to `medium`.
+- `POST /api/v1/collections/<id>/deduplication?delta=<level>`: start the corresponding duplicate removal (destructive; require explicit approval).
 - `PUT /api/v1/collections/<id>`: edit collection metadata.
 - `PUT /api/v1/collections/<id>/documents`: upsert one document.
 - `POST /api/v1/collections/<id>/documents`: import JSONL through the multipart file field `documents` (route name: `system.v1.documents.index-jsonl`, not a URL suffix). The optional `insert-mode=sync` also deletes documents absent from the upload; use only with explicit authorization.
-- `DELETE /api/v1/collections/<id>/vectors-only`: rebuild vectors without deleting documents.
+- `POST /api/v1/collections/<id>/documents/media/chunk`: append a binary chunk identified by the required media-upload headers.
+- `POST /api/v1/collections/<id>/documents/media/complete`: queue processing of the uploaded media chunks.
+- `DELETE /api/v1/collections/<id>/documents/<document-id>`: delete one document; `include-references` also deletes documents sharing its reference (destructive; require explicit approval).
+- `DELETE /api/v1/collections/<id>`: delete the collection and its documents (destructive; require explicit approval).
+- `DELETE /api/v1/collections/<id>/reset-only`: delete every document while retaining the collection configuration (destructive; require explicit approval).
+- `DELETE /api/v1/collections/<id>/vectors-only`: delete and rebuild the vector index while preserving documents (destructive mutation; require explicit approval).
 
 ## Minimal Examples
 

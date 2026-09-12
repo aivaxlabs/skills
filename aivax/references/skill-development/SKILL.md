@@ -20,23 +20,30 @@ An AIVAX account skill has:
 
 - `slug`: stable account-local name, up to 64 characters, using letters, numbers, underscores, hyphens, or periods.
 - `description`: concise summary of what the skill does and when it should be selected. The description is what the model uses to decide activation.
-- `instructions`: the instruction text injected when the skill is active.
-- `options.instructionSources`: external instruction resources appended at runtime.
+- `instructions`: the inline instruction text injected when the skill is active. This is the only skill instruction content injected by the current runtime.
+- `options.instructionSources`: external instruction resources stored and exported with the skill, but not injected by the current runtime.
 - `options.allowedToolsNames`: tool names this skill may request in tool-enabled flows.
 
 Gateway attachment is flat: a gateway has `parameters.skills` as an array of skill IDs. There is no native priority, no weights, and no primary skill. Base behavior belongs in gateway `systemInstruction`; reusable task-specific behavior belongs in skills.
 
-## Discovery Workflow
+## Discovery And Management Workflow
 
 ```text
 GET /api/v1/skills
 GET /api/v1/skills/<skill-id>
+PUT /api/v1/skills/<skill-id>
+DELETE /api/v1/skills/<skill-id>
+POST /api/v1/skills/management/import
 GET /api/v1/skills/management/export.jsonl
+DELETE /api/v1/skills/management/clear
 GET /api/v1/ai-gateways
 GET /api/v1/ai-gateways/<gateway-id>
 ```
 
-Use export before large edits, migrations, or imports.
+- `PUT /api/v1/skills/<skill-id>` accepts a partial update. Omitted fields remain unchanged; supplied top-level keys in `options` are shallow-merged with existing options.
+- `POST /api/v1/skills/management/import` imports the multipart `skills` JSONL file and overwrites existing skills matched by slug.
+- Export with `GET /api/v1/skills/management/export.jsonl` before large edits, migrations, imports, or deletions.
+- Obtain explicit user approval immediately before `DELETE /api/v1/skills/<skill-id>` or `DELETE /api/v1/skills/management/clear`; the latter deletes every skill in the account.
 
 ## Skill Design Workflow
 
@@ -77,7 +84,7 @@ Avoid generic reminders that every model already knows. Include only AIVAX-speci
 
 ## Cost Awareness
 
-Skills are injected into the conversation context when active. Long skill instructions consume tokens on every call. Keep skills short, focused, and reusable.
+Skill instructions are injected into the conversation context only when the skill is activated. Long instructions consume tokens on calls where that skill is active, not on every call. Keep skills short, focused, and reusable.
 
 ## Validation
 
@@ -90,7 +97,7 @@ Skills are injected into the conversation context when active. Long skill instru
 ## Limits
 
 - `allowedToolsNames` is enforced only when the gateway has `hideToolsWithoutSkill` set. The list is matched by name; typos silently disable the tool.
-- `instructionSources` must be reachable and must not contain secrets.
+- `instructionSources` is stored and exported but is not consumed by the current runtime. Do not rely on it for active behavior or store secrets in it.
 - The skill's `description` is the trigger. A vague description means the skill rarely activates.
 
 ## Escalation

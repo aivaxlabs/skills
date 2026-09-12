@@ -20,7 +20,7 @@ Use this sub-skill when the agent must:
 - Trace a specific request from the entry point (API, web chat, integration) to the final response.
 - Diagnose latency or error rate that has increased on a gateway, chat client, or batch job.
 - Audit stored conversations for compliance, quality, or customer support.
-- Correlate a request ID with a conversation, a transaction, a job item, or a hook schedule.
+- Correlate a conversation `requestId` with returned conversation, transaction, job, item, run, or hook-schedule resource IDs.
 - Confirm that a recent change had the intended effect (or did not).
 
 Do not use this sub-skill for:
@@ -62,7 +62,7 @@ Use `media: text` and `thinking: visible` for default exports. Use `media: inclu
 - The trace or the conversation is identified.
 - The relevant fields are extracted (timestamps, resources, error messages, tool calls, usage).
 - The cause or the audit conclusion is supported by evidence.
-- The trace ID is preserved.
+- The conversation `requestId` and relevant returned resource IDs are preserved.
 - The report is reproducible: same conversation IDs, same filters, same result.
 
 ## Limits

@@ -57,8 +57,13 @@ Rerankers are priced per million tokens (most models) or per search unit (Cohere
 
 ## Limits
 
-- Each model has a declared context and document count limit. Reflex accepts up to 10,000 documents (returns at most 200). Most other models accept up to 1,024.
-- The endpoint returns 400 for unknown or non-autonomous models, invalid `top_n` or `min_score`, empty input, or a document count above the model's limit.
+Use the live catalog at `GET /api/v1/information/rerankers-models.json` for current capabilities and limits (`OpenIndexer.Alpha2/Api/Modules/InformationApi.cs:84`). In the current implementations:
+
+- Reflex accepts up to 10,000 documents and returns at most 200.
+- Cohere models accept up to 10,000 documents (`OpenIndexer.Alpha2/Embedding/RerankingServices/OpenRouterReranker.cs:47`).
+- DeepInfra-backed models accept up to 1,024 documents (`OpenIndexer.Alpha2/Embedding/RerankingServices/DeepInfraReranker.cs:61`).
+- Jina and lexical declare no maximum document count.
+- The endpoint returns 400 for unknown or non-autonomous models, invalid `top_n` or `min_score`, empty input, or a document count above the model's declared limit.
 - All non-none reranking operations share the account's reranking request quota. Reflex also has a token-rate quota. Exceeding either returns 429. Load `references/resilience/situations/rate-limit-429.md`.
 
 ## Escalation

@@ -29,7 +29,7 @@ This sub-skill defines the patterns. The decision of when to apply them belongs 
 
 - **Exponential backoff with jitter.** Start at 500ms, double, cap at 30s, add up to 250ms of random jitter. Three attempts is usually enough; more than five is rarely worth it.
 - **Honor Retry-After.** When AIVAX returns `Retry-After`, sleep for that duration before retrying. Do not retry earlier.
-- **Idempotency for mutations.** Use `idempotency_key` on chat completions. For other mutations, capture the pre-mutation state and design a manual rollback in case the retry also fails.
+- **Conversation correlation, not deduplication.** On chat completions, `idempotency_key` only supplies the stored conversation's `ConversationToken`. It does not deduplicate or suppress inference execution; every retry can execute and incur usage again. For mutations, capture the pre-mutation state and design a manual rollback in case the retry also fails.
 - **Circuit breaker for known-bad states.** If three consecutive retries fail with the same class, stop retrying. Switch to a fallback (different model, different region) or surface the error to the user.
 - **Cost-aware retries.** Do not retry large inference calls or batch operations on a 429 without confirming the user is willing to absorb the retry cost. Balance and quotas can be exhausted by a retry storm.
 - **Time-boxed retries.** A retry that has not succeeded in 60 seconds is unlikely to succeed. Surface it.
@@ -39,7 +39,7 @@ This sub-skill defines the patterns. The decision of when to apply them belongs 
 When a primary call cannot be retried, the fallback options are:
 
 - **Model swap**: a cheaper or faster model that meets the same capability floor. Verify the alternative model supports the modality, context, and tool surface.
-- **Reranker swap**: when the reranker is failing, swap to `lexical` (no cost, no quota) or `none` (RAG only, disables rerank).
+- **Reranker swap**: when the reranker is failing, swap to `lexical` (no model cost, but subject to the reranking request quota) or `none` (RAG only, disables rerank).
 - **Gateway bypass**: a direct chat completion to an integrated model may bypass a gateway that is failing.
 - **Skip stage**: a stage that is not critical (e.g. rerank, classify) can be skipped if the rest of the pipeline can still meet the goal.
 - **Defer**: when the work is not time-critical, queue it for later rather than retrying now. Batch is the right shape for this.

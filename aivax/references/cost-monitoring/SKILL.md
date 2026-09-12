@@ -32,6 +32,7 @@ Do not use this sub-skill for:
 
 Cost monitoring works through account usage data and resource attribution:
 
+- `GET /api/v1/information/usage/monthly-report?month=YYYY-MM`: first triage for a monthly spike, with insights and top-cost model, resource, and SKU tables.
 - `GET /api/v1/information/balance`: current health.
 - `GET /api/v1/information/usage?timeStart=<iso>&timeEnd=<iso>`: detailed usage for a period.
 - `GET /api/v1/ai-gateways/<id>`, `GET /api/v1/collections/<id>`, `GET /api/v1/web-chat-client/<id>`, `GET /api/v1/batch/workflows/<id>/jobs/<id>`, `GET /api/v1/conversations`: resource-level inspection.

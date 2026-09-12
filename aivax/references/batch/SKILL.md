@@ -23,14 +23,18 @@ Do not use Batch when inputs need shared memory, when a user needs an immediate 
 
 - `GET` / `POST /api/v1/batch/workflows`: list or create workflows.
 - `GET` / `PATCH /api/v1/batch/workflows/<workflow-id>`: inspect or update a workflow.
-- `GET /api/v1/batch/workflows/<workflow-id>/jobs`: list a workflow's jobs.
+- `GET /api/v1/batch/workflows/<workflow-id>/jobs`: list all jobs under a workflow, optionally filtered by job ID or title.
 - `POST /api/v1/batch/workflows/<workflow-id>/jobs`: create a paused job.
 - `GET` / `PATCH /api/v1/batch/workflows/<workflow-id>/jobs/<job-id>`: inspect, start, pause, or finish a job.
+- `DELETE /api/v1/batch/workflows/<workflow-id>/jobs/<job-id>`: delete a job and every item under it (destructive; require explicit approval).
 - `POST /api/v1/batch/workflows/<workflow-id>/jobs/<job-id>/items`: import items as multipart data.
 - `GET /api/v1/batch/workflows/<workflow-id>/jobs/<job-id>/items`: list and filter items.
+- `GET /api/v1/batch/workflows/<workflow-id>/jobs/<job-id>/items/<item-id>`: inspect one item's input, output, state, validation, confidence, and cost.
+- `PATCH /api/v1/batch/workflows/<workflow-id>/jobs/<job-id>/items/<item-id>`: change a non-running item's `priority`; `action: cancel` removes it and is destructive, so require explicit approval.
 - `POST /api/v1/batch/workflows/<workflow-id>/jobs/<job-id>/items/retry?mode=<mode>`: retry matching non-running items.
 - `DELETE /api/v1/batch/workflows/<workflow-id>/jobs/<job-id>/items?mode=<mode>`: remove matching non-running items (destructive).
 - `GET /api/v1/batch/workflows/<workflow-id>/jobs/<job-id>/export.jsonl`: export completed results.
+- `DELETE /api/v1/batch/workflows/<workflow-id>`: delete a workflow with all jobs and items under it (destructive; require explicit approval).
 
 Use `aivax_search_context` before changing uncertain workflow schemas, import fields, retry behavior, or export filters.
 
@@ -62,7 +66,7 @@ Item states include `Pending`, `Finished`, `Refused`, `ExecutionError`, `Validat
 - Inspect balance and estimate cost before a large run.
 - Start only after the imported item count and sample inputs look correct.
 - Retry the narrowest mode justified by evidence; do not retry all items blindly.
-- `DELETE` only removes non-running items but is still destructive. Require explicit approval.
+- Item deletion only removes non-running items, but any item, job, or workflow deletion is destructive. Require explicit approval.
 - Export only the necessary state and confidence subset; pending items are not exported.
 
 ## Validation

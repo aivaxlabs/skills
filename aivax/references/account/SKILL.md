@@ -18,18 +18,19 @@ This sub-skill owns the account-level resources on AIVAX. The agent uses these r
 AIVAX has two key families because browser-facing and server-side use cases have different risk profiles.
 
 - **Private key** (`sk-aiv-acc`): server-side integrations and administrative API calls. Authenticated account APIs and OpenAI-compatible inference.
-- **Public key** (`pk-aiv-`): restricted client-side calls to explicitly public routes (RAG query, RAG answer, speech, image generation, media descriptions, and chat completions with stripped tool surfaces).
+- **Public key** (`pk-aiv-`): restricted client-side calls to explicitly public routes (RAG query, RAG answer, speech generation, speech-to-text transcription, image generation, media descriptions, and chat completions with stripped tool surfaces).
 
 When the agent writes a server-side integration, use a private key. When the agent writes a browser or widget experience, use a public key and keep the workflow limited to routes designed for public access.
 
 ## Endpoints
 
-- `GET /api/v1/accounts/api-key`: list keys (masked).
+- `GET /api/v1/accounts/api-key`: list masked keys and the current account `salt`.
 - `POST /api/v1/accounts/api-key`: create a key with a label, expiration, and type.
 - `DELETE /api/v1/accounts/api-key/<key-id>`: delete a key.
 - `GET /api/v1/information/balance`: get the current balance, plan, storage usage, and reserve consumption.
-- `GET /api/v1/information/usage?timeStart=<iso>&timeEnd=<iso>`: get usage details for a period.
-- `PUT /api/v1/accounts`: update account metadata.
+- `GET /api/v1/information/usage?timeStart=<iso>&timeEnd=<iso>&dayCount=<n>`: get usage details; defaults are the last 30 days through now, with `dayCount=7`.
+- `GET /api/v1/information/usage/monthly-report?month=YYYY-MM`: get monthly insights and top-cost model, resource, and SKU tables.
+- `PUT /api/v1/accounts`: replace the account name and full `parameters` object; read the current account first and preserve every unrelated parameter.
 - `POST /api/v1/accounts/roll-salt`: roll the hook salt. Destructive: invalidates existing worker and integration validation secrets.
 
 ## Public Key Restrictions
@@ -39,6 +40,7 @@ Public keys can call only the following routes:
 - RAG semantic search (`/api/v1/query`).
 - RAG answer generation (`/api/v1/answer`).
 - Speech generation (`/api/v1/generations/speech`).
+- Speech-to-text transcription (`POST /api/v1/generations/audio/transcriptions`).
 - Media descriptions (`/api/v1/generations/descriptions`).
 - Image generation (`/api/v1/generations/images`).
 - Chat completions with stripped tool surfaces (no MCP sources, no protocol functions, no built-in tools, no Bash, no skills, no sentinel options).
@@ -51,7 +53,7 @@ AIVAX can authenticate outbound requests to your services (workers, protocol fun
 
 ## Cost Awareness
 
-Balance, usage, and plan drive the cost of every operation. Inspect them before starting a large job, a model swap, or a batch run. The Free plan has a context cap and a commission multiplier of 1.25x. The Pro plan has 1.05x. The Max plan has 1.00x.
+Balance, usage, and plan drive the cost of every operation. Inspect them before starting a large job, a model swap, or a batch run. Do not hard-code plan multipliers or quotas; use the current public `pricing.md` and `limits.md` documentation.
 
 ## Validation
 

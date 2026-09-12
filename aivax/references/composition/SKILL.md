@@ -10,7 +10,7 @@ Most real work on AIVAX is not a single call. A support assistant might classify
 ## Operating Files
 
 - `situations/design-pipeline.md`: how to design a multi-step AIVAX workflow from scratch.
-- `situations/cross-skill-observability.md`: how to keep trace IDs, request IDs, and resource IDs correlated across steps.
+- `situations/cross-skill-observability.md`: how to correlate stage metadata, idempotency keys, conversation `requestId` values, and returned resource IDs.
 
 ## When Composition Applies
 
@@ -100,6 +100,6 @@ Do not substitute silently. Record the change so the pipeline's behavior is audi
 
 ## Cross-Skill Observability
 
-Every stage must propagate a trace ID and a parent request ID. The trace ID is generated at pipeline start. Each stage adds its own resource IDs (conversation, transaction, item, run, batch, request). The final report links the whole chain.
+Correlate each stage through fields its contract actually supports: propagate caller-defined `metadata`, record a supplied `idempotency_key` as a conversation correlation field, capture the conversation `requestId` when returned, and record returned resource IDs such as conversation, collection transaction, batch job, item, run, or hook schedule. Do not require a universal trace or parent request ID from endpoints that do not expose one. The final report links the chain stage by stage.
 
 See `situations/cross-skill-observability.md` for the propagation rules.
