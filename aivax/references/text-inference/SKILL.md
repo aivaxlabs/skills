@@ -58,7 +58,7 @@ The endpoint accepts OpenAI-compatible payloads plus AIVAX extensions:
 - `response_schema`: AIVAX-specific structured output with JSON Healing.
 - `json_only`: when the caller expects only the generated JSON, not the chat-completion envelope.
 - `multimodal_preprocess`: AIVAX-specific flag to convert media into a text description before the main call.
-- `idempotency_key`: string up to 128 characters, mapped to `ConversationToken` for stored-conversation correlation. Reusing it may update the same stored conversation record, but does not deduplicate inference execution; each request still executes.
+- `idempotency_key`: AIVAX-specific optional string up to 128 characters (not part of the OpenAI spec), mapped to `ConversationToken` for stored-conversation correlation. Reusing it may update the same stored conversation record, but does not deduplicate inference execution; each request still executes.
 - `metadata`: a JSON object of string key/value pairs, stored with the conversation record for correlation.
 - `tool_invocation_explanations`: when supported, expose tool-call explanations in the response.
 

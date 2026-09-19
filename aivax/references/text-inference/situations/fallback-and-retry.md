@@ -35,7 +35,7 @@ A fallback model is a cheaper or more available model that meets the same capabi
 
 - Exponential backoff with jitter: start at 500ms, double, cap at 30s, jitter up to 250ms.
 - Honor `Retry-After` when present.
-- Use `idempotency_key` on chat completions to avoid duplicates on retry.
+- Pass the AIVAX-specific `idempotency_key` on chat completions to correlate the retry with the same conversation record (it does not avoid a duplicate execution or charge).
 - Three attempts is the default. Five is the absolute cap.
 - Time-box to 60 seconds total. Beyond that, the user has lost patience.
 

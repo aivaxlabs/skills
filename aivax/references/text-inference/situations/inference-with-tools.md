@@ -74,7 +74,7 @@ Use `builtin_tools` only for documented AIVAX built-in tools such as `WebSearch`
 ## Failure Modes
 
 - Unknown function name or malformed arguments: do not invoke it; return a structured tool error and let the model recover or ask for clarification.
-- Repeated calls after a transient failure: use an idempotency key and load `references/resilience/` before retrying.
+- Repeated calls after a transient failure: pass the AIVAX-specific `idempotency_key` to correlate with the same conversation record (it does not suppress re-execution) and load `references/resilience/` before retrying.
 - Tool output exceeds useful context: return a minimal structured summary or reference, then configure appropriate gateway `toolContextCount` if needed.
 - The model uses the wrong tool: narrow descriptions and schemas, or adjust the gateway's attached tool surface.
 

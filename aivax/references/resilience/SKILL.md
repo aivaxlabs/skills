@@ -29,7 +29,7 @@ This sub-skill defines the patterns. The decision of when to apply them belongs 
 
 - **Exponential backoff with jitter.** Start at 500ms, double, cap at 30s, add up to 250ms of random jitter. Three attempts is usually enough; more than five is rarely worth it.
 - **Honor Retry-After.** When AIVAX returns `Retry-After`, sleep for that duration before retrying. Do not retry earlier.
-- **Conversation correlation, not deduplication.** On chat completions, `idempotency_key` only supplies the stored conversation's `ConversationToken`. It does not deduplicate or suppress inference execution; every retry can execute and incur usage again. For mutations, capture the pre-mutation state and design a manual rollback in case the retry also fails.
+- **Conversation correlation, not deduplication.** `idempotency_key` is an AIVAX-specific chat-completions field (not part of the OpenAI spec): it only supplies the stored conversation's `ConversationToken`. It does not deduplicate or suppress inference execution; every retry can execute and incur usage again. For mutations, capture the pre-mutation state and design a manual rollback in case the retry also fails.
 - **Circuit breaker for known-bad states.** If three consecutive retries fail with the same class, stop retrying. Switch to a fallback (different model, different region) or surface the error to the user.
 - **Cost-aware retries.** Do not retry large inference calls or batch operations on a 429 without confirming the user is willing to absorb the retry cost. Balance and quotas can be exhausted by a retry storm.
 - **Time-boxed retries.** A retry that has not succeeded in 60 seconds is unlikely to succeed. Surface it.
