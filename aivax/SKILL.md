@@ -16,6 +16,8 @@ Use this skill when the task involves any of the following:
 - Generating, transcribing, or describing media (speech, image, video, file).
 - Opening or designing a realtime voice session.
 - Classifying, segmenting, or extracting structure from text or media.
+- Evaluating one text against fixed criteria in a single call (semantic decisions).
+- Searching the web or extracting content from URLs or files via direct API calls.
 - Searching and reranking a knowledge base, with or without a collection.
 - Creating, running, evaluating, or comparing agentic tests.
 - Creating, rotating, or auditing API keys; inspecting balance, usage, salt, or plan.
@@ -43,6 +45,8 @@ Map the user intent to a sub-skill. Load only what you need. When in doubt, pref
 | Transcribe audio to text (STT) | `references/speech/` (STT) |
 | Open a realtime bidirectional voice session | `references/voice-realtime/` |
 | Classify documents, segment text, or describe media into text | `references/text-tools/` |
+| Evaluate one text against fixed noul/choice/score criteria in a single call | `references/decisions/` |
+| Search the web or extract content from URLs/files via direct API calls | `references/web/` |
 | Build a RAG pipeline: collection, ingestion, query, answer, grounding | `references/rag/` |
 | Rerank candidate documents; choose Reflex, Cohere, Qwen, Jina, NVIDIA, or lexical reranker | `references/rerankers/` |
 | Create, run, evaluate, or compare agentic tests | `references/agentic-tests/` |
