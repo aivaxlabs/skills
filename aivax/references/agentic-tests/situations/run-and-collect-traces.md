@@ -7,7 +7,7 @@ Use when executing an Agentic Test and collecting its result, retained conversat
 - Use a persisted run when history, scheduling, cancellation, or later comparison matters.
 - Use ephemeral SSE for one direct evaluation whose progress must be streamed and does not need to be retained as an Agentic Test run.
 
-Both modes call paid models. Establish a reasonable turn budget before execution. One test run is one simulated conversation, not a batch of inputs.
+Both modes meter gateway, simulated-user, and judge inference separately from the shared new-run quota. No allowance covers the run itself or its text-model inference; eligible remote Fetch/OCR processing can use its separate subscription allowance. Establish a reasonable turn budget before execution. One test run is one simulated conversation, not a batch of inputs.
 
 ## Persisted Procedure
 
@@ -29,7 +29,7 @@ Both modes call paid models. Establish a reasonable turn budget before execution
 6. Inspect data.result, data.conversation, data.cost, and data.error
 ```
 
-Do not call `/run`; the implemented queue endpoint is plural `/runs`. Do not send run metadata in the queue request. `metadata` and `external_user_id` are copied from the saved test definition.
+Do not call `/run`; the implemented queue endpoint is plural `/runs`. Do not send run metadata in the queue request. `metadata` and `external_user_id` are copied from the saved test definition. The run uses one unit of the account-wide new-run quota when queued, shared with scheduled runs and direct evaluations; starting execution and subsequent turns do not consume additional run units.
 
 ## Interpret The Result
 
@@ -59,7 +59,7 @@ Content-Type: application/json
 Accept: text/event-stream
 ```
 
-Use the request schema in `../SKILL.md`. Consume events until `chat.validation.end` or a terminal `unhandled_error`. Relevant event families are:
+Use the request schema in `../SKILL.md`; direct evaluations reject persisted-only `hooks`. Check for HTTP 429 before processing the SSE stream. Each direct evaluation uses the same account-wide new-run quota as persisted runs. Consume events until `chat.validation.end` or a terminal `unhandled_error`. Relevant event families are:
 
 - `chat.user_message.*`
 - `chat.assistant_message.*`
@@ -76,12 +76,13 @@ The direct evaluation is not available later through the persisted run endpoints
 POST /api/v1/agentic-tests/{test-id}/runs/{run-id}/cancel
 ```
 
-The endpoint has no body. Pending work is cancelled immediately; running work is cooperatively stopped. Calling it for a terminal run leaves that run unchanged. Already completed model calls remain billable.
+The endpoint has no body. Pending and running runs transition to `cancelled` immediately; running execution stops cooperatively. Calling it for a terminal run leaves that run unchanged. Already completed model calls remain billable.
 
 ## Failure Handling
 
 - `400`: correct the model/gateway, goal, initial messages, profile, thresholds, sampling, or cron values; do not retry unchanged.
 - `402` on ephemeral evaluation: stop and report insufficient operating balance.
+- `429` on a manual queue request or before direct SSE begins: no run/stream was created; wait for the quota window to clear and use bounded retries with backoff. Account API keys share this quota, and a scheduled test without quota waits for a later scheduling check.
 - Persisted `failed` with insufficient-balance error: stop; do not repeatedly requeue.
 - Retryable provider events in SSE may be retried internally (`will_retry: true`). Do not start a duplicate evaluation while the existing stream is active.
 - A long run is not evidence of a hang while its state remains `running`; use bounded polling and cancel only under an agreed limit.

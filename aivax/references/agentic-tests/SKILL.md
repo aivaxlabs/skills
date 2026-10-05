@@ -23,7 +23,7 @@ Before an unfamiliar or account-changing call, follow `../platform-rules/SKILL.m
 - **Persisted**: use `/api/v1/agentic-tests` to save a reusable definition, schedule it, queue runs, inspect history, and cancel pending or running work.
 - **Ephemeral**: `POST /api/v1/generations/agentic-tests` streams one direct evaluation as server-sent events and does not create a test or retained run. `/api/v1/generations/validations` is a compatibility alias.
 
-Both modes consume account balance. Persisted runs are asynchronous. The ephemeral endpoint requires positive operating balance and returns an SSE stream even when `stream` is omitted or false.
+Both modes use metered inference for the tested gateway, simulated user, and judge; the selected profile affects simulator and judge rates. There is no subscription allowance for an Agentic Test run or its text-model inference. Remote-resource Fetch/OCR processing may separately use the plan's Fetch/OCR allowance when eligible; this does not cover the test or bypass its run quota or balance requirements. Persisted runs are asynchronous. The ephemeral endpoint requires positive operating balance and returns an SSE stream even when `stream` is omitted or false.
 
 ## Persisted Endpoints
 
@@ -32,6 +32,7 @@ Both modes consume account balance. Persisted runs are asynchronous. The ephemer
 | `GET` | `/api/v1/agentic-tests?search=&gateway=` | List owned tests with `latest_run`. |
 | `POST` | `/api/v1/agentic-tests` | Create a definition; returns `201`. |
 | `GET` | `/api/v1/agentic-tests/{test-id}` | Get the complete definition and latest run. |
+| `GET` | `/api/v1/agentic-tests/{test-id}/sse` | Subscribe to live updates for this persisted test. |
 | `PATCH` | `/api/v1/agentic-tests/{test-id}` | Partially update supplied fields. |
 | `DELETE` | `/api/v1/agentic-tests/{test-id}` | Delete the test and retained runs; returns `204`. |
 | `POST` | `/api/v1/agentic-tests/{test-id}/runs` | Queue a run from the current definition; no body; returns `202`. |
@@ -52,7 +53,7 @@ Both modes consume account balance. Persisted runs are asynchronous. The ephemer
 | `goal` | string, message-part object, or message-part array | required | Shared with the simulated user and judge. |
 | `validation_criteria` | string, message-part object, array, or null | `null` | Visible only to the judge. |
 | `start` | message array | `[]` | Initial OpenAI-compatible conversation messages. |
-| `resources` | external-resource array | `[]` | Up to 16 `{ "type", "data" }` objects that provide additional shared context to the simulated user and judge. Use `Text` for literal non-empty `data` or `RemoteResource` to retrieve content from the non-empty URL in `data`. Resources are not conversation messages and are not sent to the gateway under test as chat history. |
+| `resources` | external-resource array | `[]` | Up to 16 objects with non-empty `data` and `type` (`Text` or `RemoteResource`), optional `hook` (`OnStart` or `OnTurn`), `visibility` (`Internal`, `Gateway`, or `Both`), and `cacheDuration` (remote cache seconds, 0–21600). Defaults: `Text`, `OnStart`, `Internal`, and 900 seconds. Resources are context, not conversation messages. |
 | `max_turns` | integer | `10` | 2–64 simulated user turns. |
 | `minimum_turns` | integer | `1` | At least 1 and less than `max_turns`. |
 | `allow_user_exit` | boolean | `true` | Allows the simulator to end after `minimum_turns`. |
@@ -64,12 +65,13 @@ Both modes consume account balance. Persisted runs are asynchronous. The ephemer
 | `user_sampling.max_decay` | number | `0.02` | 0–1. |
 | `metadata` | object | `{}` | Forwarded to gateway inference; use string values for compatibility with execution. |
 | `external_user_id` | string or null | `null` | Forwarded to gateway inference; maximum 200 characters. |
+| `hooks` | validation-hook array | `[]` | Up to 16 `{ "event", "url" }` callbacks on persisted runs only; see Validation Hooks below. |
 | `cron` | string or null | `null` | Standard five-field cron; minimum interval is five minutes. |
 | `enabled` | boolean | `true` | Enables scheduled execution; manual runs can still be queued. |
 | `notification_threshold` | integer | `1` | Consecutive execution failures before notification; minimum 1. |
 | `recovery_notification` | boolean | `true` | Notify when a successful run follows the configured failure streak. |
 
-`PATCH` accepts any subset of the same fields. Omitted fields remain unchanged. Send explicit `null` to clear nullable fields such as `validation_criteria`, `external_user_id`, or `cron`.
+`PATCH` accepts any subset of the same fields. Omitted fields remain unchanged; supplying `resources` or `hooks` replaces the entire respective list (send `[]` to remove all). Explicit `null` clears `cron`, but `null` for `validation_criteria` or `external_user_id` currently retains the existing value. Do not claim those fields were cleared without verifying the returned definition.
 
 ```json
 {
@@ -112,14 +114,19 @@ Both modes consume account balance. Persisted runs are asynchronous. The ephemer
 
 Use `resources` for stable facts, policy text, product reference material, or other context that the simulated user and judge must share but that should not be represented as a prior message. Each entry has a non-empty `data` field and a `type` of `Text` or `RemoteResource`; send no more than 16 entries.
 
-`Text` embeds `data` literally. `RemoteResource` retrieves the URL in `data` during evaluation. Use only trusted, publicly reachable URLs with content appropriate for the test. Remote content can change between runs and adds processing usage, so prefer `Text` when the test needs a fixed, reproducible reference. Do not use a remote resource to provide the assistant's previous message: put that message in `start` with its original role instead.
+`Text` embeds `data` literally. `RemoteResource` retrieves the URL in `data` during evaluation. `hook: "OnStart"` resolves once at startup; `"OnTurn"` resolves before each turn. `visibility: "Internal"` shares it with the simulated user and judge, `"Gateway"` with the tested gateway only, and `"Both"` with all three. A resource is not inserted as a prior conversation message. Use only trusted, publicly reachable URLs with content appropriate for the test. Remote content can change between runs and adds processing usage, so prefer `Text` when the test needs a fixed, reproducible reference. Do not use a remote resource to provide the assistant's previous message: put that message in `start` with its original role instead.
+
+### Validation Hooks
+
+Persisted definitions may configure up to 16 `{ "event", "url" }` HTTP callbacks with events `before-test`, `after-test`, `before-inference`, `after-inference`, or `context-changed`. The two inference events require an AI Gateway, not an integrated model. Use public HTTP(S) URLs; local and private destinations are rejected. Hooks receive POST JSON; any 2xx response continues, while a non-2xx response or request failure interrupts the run (`state: failed`, `result.reason: validation_hook_interrupted`). Inspect `result.hooks` for the call audit. If a hook key is configured, validate `X-Request-Nonce` before trusting a callback. Direct SSE evaluations reject `hooks`; do not send them there.
 
 ## Ephemeral Request Schema
 
 `POST /api/v1/generations/agentic-tests` uses the same simulation fields, except:
 
 - use `model` instead of `name` and `gateway`;
-- scheduling and notification fields are not used; the current implementation may silently ignore them and other unknown properties;
+- scheduling and notification fields are not used; `hooks` are rejected, while other unknown properties may be silently ignored;
+- `user` is a compatibility alias for `external_user_id` when the latter is omitted;
 - `stream` is read for compatibility but the response is always SSE.
 
 ```json
@@ -188,7 +195,9 @@ A run detail adds `test_name`, `result`, and `conversation`. Each conversation i
 4. Inspect the complete run. Separate execution state, behavioral outcome, retained judge reasoning, error, and cost.
 5. Cancel only when the user requests it or an agreed limit is exceeded. Completed inference remains billable.
 
-Scheduled runs follow plan concurrency: Free 1, Pro 4, Max/Reseller 8 concurrent runs per account. A run can fail before or during execution when balance is insufficient. Notifications track execution failures (`state: failed`), not low behavioral scores in otherwise succeeded runs.
+Manual runs, scheduled runs, and direct evaluations share one plan-dependent new-run quota per account across API keys. A persisted run counts when queued, not again when execution starts; conversation turns do not use additional run units, although inference limits still apply. Excess manual requests and direct evaluations return HTTP 429 (before SSE starts for direct requests); no persisted run is created on a rejected manual request. Use bounded retries with backoff after the quota window clears, not immediate duplicates. A due scheduled test without quota waits for a later scheduling check instead of creating a run.
+
+All persisted runs, manual or scheduled, also follow the separate account concurrency limit (Free 1, Pro 4, Max 8; Reseller 8). Consult the current plan limits rather than treating these as an allowance of free runs. A persisted run can fail before or during execution when balance is insufficient; direct evaluations can return HTTP 402 before streaming. Notifications track execution failures (`state: failed`), not low behavioral scores in otherwise succeeded runs.
 
 ## Test Authoring Rules
 

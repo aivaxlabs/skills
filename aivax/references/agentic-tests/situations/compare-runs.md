@@ -61,7 +61,7 @@ Then state whether the evidence suggests a regression, improvement, operational 
 
 ## Repeated Runs
 
-To estimate consistency, queue multiple runs intentionally and compare the distribution of outcomes and scores yourself. Agree on run count and cost before doing so. Do not automatically launch three or more paid runs, and do not claim statistical significance from a small unplanned sample.
+To estimate consistency, queue multiple runs intentionally and compare the distribution of outcomes and scores yourself. Agree on run count and cost before doing so. Pace them within the account-wide new-run quota shared with schedules and direct evaluations; a 429 calls for a bounded retry with backoff, not immediate duplicate runs. Do not automatically launch three or more paid runs, and do not claim statistical significance from a small unplanned sample.
 
 ## Common Errors
 
