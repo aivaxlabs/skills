@@ -30,12 +30,12 @@ Keep credentials fresh, scoped, and auditable, without disrupting running servic
 POST /api/v1/accounts/api-key
 {
   "label": "<application-or-user>",
-  "type": "private" | "public",
-  "expiresIn": "<duration-or-negative>"
+  "type": "private",
+  "duration": 30
 }
 ```
 
-The response includes the full key. Store it in a secret manager; do not echo it back in any log or final response.
+`duration` is a number of days; a negative value creates a non-expiring key. Use `type: "public"` only for supported client-facing routes. The response includes the full key. Store it in a secret manager; do not echo it back in any log or final response.
 
 ## Rotation Pattern
 
@@ -72,4 +72,3 @@ The operation is irreversible. All existing worker and integration validation se
 
 - A key is compromised: rotate immediately. Do not wait for the next maintenance window.
 - The salt must be rolled: confirm the impact on workers and integrations before rolling.
-- The balance is low and a rotation would consume balance: load `references/cost-monitoring/situations/optimize-spend.md`.
