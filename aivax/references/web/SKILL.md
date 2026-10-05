@@ -15,7 +15,7 @@ Use this sub-skill when the agent must search the web for current information wi
 
 Do not use this sub-skill for:
 
-- Model-driven browsing inside `/v1/chat/completions` (`builtin_tools` such as `WebSearch`, `AdvancedWebUsage`, or `OpenUrl`). That belongs to text inference; load `references/text-inference/` instead. Rule of thumb: if the model decides when to browse during a completion, it is text-inference; if the agent calls search or fetch directly with its own parameters, it is this sub-skill.
+- Model-driven browsing inside `/v1/chat/completions` (`builtin_tools` such as `WebSearch` or `OpenUrl`). That belongs to text inference; load `references/text-inference/` instead. Rule of thumb: if the model decides when to browse during a completion, it is text-inference; if the agent calls search or fetch directly with its own parameters, it is this sub-skill.
 - Searching a RAG knowledge base or collection. Use `references/rag/` instead.
 - Classifying, segmenting, or describing already-held text or media. Use `references/text-tools/` instead.
 

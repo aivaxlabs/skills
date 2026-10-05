@@ -49,7 +49,7 @@ The endpoint accepts OpenAI-compatible payloads plus AIVAX extensions:
 - `temperature`, `top_p`, `top_k`, `seed`, `max_completion_tokens`, `reasoning_effort`, `stop`: standard sampling parameters.
 - `tools`: an array of OpenAI-compatible tool definitions (function calling).
 - `tool_choice`: optional tool-selection behavior forwarded to compatible gateways.
-- `builtin_tools`: AIVAX-specific on-demand built-in tools (`WebSearch`, `Code`, `OpenUrl`, `Remember`, `ImageGeneration`, `XPostsSearch`, `GenerateDocument`, `GenerateWebPage`, `AdvancedWebUsage`, `Request`, `Calendar`, `DateTime`). Include `DateTime` in `tools` to expose `get_date_time`.
+- `builtin_tools`: AIVAX-specific on-demand built-in tools (`WebSearch`, `Code`, `OpenUrl`, `Remember`, `ImageGeneration`, `XPostsSearch`, `GenerateDocument`, `GenerateWebPage`, `Request`, `Calendar`, `DateTime`). Include `DateTime` in `tools` to expose `get_date_time`.
 - `builtin_tools.options.dateTimeTimeZone`: time zone returned by `get_date_time`. Use an IANA identifier such as `America/Los_Angeles` or `America/Sao_Paulo`. Defaults to `America/Los_Angeles` (Pacific Time), automatically following daylight-saving changes. Independent of the browser time zone. Invalid identifiers are rejected.
 - `user`: optional external user identifier attached to the gateway inference context.
 - `extra_body`: provider-specific request fields, supported only with BYOK AI Gateways.

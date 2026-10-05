@@ -55,12 +55,12 @@ For each requested tool call:
 5. Append the tool result to the conversation using the tool-call identifier returned by the model.
 6. Call `/v1/chat/completions` again so the model can produce the final answer.
 
-Use `builtin_tools` only for documented AIVAX built-in tools such as `WebSearch`, `AdvancedWebUsage`, `OpenUrl`, `Code`, `Request`, `Calendar`, `DateTime`, and `Remember`. Verify supported tools and options with `aivax_search_context`.
+Use `builtin_tools` only for documented available AIVAX built-in tools such as `WebSearch`, `OpenUrl`, `Code`, `Request`, `Calendar`, `DateTime`, and `Remember`. Verify supported tools and options with `aivax_search_context`.
 
 ## Web Research Depth
 
 - `WebSearch` answers quick current-fact questions (weather, news, scores). Tune with `web_search_max_results` and `web_search_mode` (`full` inserts whole result contents at higher token cost; `summarized` inserts provider summaries). Prefer it for routine lookups.
-- `advanced_web_search(prompt)` runs a deeper multi-source research pass for complex questions needing synthesis. It takes a single `prompt` argument, costs usage, and is overkill for single-fact lookups.
+- `AdvancedWebUsage` (`advanced_web_search`) is unavailable: calling it returns `this tool is not available in the moment`. Do not enable or recommend it for deep research. `WebSearch` and `OpenUrl` do not provide an equivalent deep research pass.
 - `OpenUrl` reads a user-provided URL; use it instead of search when the source is already known.
 - Searching the web or extracting URL/file content as a direct agent-called API step (`POST /api/v1/web/search`, `POST /api/v1/web/fetch`): load `references/web/` instead of a built-in tool.
 - `get_date_time` returns the current date, time, day of the week, time zone, UTC offset, and date/time in ISO 8601. It takes no arguments; configure the zone with `builtin_tools.options.dateTimeTimeZone`.
