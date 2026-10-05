@@ -37,6 +37,8 @@ GET /api/v1/ai-gateways/<gateway-id>
 
 Gateway attachment arrays are replaced rather than patched per element. Preserve the entire intended list of `skills`, `mcpSources`, `protocolFunctions`, `protocolFunctionSources`, `alwaysVisibleTools`, or other arrays when changing one of them.
 
+When enabling Bash, set `enableBash` with `bashOptions.toolExclusionMode` and `bashOptions.toolList`. Prefer `WhiteList` with an explicit list or narrow wildcard (`*` and `?`, case-insensitive, matched against the runtime function name): with `BlackList`, every tool not listed leaks into the shell automatically, including tools added later. Do not use a lone `*` in a `WhiteList` unless every tool is meant to be shell-callable.
+
 For MCP sources and protocol functions, inspect the exact schema with `aivax_search_context` before submitting callback URLs, headers, or content formats. Treat headers and callback credentials as secrets.
 
 ## Validation
