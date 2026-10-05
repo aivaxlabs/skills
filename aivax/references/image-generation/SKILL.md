@@ -1,11 +1,11 @@
 ---
 name: aivax-image-generation
-description: Generate, edit, or transform images with AIVAX — model selection, prompt design, parameters, output storage, and result handling. Load when the user wants the model to create images, edit existing images, or produce visual assets.
+description: Generate images with AIVAX, optionally guided by reference images — model selection, prompt design, output delivery, and result handling. Load when the user wants to create images or produce visual assets.
 ---
 
 # Image Generation
 
-This sub-skill owns text-to-image generation and image-editing through AIVAX. The endpoint is `POST /api/v1/generations/images`. The discipline is matching the model to the task, designing the prompt, and handling the result.
+This sub-skill owns image generation through AIVAX, including reference-guided edits when the selected model supports them. The endpoint is `POST /api/v1/generations/images`. The discipline is matching the model to the task, designing the prompt, and handling the result.
 
 ## Operating Files
 
@@ -17,7 +17,7 @@ This sub-skill owns text-to-image generation and image-editing through AIVAX. Th
 Use this sub-skill when the user wants the model to:
 
 - Create an image from a text prompt.
-- Edit or transform an existing image (variation, inpainting, style transfer).
+- Generate an image guided by existing image URLs when the model supports references.
 - Produce visual assets for a product, a presentation, a social post, or a document.
 
 Do not use this sub-skill for:
@@ -67,7 +67,7 @@ Use `GET /api/v1/information/image-models.json` as the image model catalog. Chec
 
 ## Cost Awareness
 
-Image generation is priced per image, not per token. Set a cost cap with the user before increasing `count` or sending many prompts. For batch use, load `references/batch/situations/design-batch-workflow.md`.
+Consult the catalog's `PricingDescription` for the selected model; it is an estimate, not a guaranteed total. More prompts or a higher `count` can increase usage, and reference-image charges may apply. Agree on a budget before increasing the request volume. For batch use, load `references/batch/situations/design-batch-workflow.md`.
 
 ## Storage And Delivery
 
@@ -81,7 +81,7 @@ Treat each returned image URL as endpoint output. Download or persist it only wh
 
 ## Limits
 
-- Image generation has a per-account quota. High-volume generation can hit the quota. Load `references/cost-monitoring/` and `references/resilience/situations/rate-limit-429.md` for the rate-limit response.
+- Image-generation or request-level rate limits may return HTTP 429. Load `references/resilience/situations/rate-limit-429.md` when that happens.
 - `referenceImages` is accepted only for models whose catalog flags declare that capability.
 - Public keys (`pk-aiv-`) can call image generation. They cannot call integrated text models.
 

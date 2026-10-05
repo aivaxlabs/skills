@@ -4,73 +4,72 @@ Use when the agent must build the request, call `POST /api/v1/generations/images
 
 ## Objective
 
-Produce one or more images that match the user's prompt, with the right fidelity, cost, and downstream delivery.
+Generate images from one or more prompts and handle their URLs according to the user's delivery needs and budget.
 
 ## Preconditions
 
-- The model is chosen (see `situations/choose-image-model.md`).
-- The prompt is clear. A good prompt names the subject, the style, the composition, the lighting, and any constraints (no text, square, etc.).
-- The account balance is sufficient.
-- The agent has a place to store the generated images (S3, GCS, local disk, the user's CMS).
+- The model is chosen from `GET /api/v1/information/image-models.json` (see `situations/choose-image-model.md`).
+- Each prompt names the subject, style, composition, and important constraints. Describe desired framing in the prompt; there is no size or aspect-ratio field.
+- The account has a positive balance, and the intended number of prompts and images fits the agreed budget.
+- If references are needed, the model's catalog flags allow them and the image URLs are safe absolute HTTP(S) URLs.
 
 ## Decision Tree
 
-1. Is the task one image? Set `n: 1`.
-2. Is the task a few options? Set `n` to a small number (2 to 4) and let the user pick.
-3. Is the task a batch? Load `references/batch/situations/design-batch-workflow.md` and run the generation in batch.
-4. Is the task an edit of an existing image? Pass the reference image and (if needed) a mask.
-5. Is reproducibility important? Set `seed` to a stable value and record it.
-6. Is the prompt negative (avoid X, no Y)? Use `negative_prompt` when supported.
-7. Is the output style specific? Name the style in the prompt (e.g. "in the style of a 1990s anime", "shot on 35mm film").
+1. For one image, send one `input` prompt with `count: 1` (or omit `count`).
+2. For a few alternatives, set `count` from 2 to 4 per prompt; an array of prompts produces a separate group for each input.
+3. For many independent requests, load `references/batch/situations/design-batch-workflow.md`.
+4. For a reference-guided change, use up to four `referenceImages` URLs with a model that supports them. The endpoint has no mask or separate editing operation.
+5. Put style, framing, and exclusions in the prompt. This endpoint does not accept `seed`, `negative_prompt`, `quality`, or `size`; do not promise reproducible reruns.
 
 ## Construction
 
-```text
+Send `POST /api/v1/generations/images` with a JSON body:
+
+```json
 {
-  "model": "<chosen-image-model>",
-  "prompt": "<textual description>",
-  "size": "<size-or-aspect>",
-  "quality": "standard",
-  "n": 1,
-  "metadata": { "trace_id": "tr_..." }
+  "input": "<textual description>",
+  "count": 1,
+  "model": "<chosen-image-model>"
 }
 ```
 
-For image-to-image:
+For reference-guided generation, choose a reference-capable model:
 
-```text
+```json
 {
-  "model": "<chosen-image-model>",
-  "prompt": "<what-to-change>",
-  "reference_image": "<url or data:>",
-  "metadata": { "trace_id": "tr_..." }
+  "input": "<what-to-change>",
+  "count": 1,
+  "model": "<reference-capable-model>",
+  "referenceImages": ["https://example.com/reference.jpg"]
 }
 ```
+
+`input` can also be a non-empty array of non-empty prompt strings. Do not send data URLs or unsupported fields as substitutes for the documented controls.
 
 ## Response Handling
 
-1. The response is a JSON object with one or more image entries. Each entry has a URL or a base64 payload.
-2. Download the image promptly. The hosted URL is short-lived.
-3. Store the image in the user's storage of choice.
-4. Pass the stable URL to the user or the downstream system.
-5. Record the model, the prompt, the parameters, and the image URL in the trace.
+1. Read `data` from the JSON response. It contains one `{ "input": "<prompt>", "images": ["<url>"] }` group per prompt; image entries are URLs, not base64 payloads.
+2. Check each group's `images` array. A provider failure may leave fewer images than requested; do not assume every successful response has `count` images.
+3. Deliver the returned URLs, or download and store the images if the user's workflow requires durable storage. The endpoint does not specify a URL expiration time.
+4. Record the model, prompts, `count`, reference URLs when used, and returned URLs in the caller's own trace if needed; the endpoint does not accept `metadata` or a trace ID in its body.
 
 ## Validation
 
-- At least one image was generated and matches the prompt.
-- The image was downloaded and stored before the hosted URL expired.
-- The trace ID is preserved.
-- The cost is within the user's cap.
+- `data` has one group per input prompt, and each generated image is represented by a URL in `images`.
+- Inspect the output against the prompt before delivery or publication; investigate empty or short image arrays.
+- If storage was requested, confirm that the images were saved and the delivered locations work.
+- Check actual usage against the agreed budget.
 
 ## Failure Modes
 
-- The model returns no image: the prompt was rejected (moderation, format). Adjust the prompt or the model.
-- The model returns a low-fidelity image: the prompt is too vague or the quality tier is too low.
-- The hosted URL expires before download: re-request the image with the same seed. The model is deterministic when seeded.
-- The cost is higher than expected: the user did not set a cap. Set one and re-run.
+- Invalid prompts, `count`, model, or reference URLs return a validation error: fix the reported field before retrying.
+- An empty or short `images` array does not establish why generation failed; inspect the result and provider status before deciding whether to retry.
+- The output misses the brief: refine the prompt or try another catalog model; there is no caller-controlled quality tier.
+- A returned URL is unavailable: report the failed retrieval rather than claiming a seeded rerun will reproduce the image.
+- Usage exceeds the estimate: stop further generation and recheck the selected model's catalog pricing and request volume.
 
 ## Escalation
 
 - The user wants many images: load `references/batch/`.
 - The user wants a different style: load `situations/choose-image-model.md` and try a different model.
-- The user wants to edit an image, not generate one: confirm the operation is supported by the chosen model and re-issue the request.
+- The user needs a controlled edit or inpainting mask: explain that this endpoint supports reference-guided generation but not a mask or edit-specific controls.
