@@ -99,6 +99,8 @@ Use Media Injector when the useful knowledge sits inside a source file (PDF repo
 ## Limits
 
 - Per-collection and per-account quotas exist. Plan limits control collection count, search rate, insertion rate, and JSONL import size.
+- Search and insertion embeddings share the plan's daily RAG embedding allowance. Each uncached embedding item is either fully covered or billed normally; cached query embeddings do not consume it. Included items appear in subscription consumption, not billing history.
+- Reflex reranking uses a separate allowance; answer generation and other rerankers are billed separately. Allowances do not bypass balance requirements or rate limits.
 - Some query strategies are more expensive than others. `FullRewrite` and `UserRewrite` consume tokens; `Plain` does not.
 
 ## Escalation

@@ -1,6 +1,6 @@
 # Inspect Balance And Usage
 
-Use when the agent must read account state — balance, plan, storage, reserve consumption, or detailed usage for a period — to inform a decision.
+Use when the agent must read account state — balance, plan, storage, subscription allowance consumption, or detailed usage for a period — to inform a decision.
 
 ## Objective
 
@@ -9,13 +9,13 @@ Know the account's current capacity and recent consumption before any operation 
 ## Preconditions
 
 - The agent has access to the account (MCP or direct HTTPS with a private key).
-- The period of interest is defined (e.g. last 24 hours, last 7 days, last 30 days, or a custom range).
+- The period of interest is defined for the requested comparison.
 
 ## Decision Tree
 
-1. Is the question about the current health (balance, plan, storage, reserve)? Call `GET /api/v1/information/balance` and read the top-level fields.
+1. Is the question about the current health (balance, plan, storage, allowances)? Call `GET /api/v1/information/balance` and read the top-level fields.
 2. Is the question about a period (model spend, category spend, resource spend, charts)? Call `GET /api/v1/information/usage?timeStart=<iso-start>&timeEnd=<iso-end>` and read the detailed fields.
-3. Is the period longer than one year? Split it into smaller windows. The endpoint may truncate.
+3. Is the period beyond the endpoint's accepted window? Split it into smaller windows; oversized periods are rejected.
 4. Are the resource IDs in the response meaningful? Map them back to gateways, collections, chat clients, sessions, batch workflows, or API keys. The agent has those resources; map them.
 5. Is the storage usage approaching the plan limit? Plan limits control storage. Confirm with the user before deleting or resetting.
 
@@ -36,8 +36,8 @@ The balance response includes:
 - `usage24h`: recent spend.
 - `plan`: account plan.
 - `storageUsage`: current account storage usage.
-- `subscriptionModelUsage`: six-hour and weekly reserve consumption for subscription models.
-- `planLimits`: storage and subscription-model availability.
+- `subscriptionModelUsage`: service-allowance snapshot with `consumptions` by type, `usedPercent`, `resetAt`, `isExhausted`, and usage-share `details`. Inference coverage is currently disabled.
+- `planLimits`: included storage and whether the plan defines a subscription-model allowance; this does not mean inference coverage is active.
 
 The usage response includes:
 
@@ -46,7 +46,7 @@ The usage response includes:
 - `usageDetails.categoryDiscriminations`: spend by SKU and category.
 - `usageDetails.resourceDiscriminations`: spend by resource type and resource ID.
 - `usageDetails.meterGroups`: storage, period spend, token volume, input tokens, output tokens, cached tokens, and cache hit rate.
-- `usageDetails.charts`: time-series usage by model, category, and resource unless the response is truncated.
+- `usageDetails.charts`: time-series usage by model, category, and resource, omitted when the `X-Response-Truncating: agent-optimized` header is used.
 - `usageDetails.dayListings`: recent usage rows grouped by day.
 
 ## Validation
@@ -58,13 +58,13 @@ The usage response includes:
 
 ## Limits
 
-- The period should be under one year. Larger periods may truncate.
-- URL-encode filter values that include spaces or flags (e.g. `--gateway <gateway-id>`).
-- Usage data can lag real-time spend by a few minutes. Do not promise immediate cost deltas.
+- Oversized periods are rejected; split them into accepted windows.
+- URL-encode filters when mapping resource IDs through conversation listings; the usage endpoint accepts time filters and `dayCount`.
+- The balance view is cached briefly; usage reflects recorded billing rows, not allowance-covered items. Do not promise immediate cost deltas.
 
 ## Escalation
 
 - Balance is low: load `references/cost-monitoring/situations/optimize-spend.md`.
 - A spike is detected: load `references/cost-monitoring/situations/investigate-cost-spike.md`.
 - Storage is approaching the plan limit: identify the largest collections and consider cleanup. Confirm with the user.
-- Subscription reserve is exhausted early: identify the dominant consumer (a model, a gateway, a session) and reduce its consumption. Confirm with the user.
+- A service allowance is exhausted early: inspect its consumption details and reset time; items that do not fit are billed normally. Compare billed usage before recommending a change.

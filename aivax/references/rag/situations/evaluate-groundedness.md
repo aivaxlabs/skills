@@ -14,7 +14,7 @@ Quantify the groundedness of the RAG answers and identify the failure mode (retr
 
 ## Decision Tree
 
-1. How many questions are in the held-out set? Small sets (10 to 30) are enough for a smoke test. Larger sets (100+) are needed for statistical confidence.
+1. How many questions are in the held-out set? Use a small diverse sample for a smoke test; size any statistical evaluation according to the required confidence and variability.
 2. What is the source of the questions? Real user queries are best; synthetic questions from the documents are second-best.
 3. What is the expected evidence? A document ID, a URL, or a textual fact. The expected evidence is the ground truth.
 4. What is the metric? Precision (are the retrieved documents relevant?), recall (are all the relevant documents retrieved?), groundedness (does the answer cite the evidence?), faithfulness (does the answer stick to the evidence?).
@@ -25,7 +25,7 @@ Quantify the groundedness of the RAG answers and identify the failure mode (retr
 ```text
 1. Define the held-out set
    questions: [ { query: "...", expected_documents: ["..."], expected_answer: "..." } ]
-   size: 30 to 100 questions
+   size: based on the evaluation goal and coverage
    diversity: cover the typical and the edge cases
 
 2. Run the pipeline for each question

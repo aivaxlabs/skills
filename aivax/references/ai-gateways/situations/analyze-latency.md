@@ -29,7 +29,7 @@ Goal: identify whether latency comes from model choice, RAG, tools, context size
 - Long session context or large `extraContext`.
 - Long output limit or verbose system instructions.
 - External provider latency.
-- Batch or subscription reserve pressure.
+- Batch load.
 
 ## Validation
 

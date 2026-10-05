@@ -27,8 +27,8 @@ When the agent writes a server-side integration, use a private key. When the age
 - `GET /api/v1/accounts/api-key`: list masked keys and the current account `salt`.
 - `POST /api/v1/accounts/api-key`: create a key with a label, expiration, and type.
 - `DELETE /api/v1/accounts/api-key/<key-id>`: delete a key.
-- `GET /api/v1/information/balance`: get the current balance, plan, storage usage, and reserve consumption.
-- `GET /api/v1/information/usage?timeStart=<iso>&timeEnd=<iso>&dayCount=<n>`: get usage details; defaults are the last 30 days through now, with `dayCount=7`.
+- `GET /api/v1/information/balance`: get the current balance, plan, storage usage, and subscription allowance consumption.
+- `GET /api/v1/information/usage?timeStart=<iso>&timeEnd=<iso>&dayCount=<n>`: get usage details; use the API parameters to select the period and listing size.
 - `GET /api/v1/information/usage/monthly-report?month=YYYY-MM`: get monthly insights and top-cost model, resource, and SKU tables.
 - `PUT /api/v1/accounts`: replace the account name and full `parameters` object; read the current account first and preserve every unrelated parameter.
 - `POST /api/v1/accounts/roll-salt`: roll the hook salt. Destructive: invalidates existing worker and integration validation secrets.

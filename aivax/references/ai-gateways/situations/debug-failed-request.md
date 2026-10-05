@@ -39,7 +39,7 @@ GET /api/v1/ai-gateways/<gateway-id>
 - MCP source unreachable or wrong tool schema.
 - RAG collection missing, stale, or too restrictive.
 - Context overflow or bad truncation setting.
-- Balance or subscription reserve exhausted.
+- Insufficient account balance; allowance exhaustion alone does not block a request.
 - Moderation or structured-output validation blocked the request.
 
 ## Validation

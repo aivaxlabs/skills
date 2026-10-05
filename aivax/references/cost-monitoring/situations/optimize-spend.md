@@ -9,7 +9,7 @@ Produce a prioritized list of safe optimizations, ordered by savings and behavio
 ## Preconditions
 
 - The user is willing to consider changes to the production configuration.
-- The agent has a recent usage view (24h, 7d, 30d) to inform the recommendations.
+- The agent has recent usage views over relevant comparison periods to inform the recommendations.
 - The agent has the resource IDs and configurations that drive the spend.
 
 ## Decision Tree

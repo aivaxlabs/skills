@@ -15,10 +15,10 @@ Pick the cheapest reranker that meets the task's quality, latency, context, and 
 ## Decision Tree
 
 1. What is the total token count of the query plus the candidates? Pick a model whose context exceeds this. Segment if necessary.
-2. How many candidate documents? Pick a model whose document count limit exceeds this. Reflex accepts up to 10,000.
-3. Is the language coverage a constraint? Qwen 3, Jina, and Cohere 4 have strong multilingual coverage. Verify with `aivax_list_models`.
-4. Is the volume high? Reflex with cache hit is the cheapest semantic option; `lexical` is free.
-5. Is precision the priority? Cohere 4 Pro or the larger Qwen models.
+2. How many candidate documents? Pick a model whose live catalog limit supports this count.
+3. Is the language coverage a constraint? Check the live catalog and provider capabilities.
+4. Is the volume high? Compare allowance-covered Reflex calls, metered cache hits, and other models; lexical has no usage charge but shares the reranking request quota.
+5. Is precision the priority? Evaluate the candidate models on representative queries before choosing.
 6. Is the call site RAG? `lexical`, `rrf`, `none`, or any autonomous model are accepted. The gateway's `rerankerName` parameter is the configuration point.
 7. Is the call site standalone? Any autonomous model is accepted. RRF and `none` are rejected.
 

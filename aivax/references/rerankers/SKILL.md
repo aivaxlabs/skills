@@ -37,7 +37,7 @@ Rerankers differ in language coverage, context window, document limits, latency,
 - **Jina Reranker v3** (`@jina/reranker-v3`): 131k token context, useful for very long documents.
 - **Cohere Rerank 4** (`@cohere/rerank-4-pro`, `@cohere/rerank-4-fast`): search-unit pricing, large document support.
 - **NVIDIA Nemotron** (`@nvidia/llama-nemotron-rerank-vl-1b-v2`): vision-language reranker, useful when the candidates include images.
-- **Lexical**: word-aware reranking with no cost and no quota. Useful when the candidates are already high-quality and the reranker should be cheap.
+- **Lexical**: word-aware reranking without a usage charge; the reranking request quota still applies. Useful when the candidates are already high-quality.
 - **RRF**: rank fusion for vector and lexical ranks. RAG only.
 
 ## Autonomy
@@ -46,7 +46,7 @@ The rerank endpoint accepts only models with `autonomousUse: true`. `rrf` and `n
 
 ## Cost Awareness
 
-Rerankers are priced per million tokens (most models) or per search unit (Cohere). Reflex has a separate cache-miss and cache-hit price. Reusing the same query or document strings can produce a cache hit. Cache hits cost less than cache misses; see the usage object, which reports `input_tokens`, `cached_input_tokens`, `total_tokens`, and `cost`.
+Reflex calls consume the plan's daily reranking allowance when fully covered; otherwise they are billed at the cache-miss and cache-hit token rates. Both cached and uncached input count toward coverage. Other paid rerankers are metered by tokens or search units, without this allowance; lexical, RRF, and none carry no usage charge. Included calls appear in subscription consumption, not billing history. Reflex usage reports `input_tokens`, `cached_input_tokens`, `total_tokens`, and `cost` (the account charge, which is zero when covered); other providers may report different usage fields.
 
 ## Validation
 
@@ -57,14 +57,7 @@ Rerankers are priced per million tokens (most models) or per search unit (Cohere
 
 ## Limits
 
-Use the live catalog at `GET /api/v1/information/rerankers-models.json` for current capabilities and limits (`OpenIndexer.Alpha2/Api/Modules/InformationApi.cs:84`). In the current implementations:
-
-- Reflex accepts up to 10,000 documents and returns at most 200.
-- Cohere models accept up to 10,000 documents (`OpenIndexer.Alpha2/Embedding/RerankingServices/OpenRouterReranker.cs:47`).
-- DeepInfra-backed models accept up to 1,024 documents (`OpenIndexer.Alpha2/Embedding/RerankingServices/DeepInfraReranker.cs:61`).
-- Jina and lexical declare no maximum document count.
-- The endpoint returns 400 for unknown or non-autonomous models, invalid `top_n` or `min_score`, empty input, or a document count above the model's declared limit.
-- All non-none reranking operations share the account's reranking request quota. Reflex also has a token-rate quota. Exceeding either returns 429. Load `references/resilience/situations/rate-limit-429.md`.
+Use the live catalog at `GET /api/v1/information/rerankers-models.json` for current capabilities and limits (`OpenIndexer.Alpha2/Api/Modules/InformationApi.cs:84`). Check the live catalog for each model's context and document limits; Jina and lexical declare no maximum document count. The endpoint rejects unknown or non-autonomous models, invalid `top_n` or `min_score`, empty input, or a document count above the model's declared limit. All non-none reranking operations share the account's reranking request quota; Reflex also has a processing-time cap. These constraints and balance requirements still apply to allowance-covered calls. On rate limits, load `references/resilience/situations/rate-limit-429.md`.
 
 ## Escalation
 

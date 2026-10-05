@@ -26,7 +26,7 @@ GET /api/v1/information/usage?timeStart=<iso-start>&timeEnd=<iso-end>
 - Tool loop or repeated tool calls.
 - Batch job attached to a costly gateway.
 - Chat session context grew too large.
-- Subscription reserve exhausted and fallback pricing applies.
+- Daily service allowance exhausted; uncovered eligible items are billed at normal rates.
 
 ## Validation
 

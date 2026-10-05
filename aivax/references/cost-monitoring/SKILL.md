@@ -9,7 +9,7 @@ This sub-skill owns cost and consumption on AIVAX. The discipline is to work fro
 
 ## Operating Files
 
-- `situations/investigate-cost-spike.md`: balance drop, reserve exhaustion, runaway resource spend, or unexpected model/RAG/batch cost.
+- `situations/investigate-cost-spike.md`: balance drop, service allowance exhaustion, runaway resource spend, or unexpected model/RAG/batch cost.
 - `situations/optimize-spend.md`: identify safe levers to reduce spend without harming answer quality or user experience.
 
 ## When To Use Cost Monitoring
@@ -18,7 +18,7 @@ Use this sub-skill when the user asks:
 
 - Why did AIVAX spend increase?
 - Why did the balance drop?
-- Why was the subscription reserve exhausted early?
+- Which service allowance was exhausted early, and which items consumed it?
 - Why is one resource more expensive than the others?
 - How can I reduce spend without changing user-visible behavior?
 
@@ -35,18 +35,12 @@ Cost monitoring works through account usage data and resource attribution:
 - `GET /api/v1/information/usage/monthly-report?month=YYYY-MM`: first triage for a monthly spike, with insights and top-cost model, resource, and SKU tables.
 - `GET /api/v1/information/balance`: current health.
 - `GET /api/v1/information/usage?timeStart=<iso>&timeEnd=<iso>`: detailed usage for a period.
-- `GET /api/v1/ai-gateways/<id>`, `GET /api/v1/collections/<id>`, `GET /api/v1/web-chat-client/<id>`, `GET /api/v1/batch/workflows/<id>/jobs/<id>`, `GET /api/v1/conversations`: resource-level inspection.
+- `GET /api/v1/ai-gateways/<id>`, `GET /api/v1/collections/<id>`, `GET /api/v1/web-chat-client/<id>`, `GET /api/v1/batch/workflows/<workflow-id>/jobs/<job-id>`, `GET /api/v1/conversations`: resource-level inspection.
 - `aivax_list_models`: model pricing and capability.
 
-## Plan Multipliers
+## Plan Pricing
 
-Plans have commission multipliers that affect how balance translates to capacity:
-
-- Free: 1.25x.
-- Pro: 1.05x.
-- Max: 1.00x.
-
-The multiplier is applied to the per-unit cost; the public `usage.cost` is the final amount recorded for the account after applicable account adjustments.
+Consult the current public pricing and limits pages for plan adjustments. Included service items consume their own allowance rather than balance and do not appear as zero-cost billing entries. Uncovered items are charged at applicable account and plan rates; compare billed usage with the separate subscription consumption indicators.
 
 ## Cost Discipline
 
@@ -65,7 +59,7 @@ The multiplier is applied to the per-unit cost; the public `usage.cost` is the f
 
 ## Limits
 
-- Usage data can lag real-time spend by a few minutes. Do not promise immediate cost deltas.
+- Balance is cached briefly; usage reflects recorded billing rows, while included items appear in subscription consumption. Do not promise immediate cost deltas.
 - A change in cost may be the intended effect of a previous change (a model swap, a new gateway, a new chat client). Verify the history before reverting.
 - Some optimizations (storage cleanup, batch finish, model swap) are destructive. Confirm with the user.
 
@@ -74,5 +68,5 @@ The multiplier is applied to the per-unit cost; the public `usage.cost` is the f
 - A cost spike is unexplained: load `situations/investigate-cost-spike.md`.
 - A cost optimization is requested: load `situations/optimize-spend.md`.
 - A new resource is unusually expensive: load `references/observability/situations/diagnose-degradation.md` and confirm the resource is not in a failure loop.
-- A subscription reserve is exhausted: identify the dominant consumer and reduce its consumption. Confirm with the user.
+- A service allowance is exhausted: check `subscriptionModelUsage.consumptions` for its type, usage share, and reset time; compare subsequent billed items separately before recommending a change.
 - The request fails with 429 or a transient error: load `references/resilience/situations/rate-limit-429.md`.

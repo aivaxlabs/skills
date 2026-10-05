@@ -19,9 +19,9 @@ Produce a pipeline that returns the right evidence for the user's queries, with 
 3. What metadata should the documents have? Tags, references, owners, and dates help the model reason about the source. Add metadata at ingestion time.
 4. How many collections? One per domain. Splitting by domain reduces cross-contamination and improves precision.
 5. What query strategy? `Plain` for direct lookups; `FullRewrite` for conversational queries; `UserRewrite` when the user often refers to earlier turns; `QueryFunction` for custom transformation.
-6. What reranker? Default is `lexical` (no cost, no quota). Reflex is the default AIVAX reranker for low-latency semantic reranking. See `references/rerankers/`.
-7. What top K? 5 to 10 is a good default. Larger K improves recall but inflates the prompt and the cost.
-8. What min score? 0.2 is a good default. Higher is more precise; lower is more permissive.
+6. What reranker? Default is `lexical` (no charge, but subject to the reranking request quota). Reflex is the default AIVAX reranker for low-latency semantic reranking. See `references/rerankers/`.
+7. What top K? Tune against retrieval quality and answer cost; larger K can improve recall but inflates the prompt.
+8. What min score? Tune against relevant and irrelevant examples; higher is more precise, lower is more permissive.
 9. How are documents updated? Single-document upsert, JSONL import, or a webhook that re-indexes on change. The update path affects freshness.
 10. How is grounding evaluated? With a held-out set of questions and expected evidence. See `situations/evaluate-groundedness.md`.
 
