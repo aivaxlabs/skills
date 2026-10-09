@@ -42,6 +42,16 @@ Do not use this sub-skill for:
 
 The conversations listing accepts command-line-style expressions in the `filter` query parameter: `--gateway <id>`, `--chat-client <id>`, `--chat-session <id>`, `--model <name>`, `--user <external-user-id>`, `--api-key <id>`. URL-encode the complete expression, for example `?filter=--gateway%20<id>`. The listing window uses `timeStart` and `timeEnd` (ISO 8601), or `offsetminutes` when `timeStart` is omitted; `period` belongs to export, not listing.
 
+Plain-text `filter` searches input/output previews, model name, and provider name; it is not a full-transcript search. Use `--user` for an external user ID. The listing is bounded, so use a narrow time window and do not infer account-wide totals from a partial list.
+
+## Routing And Usage Evidence
+
+Use listing fields `inputTokenCount`, `outputTokenCount`, `cost`, and `elapsedTime` for comparisons; `elapsedTime` is in milliseconds. These come from the stored usage object and can be null on older or incomplete records. Do not replace missing values with zero. The listing no longer exposes the old aggregate `tokenCount` field.
+
+Compare `modelName`, `providerName`, `modelVariant`, and `routingOption` to distinguish model changes from provider or routing changes. The detail endpoint also exposes `providerDataCollection`; treat it as the recorded provider policy, not proof of actual retention or permission to send sensitive data. The chat-completion response's `provider` is a routing tag; `providerName` is a display name.
+
+In a conversation detail, inspect `usageObject.prompt_tokens`, `usageObject.completion_tokens`, `usageObject.cost`, and `usageObject.performance.total_time` for the corresponding measurements. Do not assume the listing's derived fields are also top-level detail fields. Preserve unknown provider, policy, or usage values as unknown.
+
 ## Bulk Export Options
 
 - `period`: `2h`, `1d`, `7d`, `30d`.

@@ -1,6 +1,6 @@
 ---
 name: aivax-account
-description: Operate AIVAX account-level resources — API keys, account state, plan, salt, secret hygiene. Load when the agent must create or rotate keys, inspect account or plan, manage the hook salt, or audit secret handling.
+description: Operate AIVAX account-level resources — API keys, account state, plan, administrator-managed contact information and agreement, salt, secret hygiene. Load when the agent must create or rotate keys, inspect account or plan, understand protected account fields, manage the hook salt, or audit secret handling.
 ---
 
 # Account
@@ -30,8 +30,15 @@ When the agent writes a server-side integration, use a private key. When the age
 - `GET /api/v1/information/balance`: get the current balance, plan, storage usage, and subscription allowance consumption.
 - `GET /api/v1/information/usage?timeStart=<iso>&timeEnd=<iso>&dayCount=<n>`: get usage details; use the API parameters to select the period and listing size.
 - `GET /api/v1/information/usage/monthly-report?month=YYYY-MM`: get monthly insights and top-cost model, resource, and SKU tables.
-- `PUT /api/v1/accounts`: replace the account name and full `parameters` object; read the current account first and preserve every unrelated parameter.
+- `PUT /api/v1/accounts`: replace the account name and editable `parameters`; read the current account first and preserve unrelated settings. The server preserves administrator-managed `contactInformation` and `agreement`.
 - `POST /api/v1/accounts/roll-salt`: roll the hook salt. Destructive: invalidates existing worker and integration validation secrets.
+
+## Plan And Protected Account Fields
+
+- Use `Custom` as the current plan name in balance responses and `X-Authenticated-Account-Plan`. Update integrations that still compare against the former `Reseller` name.
+- Do not infer unlimited rate limits from `Custom`; its rate limits are administrator-configured. Consult [Pricing](https://docs.aivax.net/docs/pricing) and [Plans and limits](https://docs.aivax.net/docs/limits), and ask the administrator about account-specific terms.
+- Treat `parameters.contactInformation` and `parameters.agreement` as read-only in ordinary account workflows. Sending replacements through `PUT /api/v1/accounts` does not change them. Route correction requests to an authorized administrator; do not guess administrative endpoints or permissions.
+- Contact information contains legal identity/address data; the agreement is Markdown containing negotiated terms. Do not copy either into logs, shared skills, or unrelated reports.
 
 ## Public Key Restrictions
 
@@ -53,7 +60,7 @@ AIVAX can authenticate outbound requests to your services (workers, protocol fun
 
 ## Cost Awareness
 
-Balance, usage, and plan drive the cost of every operation. Inspect them before starting a large job, a model swap, or a batch run. Do not hard-code plan multipliers or quotas; use the current public `pricing.md` and `limits.md` documentation.
+Balance, usage, and plan drive the cost of every operation. Inspect them before starting a large job, a model swap, or a batch run. Do not copy commercial figures or account-specific terms into skills; consult the current Pricing and Plans and limits pages.
 
 ## Validation
 
@@ -74,4 +81,4 @@ Balance, usage, and plan drive the cost of every operation. Inspect them before 
 - A secret leaked in a log or final response: load `situations/secret-hygiene.md` and rotate the affected credentials.
 - Balance is low: load `references/cost-monitoring/situations/optimize-spend.md`.
 - The salt must be rolled: load `situations/create-and-rotate-keys.md` (the salt section) and confirm approval.
-- The request fails with 429 or a transient error: load `references/resilience/situations/rate-limit-429.md`.
+- The request fails with 429 or a transient error: load `references/resilience/` and classify before retrying.

@@ -9,14 +9,14 @@ Get the model's reasoning over audio content with the right fidelity/cost trade-
 ## Preconditions
 
 - The audio is in a supported format (e.g. `wav`, `mp3`).
-- The account balance meets the minimum for audio input ($0.10) or the cost of the chosen alternative path.
+- The selected audio path meets current account requirements in [Limits](https://docs.aivax.net/docs/limits); consult [Pricing](https://docs.aivax.net/docs/pricing) before increasing volume.
 - The model supports the chosen path.
 
 ## Decision Tree
 
 1. Does the model support `input_audio`? If yes, send the audio directly. Lower cost for short audio; higher fidelity for tone, timing, and non-speech signals.
-2. Does the model not support audio, or is the audio primarily speech? Transcribe first with `POST /api/v1/generations/audio/transcriptions` and pass the transcript as text. The model can reason over the transcript without seeing the audio.
-3. Is the audio long (>10 minutes)? Transcription is usually cheaper. Compare the per-minute transcription cost against the per-token audio cost of the multimodal model.
+2. Does the model not support audio, or is the audio primarily speech? Use `multimodal_resolver.audioEngine: "Stt"`, or transcribe separately with `POST /api/v1/generations/audio/transcriptions` and send the transcript as text. Use `InferenceLow` or `InferenceHigh` when a description beyond spoken words is needed.
+3. Is the audio long? Compare transcription and direct-audio usage for the task; do not assume a fixed duration threshold makes one cheaper.
 4. Is the audio non-speech (music, environmental sound, sound effects)? Direct audio is usually the only path. Text transcription of these is lossy.
 5. Is the audio a recording that must be re-summarized? Direct audio is usually better; the model can pick up tone and emphasis.
 

@@ -36,6 +36,7 @@ A gateway has:
 - `parameters`: the configuration object. Most parameters are at the top level of `parameters`; some are nested (e.g. `moderationParameters`).
 - `parameters.baseAddress`: `@integrated` for AIVAX managed models, or an external OpenAI-compatible endpoint.
 - `parameters.modelName`: a model returned by `aivax_list_models` or a gateway slug (private keys only).
+- `parameters.routingOption` and `parameters.allowedProviders`: integrated-model provider selection; defaults are `Balanced` and `["*"]`. Provider tags are tried in order, and `"*"` allows any provider. See `references/text-inference/model-catalog.md` before restricting providers.
 - `parameters.systemInstruction`: the base behavior of the gateway.
 - `parameters.knowledgeCollections`: collection IDs queried before model call.
 - `parameters.rerankerName`: the reranker for RAG. Default is `lexical`. See `references/rerankers/`.
@@ -47,10 +48,10 @@ A gateway has:
 - `parameters.toolContextCount`: how many previous tool results stay in context.
 - `parameters.contextMaximumSize` and `parameters.contextOverflowAction`: cap and handle long context.
 - `parameters.moderationParameters`: safety thresholds.
-- `parameters.enabledMultimodalFeatures`: input media AIVAX may resolve and forward.
+- `parameters.multimodalResolverParameters`: per-media engines that convert selected inputs into text. This replaces the deprecated `parameters.enabledMultimodalFeatures`; see `references/multimodal/`.
 - `parameters.queryStrategy`: `Plain`, `Concatenate`, `FullRewrite`, `UserRewrite`, or `QueryFunction`.
 - `parameters.knowledgeBaseMaximumResults`: number of documents injected.
-- `parameters.knowledgeBaseMinimumScore`: similarity cutoff from 0 to 1.
+- `parameters.knowledgeBaseMinimumScore`: similarity cutoff.
 - `parameters.knowledgeUseReferences`: include referenced parent documents.
 - `parameters.knowledgeUseMetaDescriptions`: include metadata descriptions in retrieved context.
 - `parameters.temperature`, `parameters.topP`, `parameters.presencePenalty`, `parameters.frequencyPenalty`, `parameters.stop`, `parameters.maxCompletionTokens`, `parameters.reasoningEffort`, `parameters.verbosity`: sampling and output.
@@ -80,7 +81,7 @@ Arrays are usually replacements during patching; include the complete intended l
 
 Public keys (`pk-aiv-`) can call chat completions with the full AI Gateway UUID. Direct integrated-model calls and gateway slug lookup are disabled. MCP sources, protocol functions, built-in tools, Bash, skills, and sentinel options are stripped from the request. Only these parameters are accepted: `model`, `messages`, `prompt`, `temperature`, `top_p`, `top_k`, `seed`, `tools`, `reasoning_effort`, `max_completion_tokens`, `stream`, and `idempotency_key` (`OpenIndexer.Alpha2/Api/Modules/OpenAi.cs:27-39`).
 
-Private-key chat-completion requests may set `routing_preset` to `Balanced`, `Cheapest`, `Fastest`, or `Quality` to override the gateway's routing for that request without changing its saved configuration. Public keys cannot send this field (`OpenIndexer.Alpha2/Api/Modules/OpenAi.cs:630-631`).
+Private-key chat-completion requests may set `routing_options.preset` (`Balanced`, `Cheapest`, `Fastest`, or `Quality`) and `routing_options.allowed_providers` without changing the saved gateway. Omitted values inherit its configuration. The deprecated `routing_preset` is still accepted, but `routing_options.preset` takes precedence. Public keys cannot send either routing extension.
 
 ## Cost Awareness
 

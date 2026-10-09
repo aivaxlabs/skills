@@ -15,11 +15,11 @@ Pick the cheapest model that meets the task's capability, latency, and quality f
 ## Decision Tree
 
 1. What is the task's modality floor? Text only, or does it require image, audio, video, or file inputs?
-   - If the task includes media, the model must support that modality or `multimodal_preprocess` must be set. See `references/multimodal/`.
+   - If the task includes media, the model must support that modality or its engine must be configured in `multimodal_resolver`. See `references/multimodal/`.
 2. Does the task need function calling or tool use?
-   - If yes, the model must declare `tools: true` in the catalog.
+   - If yes, verify tool-calling support in the returned capabilities; do not assume every catalog exposes a `tools` boolean.
 3. Does the task need structured output (JSON)?
-   - If yes, the model must declare `structured_output: true` (or accept `response_format` with `json_schema`).
+   - If yes, verify structured-output support for the selected model and request path; do not assume a `structured_output` boolean is present.
 4. What is the minimum context window? Pick the smallest model whose window exceeds the prompt + expected completion + RAG injection + tool results. Plan caps may apply.
 5. What is the latency budget?
    - Real-time voice: fast class.

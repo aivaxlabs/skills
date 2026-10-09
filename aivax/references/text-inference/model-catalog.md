@@ -18,9 +18,13 @@ GET https://inference.aivax.net/v1/models
 
 The response is OpenAI-compatible: `{ "object": "list", "data": [ ... ] }`. Each entry has `id`, `object`, `created`, and `owned_by`. Gateway entries can be used as the `model` value in chat completions.
 
+Use `GET /v1/models?filter=<URL-encoded-model-name>` for a model family and its dated snapshots, ordered by closest match and then newest snapshot. This is not a substring search: matching ignores the vendor prefix and normalizes name separators, so inspect the returned IDs rather than assuming the filter pins a vendor.
+
+For integrated models, discover provider tags in `_details.provider_model.providers[].tag`. Use these exact tags in `routing_options.allowed_providers` or gateway `parameters.allowedProviders`; do not invent tags from vendor display names. Provider order limits the candidate pool before the routing preset chooses within it.
+
 ## Decision Fields
 
-For every candidate model, capture the following before recommending it. The fields below are typical; verify with `aivax_search_context` if a field is missing or differently named.
+For every candidate model, capture the following decision axes before recommending it. These are comparison labels, not guaranteed JSON field names: MCP and HTTP catalogs differ. Read the returned capabilities and provider metadata, and verify unfamiliar fields with `aivax_search_context`.
 
 | Field | Why It Matters |
 | --- | --- |
@@ -69,10 +73,9 @@ decision:
 
 ## Pricing Rules Of Thumb
 
-- Cached input is typically 5x to 10x cheaper than uncached input. Reuse prefixes when possible.
-- Output is typically 3x to 5x more expensive than input. Long outputs (summaries, code generation) are the dominant cost driver.
-- Audio input is priced differently from text input. Check the model's audio input price.
-- Models with a reasoning phase consume reasoning tokens at a separate rate. The reasoning tokens are reported in `usage`; account for them.
+- Consult [Pricing](https://docs.aivax.net/docs/pricing) and [Limits](https://docs.aivax.net/docs/limits); do not assume fixed input, output, cache, or reasoning price ratios.
+- Reuse stable prefixes when the selected provider supports input caching.
+- Compare the actual input, output, audio, and reasoning usage for the workload before recommending a swap.
 
 ## When To Recommend A Swap
 
@@ -87,10 +90,10 @@ Do not recommend a swap when:
 
 - The current model is the only one with the required capability.
 - The quality delta is unknown and the workload is production.
-- The cost saving is below 10% and the swap would add retraining, retesting, or rollback risk.
+- The expected saving does not justify retraining, retesting, or rollback risk.
 
 ## Caveats
 
 - `aivax_list_models` is a live call. Do not cache the result across sessions; the catalog changes.
-- The same `id` can mean different things on different plans. Verify plan availability before recommending.
+- Verify that the account plan permits the selected model and workload; a listed ID alone does not establish eligibility.
 - Gateway entries in the model list are usable as `model` in chat completions, but they are not the model itself; the gateway's model, instructions, and skills apply.

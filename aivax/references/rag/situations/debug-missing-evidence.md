@@ -14,8 +14,8 @@ Determine whether the document is missing from the collection, not yet indexed, 
 ## Decision Tree
 
 1. Does the document exist in the collection? Browse the collection with a filter for the expected term. If the document is not in the listing, it was never indexed or it was deleted.
-2. Is the document still queued or failed? Browse with `?state=queued` or `?state=error`. If it is queued, wait. If it failed, the document needs to be re-ingested with a fix.
-3. Is the document's metadata rich enough? A document with no tags and no context is hard to retrieve. Add metadata at ingestion time.
+2. Is the document still queued or already indexed? Browse with `?state=queued` or `?state=indexed` and inspect the document state. Do not use `state=error`: the listing does not implement that filter. Wait for indexing before testing retrieval.
+3. Does the exact `filter` exclude it? Check the document's tags, metadata types, name, and dates against the expression. Compare a filter-only `/api/v1/query` with semantic retrieval using the same filter before changing ranking settings.
 4. Is the collection attached to the gateway? View the gateway and check `parameters.knowledgeCollections`. If the collection is not in the list, attach it.
 5. Is the min score too high? Lower it. A high min score rejects documents that would otherwise be returned.
 6. Is the top K too low? Increase it. A low top K drops relevant documents.
@@ -26,8 +26,8 @@ Determine whether the document is missing from the collection, not yet indexed, 
 ## Actions
 
 1. Browse the collection to confirm the document is indexed and the metadata is correct.
-2. Run a direct semantic search (`POST /api/v1/query`) with the same query and a low min score to surface candidates.
-3. Compare the candidates with the expected document. If the expected document is not in the candidates, the issue is ingestion or chunking.
+2. Run a direct semantic search (`POST /api/v1/query`) with the same terms and filter, and a low min score to surface candidates. Confirm whether the original path actually applied a filter; automatic gateway retrieval does not.
+3. Compare the candidates with the expected document. If it is absent from a filter-only lookup, check indexing and filter eligibility first; if it passes that lookup but semantic retrieval misses it, investigate the terms, chunking, cutoff, and ranking.
 4. If the document is in the candidates but the gateway does not return it, check the gateway RAG settings and the query strategy.
 5. If the document is in the gateway results but the answer ignores it, the issue is generation. Load `situations/debug-bad-answer.md`.
 

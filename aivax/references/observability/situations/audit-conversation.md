@@ -38,7 +38,10 @@ Produce an audit conclusion that is anchored in evidence, redacted of sensitive 
    GET /api/v1/conversations/<id>
 
 3. Inspect
-   origin, modelName, requestId, tools, usageObject, resources, timestamps, errorMessage, messages, metadata
+   origin, modelName, providerName, providerDataCollection, modelVariant, routingOption,
+   requestId, tools, usageObject, resources, timestamps, errorMessage, messages, metadata
+   Compare listing inputTokenCount, outputTokenCount, cost, and elapsedTime (milliseconds);
+   preserve missing measurements as unknown, not zero.
 
 4. Classify
    - Successful: produced a non-empty assistant message.

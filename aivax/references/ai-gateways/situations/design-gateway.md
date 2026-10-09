@@ -21,9 +21,9 @@ Produce a gateway definition that meets the user's goal with the right balance o
 5. What reranker? Default is `lexical`. Switch to a semantic reranker for higher precision. See `references/rerankers/`.
 6. What skills? Skills are reusable instruction bundles attached by ID. Load `references/skill-development/situations/attach-skill-to-gateway.md` for the pattern.
 7. What tools? MCP sources, protocol functions, built-in functions. Enable only what is needed. See `references/ai-gateways/situations/attach-skills-and-tools.md`.
-8. What multimodal inputs? Set `enabledMultimodalFeatures` to the modalities the gateway should accept.
+8. What multimodal inputs need conversion to text? Set `multimodalResolverParameters` per media type; leave raw media only when the main model supports it. See `references/multimodal/`.
 9. What moderation? Set `moderationParameters` to the safety threshold the user requires. Do not loosen moderation without a clear user requirement.
-10. What context size? `contextMaximumSize` should be at least the model's context window. Use `Truncate` for long conversations and `TruncateHard` for safety-critical gateways.
+10. What context size? Choose `contextMaximumSize` within the model and plan limits. Choose overflow handling deliberately; do not assume truncation preserves every instruction or fact.
 11. What sampling? `temperature`, `topP`, `maxCompletionTokens`, `reasoningEffort`, `verbosity`. Set only what the chosen model supports.
 12. What is the access pattern? Public keys (for browser or widget) or private keys (for server-side). Public keys strip tool surfaces.
 
@@ -39,12 +39,8 @@ POST /api/v1/ai-gateways
     "systemInstruction": "<short-specific-instruction>",
     "knowledgeCollections": ["<collection-id>"],
     "rerankerName": "lexical",
-    "knowledgeBaseMaximumResults": 8,
-    "knowledgeBaseMinimumScore": 0.2,
     "skills": ["<skill-id-1>"],
-    "contextMaximumSize": 128000,
     "contextOverflowAction": "Truncate",
-    "maxCompletionTokens": 1024,
     "moderationParameters": { ... }
   }
 }

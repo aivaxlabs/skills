@@ -8,12 +8,12 @@ Get past the rate limit without burning the account balance, without retrying in
 
 ## Preconditions
 
-- A 429 response with a JSON body that includes an error class and possibly a `Retry-After` header.
+- A `429` response; inspect either a standard `error` string or an OpenAI-compatible error object. `Retry-After` may be absent.
 
 ## Signals
 
 - 429 status code.
-- Quota counters near a plan limit (visible in `aivax_list_models` or `GET /api/v1/information/usage`).
+- Recent request volume approaching a limit documented in [Plans and limits](https://docs.aivax.net/docs/limits); `Custom` limits require account-specific confirmation. Model listings and billing usage are not live rate-limit counters.
 - Repeated 429s for the same model or endpoint across multiple requests.
 
 ## Decision Tree
@@ -28,11 +28,11 @@ Get past the rate limit without burning the account balance, without retrying in
 ## Actions
 
 1. Capture the 429 response exactly: status, body, headers (especially `Retry-After` and any quota headers).
-2. Inspect the current quota state with `GET /api/v1/information/balance` and `GET /api/v1/information/usage?timeStart=<iso>&timeEnd=<iso>`.
-3. Determine which quota was hit: per-minute request, token-rate, storage, or reranker request. The error message usually names the quota; if not, infer from the endpoint.
+2. Use balance and usage only for cost and plan context; they do not reveal the active rate-limit window.
+3. Determine the applicable request or token-rate limit from the endpoint contract and request history. The generic rate-limit message may not name it; do not guess a quota or reset time. Storage exhaustion is a `402`, not this retry path.
 4. Decide the retry strategy from the decision tree above.
 5. If the work is large, prefer deferring over retrying (queue for batch, lower the request rate, downsize the payload).
-6. After the retry succeeds, re-check the quota state to confirm the new request is within limits.
+6. After a retry succeeds, keep the request pace reduced; one success does not prove the whole rate-limit window has cleared.
 7. If three retries fail, open the circuit breaker. Document the failure in the trace.
 
 ## Validation
@@ -40,11 +40,11 @@ Get past the rate limit without burning the account balance, without retrying in
 - The retry (or fallback) succeeded within the time budget.
 - The trace ID is preserved.
 - The user's work is not duplicated.
-- The quota report shows the new request landed within the limit.
+- The observed response and retry timing are recorded without inventing quota counters.
 - The circuit breaker is documented in the final report.
 
 ## Limits
 
-- 429 is a quota problem, not a logic problem. Do not change the model, gateway, or schema to escape it; the new component will hit the same quota.
+- Do not assume changing the model, gateway, or API key resets a shared account limit.
 - 429s often come in bursts. A retry that succeeds once may be followed by another 429. Plan for it.
-- Some quotas (token-rate) reset quickly; others (subscription reserve) reset on a longer window. Match the retry to the window.
+- Rate-limit windows vary by operation. Subscription allowance exhaustion is separate and can lead to normal billing; it is not evidence of a `429` reset window.

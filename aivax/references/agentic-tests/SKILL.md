@@ -197,7 +197,7 @@ A run detail adds `test_name`, `result`, and `conversation`. Each conversation i
 
 Manual runs, scheduled runs, and direct evaluations share one plan-dependent new-run quota per account across API keys. A persisted run counts when queued, not again when execution starts; conversation turns do not use additional run units, although inference limits still apply. Excess manual requests and direct evaluations return HTTP 429 (before SSE starts for direct requests); no persisted run is created on a rejected manual request. Use bounded retries with backoff after the quota window clears, not immediate duplicates. A due scheduled test without quota waits for a later scheduling check instead of creating a run.
 
-All persisted runs, manual or scheduled, also follow the separate account concurrency limit (Free 1, Pro 4, Max 8; Reseller 8). Consult the current plan limits rather than treating these as an allowance of free runs. A persisted run can fail before or during execution when balance is insufficient; direct evaluations can return HTTP 402 before streaming. Notifications track execution failures (`state: failed`), not low behavioral scores in otherwise succeeded runs.
+All persisted runs, manual or scheduled, also follow a separate plan-dependent account concurrency limit. Consult the Plans and Limits page rather than treating these as an allowance of free runs. A persisted run can fail before or during execution when balance is insufficient; direct evaluations can return HTTP 402 before streaming. Notifications track execution failures (`state: failed`), not low behavioral scores in otherwise succeeded runs.
 
 ## Test Authoring Rules
 

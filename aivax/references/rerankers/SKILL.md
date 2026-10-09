@@ -15,7 +15,7 @@ This sub-skill owns rerankers on AIVAX. A reranker takes a query and a list of c
 
 ## Endpoint
 
-`POST /api/v1/generations/rerank`. The endpoint accepts a query, a list of candidate document strings, a model name, an optional `top_n`, and an optional `min_score`. The response is a list of results in descending relevance order, each with the original zero-based index, the relevance score, and the document text.
+`POST /api/v1/generations/rerank`. The endpoint accepts a query, a list of candidate document strings, an optional model name, an optional `top_n`, and an optional `min_score`. Read the raw response object's `results` array (no `data` envelope), alongside `id`, `model`, and `usage`. Each result carries the original zero-based `index`, `relevance_score`, and `document.text`.
 
 The legacy `/api/v1/generations/reflex/rerank` route is a deprecated alias for the same endpoint. Use the generic route for new integrations.
 
@@ -34,7 +34,7 @@ Rerankers differ in language coverage, context window, document limits, latency,
 
 - **Reflex** (`@aivax/reflex-v1`): default AIVAX reranker. Low latency, bounded lexical evidence, account-scoped cache. Best general default.
 - **Qwen 3 Reranker** (`@qwen/qwen3-reranker-0.6b`, `4b`, `8b`): three sizes for different quality/latency trade-offs.
-- **Jina Reranker v3** (`@jina/reranker-v3`): 131k token context, useful for very long documents.
+- **Jina Reranker v3** (`@jina/reranker-v3`): useful for long documents; check the live catalog's context limit.
 - **Cohere Rerank 4** (`@cohere/rerank-4-pro`, `@cohere/rerank-4-fast`): search-unit pricing, large document support.
 - **NVIDIA Nemotron** (`@nvidia/llama-nemotron-rerank-vl-1b-v2`): vision-language reranker, useful when the candidates include images.
 - **Lexical**: word-aware reranking without a usage charge; the reranking request quota still applies. Useful when the candidates are already high-quality.
@@ -44,16 +44,18 @@ Rerankers differ in language coverage, context window, document limits, latency,
 
 The rerank endpoint accepts only models with `autonomousUse: true`. `rrf` and `none` are RAG-only and are not accepted here.
 
+For managed RAG, `filter` restricts the candidates before semantic search and reranking; the standalone rerank endpoint has no filter field. A filter-only `/api/v1/query` skips reranking entirely. Do not tune or replace the reranker to fix filter eligibility or the newest-first order of that mode.
+
 ## Cost Awareness
 
 Reflex calls consume the plan's daily reranking allowance when fully covered; otherwise they are billed at the cache-miss and cache-hit token rates. Both cached and uncached input count toward coverage. Other paid rerankers are metered by tokens or search units, without this allowance; lexical, RRF, and none carry no usage charge. Included calls appear in subscription consumption, not billing history. Reflex usage reports `input_tokens`, `cached_input_tokens`, `total_tokens`, and `cost` (the account charge, which is zero when covered); other providers may report different usage fields.
 
 ## Validation
 
-- The response is a list of results in descending relevance order.
+- The response's `results` array is in descending relevance order.
 - The results preserve the original zero-based index of each document.
 - The relevance score is between 0 and 1 (or the model's equivalent).
-- The trace ID is preserved.
+- The response `id` is recorded alongside the application's trace.
 
 ## Limits
 

@@ -13,7 +13,7 @@ Identify the failure layer: retrieval, ranking, source data, gateway RAG setting
 
 ## Decision Tree
 
-1. Run a direct semantic search (`POST /api/v1/query`) with the original query and a low min score. Are the expected documents in the candidates?
+1. Run a direct semantic search (`POST /api/v1/query`) with the original terms and filter, and a low min score. Confirm whether the failing path applied a filter; automatic gateway retrieval does not. Are the expected documents in the candidates?
    - No: the issue is retrieval. Load `situations/debug-missing-evidence.md`.
    - Yes: the retrieval works. The issue is downstream.
 2. With the expected documents in the candidates, is the reranker demoting them? Run `/api/v1/query` with `reranker: "none"` and see if the documents rise. If they do, the reranker is the problem. Load `references/rerankers/`.
@@ -27,8 +27,8 @@ Identify the failure layer: retrieval, ranking, source data, gateway RAG setting
 
 ## Actions
 
-1. Run a direct semantic search with the original query and a low min score. Capture the candidates.
-2. Compare the candidates with the expected documents. If the expected documents are not in the candidates, the issue is ingestion or chunking.
+1. Run a direct semantic search with the original terms and filter, and a low min score. Capture the candidates.
+2. Compare the candidates with the expected documents and inspect `timestamps.updatedAt` when freshness matters. If evidence is absent, check indexing and filter eligibility before blaming ingestion, chunking, or reranking.
 3. If the expected documents are in the candidates but not in the gateway's top K, adjust the top K and the min score.
 4. If the gateway's top K includes the expected documents but the answer ignores them, the issue is generation. Tighten the system instruction and switch to a model that is stronger on grounding.
 5. Run a test conversation through the gateway to validate.

@@ -27,7 +27,7 @@ AIVAX accepts OpenAI-compatible content parts inside the `messages[].content` fi
 | `input_audio` | Audio content | `input_audio.data` is base64 audio data. `input_audio.format` names the format (e.g. `wav`, `mp3`). |
 | `file` | File content | `file.filename` names the file. `file.file_data` can be an external URL or a base64 data URL. |
 
-The selected model must support the modality. When it does not, set `multimodal_preprocess` to convert the media into a text description before the main call.
+The selected model must support the modality. Otherwise, configure that media type in `multimodal_resolver` to convert it into text before the main call.
 
 ## External Links
 
@@ -35,21 +35,26 @@ External links must be reachable by AIVAX without authentication, firewall restr
 
 ## Balance Minimums
 
-Media-heavy inference requires a positive account balance. The balance gate is not a price: it only checks that the account holds enough balance before the request proceeds. The actual cost is model-dependent and is reported in `usage`.
+Check the current media requirements in [Limits](https://docs.aivax.net/docs/limits) and charges in [Pricing](https://docs.aivax.net/docs/pricing). A balance gate is not the request price; actual usage depends on the selected path and model.
 
 ## Pre-Processing
 
-`multimodal_preprocess` tells AIVAX to resolve media into a textual description before the main inference call. The resolver caches descriptions by content hash for reuse. Available flags are `Image`, `Audio`, `Video`, `File`, `OtherFiles`, and `All`.
+Use `multimodal_resolver` on a private-key chat-completion request, or `parameters.multimodalResolverParameters` on a gateway. Its camelCase fields are:
 
-- Image, Audio, Video, and PDF File pre-processing use auxiliary multimodal inference.
-- Supported non-PDF files use local text extraction.
-- When the main model does not support the modality, preprocess is the only way to reason over the content.
+- `imageEngine`: `InferenceLow` (alias `Inference`), `InferenceHigh`, or `Ocr`.
+- `audioEngine`: `InferenceLow` (alias `Inference`), `InferenceHigh`, or `Stt`.
+- `videoEngine`: `InferenceLow` (alias `Inference`) or `InferenceHigh`.
+- `fileEngine`: `InferenceLow` (alias `Inference`), `InferenceHigh`, or `Ocr`. Inference engines describe PDFs; other files still use the OCR/text-conversion path. `Ocr` also extracts PDFs.
+
+A null or omitted engine leaves that media type unchanged; it does not auto-detect a fallback. The request object replaces the resolver configuration rather than merging individual engines. Precedence is `multimodal_resolver`, then deprecated `multimodal_preprocess`, then the gateway configuration. At gateway level, `multimodalResolverParameters` supersedes deprecated `enabledMultimodalFeatures`.
+
+Legacy `Image`, `Audio`, `Video`, and `File` flags map to `InferenceLow`; `OtherFiles` maps to file `Ocr`. Prefer explicit engines for new work. Results are cached per account, content-part hash, and engine; do not promise freshness when a URL's content changes. See `situations/multimodal-preprocess.md`.
 
 ## When To Use Each Path
 
-- The model supports the modality: send the media directly. Lower cost, lower latency, higher fidelity.
-- The model does not support the modality: preprocess to text. Higher cost (an extra call) but lets the model reason.
-- The content is large and the model is text-only: preprocess. Direct base64 of a 100MB file is not viable.
+- The model supports the modality: prefer direct media when visual, audio, or temporal fidelity matters; compare cost and latency rather than assuming it is cheaper.
+- The model does not support the modality: preprocess to text, accepting the extraction cost and possible loss of detail.
+- The content is large and the model is text-only: extract or segment it before the main call; preprocessing is not a bypass for upload or context limits.
 - The content is small and the model supports it: send directly.
 
 ## Cost Awareness

@@ -9,14 +9,14 @@ Send file content to the model in a way that preserves structure, fits the model
 ## Preconditions
 
 - The file is in a supported format. PDF and common text formats are supported; some formats require preprocessing.
-- The account balance is at least $0.50 (the minimum for file input).
+- The request meets the current file requirements in [Limits](https://docs.aivax.net/docs/limits); consult [Pricing](https://docs.aivax.net/docs/pricing) for extraction and inference charges.
 - The file is reachable (URL) or can be base64-encoded (data URL).
 
 ## Decision Tree
 
-1. Is the file a PDF? AIVAX preprocesses PDF files with auxiliary multimodal inference when the flag is set. Send directly via `file` and set `multimodal_preprocess: "File"` if the main model is text-only.
-2. Is the file a supported text format (TXT, MD, CSV, JSON, code)? Local text extraction is used. Send directly or preprocess as needed.
-3. Is the file an unsupported format (DOCX, XLSX, PPTX, binary)? Preprocess with `multimodal_preprocess: "OtherFiles"` to extract what can be extracted. If the extraction is lossy, convert the file to PDF or text first.
+1. Is the file a PDF? Use `multimodal_resolver.fileEngine: "InferenceLow"` or `"InferenceHigh"` for a description, or `"Ocr"` for text extraction. Leave it null only when the main model can consume the file directly.
+2. Is it a non-PDF file? Any enabled `fileEngine` uses the OCR/text-conversion path. Confirm format support rather than assuming arbitrary binary files can be extracted.
+3. Is extraction unsupported or lossy? Convert to a supported PDF or text representation first, preserving the structure needed for the task.
 4. Is the file very large? Segment it before sending. Load `references/text-tools/situations/segment-text.md` for guidance.
 5. Is the file a structured dataset (JSONL, CSV)? Use the appropriate structured input mode: `file.file_data` with a data URL is fine for small datasets; for large datasets, load the data into a RAG collection and let the model retrieve from it.
 
@@ -32,7 +32,7 @@ Send file content to the model in a way that preserves structure, fits the model
 }
 ```
 
-For text-only models, set `multimodal_preprocess: "File"` (or `"All"`) on the request so AIVAX converts the file to a text description before the main call.
+For text-only models, add `"multimodal_resolver": { "fileEngine": "InferenceLow" }` to the request, or choose `"Ocr"` for extraction. See `situations/multimodal-preprocess.md` before overriding a gateway resolver.
 
 ## Validation
 

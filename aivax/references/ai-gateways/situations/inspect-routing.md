@@ -21,6 +21,7 @@ GET /api/v1/ai-gateways/<gateway-id>
 3. Inspect:
    - `parameters.baseAddress`
    - `parameters.modelName`
+   - `parameters.routingOption` and `parameters.allowedProviders`
    - `parameters.systemInstruction`
    - `parameters.skills`
    - `parameters.knowledgeCollections`
@@ -29,7 +30,7 @@ GET /api/v1/ai-gateways/<gateway-id>
    - `parameters.contextMaximumSize`
    - `parameters.contextOverflowAction`
 4. List recent conversations for the gateway.
-5. Confirm the actual `modelName` used in conversations.
+5. Compare the observed `modelName`, `providerName`, `modelVariant`, and `routingOption` in recent conversations. Read `providerDataCollection` from the conversation detail when reviewing privacy. The completion response's `provider` is a routing tag, not the conversation's provider display name; missing historical values are not evidence of a particular provider or policy.
 6. Map skills and collections by viewing `/api/v1/skills` and `/api/v1/collections` when IDs are not self-explanatory.
 
 ## Gotchas

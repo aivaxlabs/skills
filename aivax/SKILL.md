@@ -50,7 +50,7 @@ Map the user intent to a sub-skill. Load only what you need. When in doubt, pref
 | Build a RAG pipeline: collection, ingestion, query, answer, grounding | `references/rag/` |
 | Rerank candidate documents; choose Reflex, Cohere, Qwen, Jina, NVIDIA, or lexical reranker | `references/rerankers/` |
 | Create, run, evaluate, or compare agentic tests | `references/agentic-tests/` |
-| Create, list, rotate, or delete API keys; inspect account, plan, or salt | `references/account/` |
+| Create, list, rotate, or delete API keys; inspect account, plan, protected contact/agreement fields, or salt | `references/account/` |
 | Investigate a cost spike, balance drop, or spend optimization | `references/cost-monitoring/` |
 | Correlate traces, diagnose latency/error, audit a conversation | `references/observability/` |
 | Create, edit, or operate an AI gateway (model + instructions + RAG + tools + skills) | `references/ai-gateways/` |
@@ -141,6 +141,7 @@ These apply in addition to the rules inside each sub-skill.
 - For external providers, preserve existing `apiKey` values when patching unrelated gateway parameters.
 - Use the account API (`aivax_invoke_function`) for resource work. The Account Management MCP is the operating interface; local source code is not.
 - Do not include media payloads, full transcripts, hidden reasoning, or private user data in final responses unless the user explicitly needs that exact data.
+- Keep prices, numeric plan limits, plan/account multipliers, minimum balances, and negotiated terms out of reusable skills. Consult [Pricing](https://docs.aivax.net/docs/pricing) and [Plans and limits](https://docs.aivax.net/docs/limits); route account-specific terms to the authorized administrator.
 
 ## Sub-Skill Index
 

@@ -9,14 +9,14 @@ Send image content to the model in a way that preserves fidelity, fits the model
 ## Preconditions
 
 - The model supports image input. Verify with `aivax_list_models`.
-- The account balance is at least $0.10 (the minimum for image input).
+- The request meets the current image requirements in [Limits](https://docs.aivax.net/docs/limits); consult [Pricing](https://docs.aivax.net/docs/pricing) for charges.
 - The image is reachable (URL) or can be base64-encoded (data URL).
 
 ## Decision Tree
 
 1. Is the image reachable by URL without authentication? Use `image_url.url` with the URL. Faster, smaller payload.
 2. Is the image private or behind authentication? Base64-encode the bytes and use a data URL. Slower, larger payload, but reliable.
-3. Is the image larger than 20 MB? Prefer a URL. Some providers reject very large base64 payloads. If the URL is not an option, downscale or compress before encoding.
+3. Is the image large? Check current request and provider limits before choosing URL or base64 input. A URL is not a size-limit bypass; downscale or compress when appropriate.
 4. Is the model a vision model with `detail` support? Set `image_url.detail` to `high` for fine-grained tasks (OCR, dense text, small details) and `low` for broad tasks (general classification, presence detection). `auto` lets the model decide.
 5. Are there multiple images? Send multiple `image_url` parts in the same `content` array, or in multiple `user` messages. The model treats them as a sequence.
 

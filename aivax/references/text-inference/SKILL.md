@@ -53,17 +53,20 @@ The endpoint accepts OpenAI-compatible payloads plus AIVAX extensions:
 - `builtin_tools.options.dateTimeTimeZone`: time zone returned by `get_date_time`. Use an IANA identifier such as `America/Los_Angeles` or `America/Sao_Paulo`. Defaults to `America/Los_Angeles` (Pacific Time), automatically following daylight-saving changes. Independent of the browser time zone. Invalid identifiers are rejected.
 - `user`: optional external user identifier attached to the gateway inference context.
 - `extra_body`: provider-specific request fields, supported only with BYOK AI Gateways.
-- `routing_preset`: private-key-only per-request routing override. Accepted values are `Balanced`, `Cheapest`, `Fastest`, and `Quality`; it does not change the saved gateway configuration.
+- `routing_options`: private-key-only integrated-model routing override, with `preset` (`Balanced`, `Cheapest`, `Fastest`, or `Quality`) and ordered `allowed_providers` tags. Omitted fields inherit the gateway's `routingOption` and `allowedProviders`; defaults are `Balanced` and `["*"]`. Matching is case-insensitive; empty lists or blank tags are rejected. Include `"*"` last only when any-provider fallback is intended; otherwise the request fails if no listed provider is available. It does not change the saved gateway.
+- `routing_preset`: deprecated preset override; `routing_options.preset` takes precedence when both are supplied. Public keys cannot send either routing extension.
 - `rendering_mode`: set to `textual_blocks` to normalize reasoning into textual think blocks.
 - `response_format` with `json_schema`: provider-compatible structured output.
 - `response_schema`: AIVAX-specific structured output with JSON Healing.
 - `json_only`: when the caller expects only the generated JSON, not the chat-completion envelope.
-- `multimodal_preprocess`: AIVAX-specific flag to convert media into a text description before the main call.
-- `idempotency_key`: AIVAX-specific optional string up to 128 characters (not part of the OpenAI spec), mapped to `ConversationToken` for stored-conversation correlation. Reusing it may update the same stored conversation record, but does not deduplicate inference execution; each request still executes.
+- `multimodal_resolver`: per-media engines (`imageEngine`, `audioEngine`, `videoEngine`, `fileEngine`) that convert selected inputs into text. It takes precedence over the deprecated `multimodal_preprocess` flags and the gateway's resolver configuration. See `references/multimodal/`.
+- `idempotency_key`: AIVAX-specific optional non-empty string (not part of the OpenAI spec; check [Limits](https://docs.aivax.net/docs/limits) for its size constraint), mapped to `ConversationToken` for stored-conversation correlation. Reusing it may update the same stored conversation record, but does not deduplicate inference execution; each request still executes.
 - `metadata`: a JSON object of string key/value pairs, stored with the conversation record for correlation.
 - `tool_invocation_explanations`: when supported, expose tool-call explanations in the response.
 
-These fields are implemented in `OpenIndexer.Alpha2/Api/Modules/OpenAi.cs`; `routing_preset` is applied at lines 630-631, and `rendering_mode` at line 656. The built-in names come from `OpenIndexer.Alpha2/Inference/ReasoningChainResolverOptions.cs`.
+These fields are implemented in `OpenIndexer.Alpha2/Api/Modules/OpenAi.cs`. The built-in names come from `OpenIndexer.Alpha2/Inference/ReasoningChainResolverOptions.cs`.
+
+For integrated models, the response includes the serving provider's routing tag in `provider`, next to `model`, including streamed chunks. BYOK gateways return `provider: null`. Use this observed value rather than inferring the provider from the requested model name.
 
 ## Minimal Tool-Call Loop
 
@@ -103,11 +106,11 @@ When the user already maintains a gateway, the gateway is almost always the righ
 
 ## Modality
 
-The endpoint accepts multimodal content parts: `text`, `image_url`, `video_url`, `input_audio`, and `file`. The model must support the modality unless `multimodal_preprocess` is used to convert media into a text description first. See `references/multimodal/`.
+The endpoint accepts multimodal content parts: `text`, `image_url`, `video_url`, `input_audio`, and `file`. The model must support the modality unless `multimodal_resolver` converts that media type into text first. See `references/multimodal/`.
 
 ## Cost Awareness
 
-Every inference call consumes balance, request quota, and possibly token-rate quota. A model swap to a cheaper or more expensive tier can change cost by 2x to 10x. Use `aivax_list_models` to compare pricing before recommending a swap. See `references/cost-monitoring/`.
+Every inference call consumes balance, request quota, and possibly token-rate quota. Check [Pricing](https://docs.aivax.net/docs/pricing) and [Limits](https://docs.aivax.net/docs/limits) before recommending a model swap; do not assume fixed price ratios. See `references/cost-monitoring/`.
 
 ## Validation
 

@@ -1,60 +1,59 @@
 # Segment Text
 
-Use when the agent must segment a long text into chunks through `POST /api/v1/generations/segment`. Common uses: preparing text for RAG indexing, splitting a long document for display, or chunking for downstream classification.
+Use when the agent must split long source text into retrieval-ready strings through `POST /api/v1/generations/segment`. This returns segments; it does not create collection documents or index them.
 
 ## Objective
 
-Split a long text into meaningful chunks, with the right chunk size, overlap, and structural awareness.
+Choose whether omission is acceptable, inspect segment quality, and pass only reviewed segments to the downstream task.
 
 ## Preconditions
 
-- A segmentation model is available on the account. Verify with `aivax_list_models`.
-- The text is in a supported language.
+- Supply a non-empty `documents` array of non-blank strings.
+- Preserve the original source for comparison and keep input indexes associated with source IDs in the application.
 
 ## Decision Tree
 
-1. What is the purpose of the segmentation? RAG indexing, display, or downstream classification. Each has different chunk-size sweet spots.
-2. What is the chunk size? A few hundred tokens is a good default for RAG; larger is fine for display; smaller is fine for classification.
-3. Is overlap needed? Some overlap helps RAG retrieval when a fact spans a chunk boundary.
-4. Should segmentation respect structure (headings, paragraphs, code blocks)? Some models do this natively; others split on token count alone.
-5. Is the text structured (Markdown, HTML, code)? Use a model that respects the structure. Verify with `aivax_search_context`.
+1. Is each source already focused and self-contained? Skip segmentation and ingest directly.
+2. Must all source content remain represented? Use `sanitize: false` (the default). It follows structural and semantic boundaries in source order without sliding overlap; do not treat the output as a byte-for-byte copy because whitespace and formatting can be normalized.
+3. Is removing irrelevant material acceptable? Use `sanitize: true` only then. It uses a language model and may omit frontmatter, references, or passages unsuitable for standalone retrieval; review the omissions.
+4. Are custom boundaries, overlap, or exact formatting required? Prepare the chunks in the application. The endpoint does not accept a model, chunk-size, overlap, language, or structure parameter.
 
 ## Construction
 
 ```text
+POST /api/v1/generations/segment
 {
-  "model": "<segmentation-model>",
-  "text": "<long-text>",
-  "max_chunk_size": 800,
-  "overlap": 100,
-  "metadata": { "trace_id": "tr_..." }
+  "documents": ["<complete source text>", "<another source text>"],
+  "sanitize": false
 }
 ```
 
-Some models accept `language`, `respect_structure`, and `unit` (token or character). Verify with `aivax_search_context`.
+Do not send `model`, `text`, `max_chunk_size`, `overlap`, or `metadata` as segmentation controls. Keep correlation metadata in the application and add document metadata when ingesting the returned segments.
 
 ## Response Handling
 
-1. The response is a list of chunks, in order.
-2. Each chunk has the text, the start and end positions (when supported), and any metadata the model returns.
-3. Use the chunks for the downstream task: indexing into a RAG collection, sending to a classifier, or displaying to the user.
-4. Record the chunk count and the chunk-size distribution in the trace.
+1. Read `data.result`; each item has `index`, `count`, and `segments` (strings). Map results by `index`, not response-array position: sanitized results can arrive out of input order.
+2. Inspect every item for `error`, including on successful HTTP responses. A sanitized item failure carries `error`, an empty `segments` array, and `count: 0`; an empty result without `error` also needs review before ingestion.
+3. Inspect `data.usage.processing_units` and `data.usage.cost`. Do not expect token counters, character offsets, or echoed metadata.
+4. Review coverage and boundaries, then upsert or import the segments into the collection with stable names and source references. Wait for indexing before testing retrieval.
 
 ## Validation
 
-- The chunks cover the entire input. No text is dropped or duplicated.
-- The chunk-size distribution is within the expected range.
-- The chunks respect structure (when configured to do so).
-- The trace ID is preserved.
+- Every source index has a reviewed result; retain failed items separately for deliberate retry.
+- Without sanitization, compare the segments with the source for content coverage, allowing normalization and repeated structural headers where needed.
+- With sanitization, confirm omitted passages are intentionally excluded; never promise lossless output.
+- Inspect headings, tables, code blocks, and neighboring segments for enough context to stand alone.
+- Keep source IDs and request correlation outside the segmentation payload.
 
 ## Failure Modes
 
-- The model returns no chunks: the input is empty or unsupported. Inspect the error.
-- The chunks are too small or too large: the parameters are wrong. Adjust.
-- The chunks break in the middle of a sentence or a code block: the model does not respect structure. Switch the model or set the structural parameter.
+- HTTP `400`: inspect malformed fields, an empty array, blank documents, or the returned processing failure. Do not retry invalid input unchanged.
+- HTTP `429`: the per-document segmentation quota was reached. Load `references/resilience/situations/rate-limit-429.md`.
+- An item has `error` or no useful segments: inspect that item before retrying; do not ingest it as an empty document.
+- Boundaries are unsuitable: clean the source structure or prepare chunks yourself; there is no chunk-size knob or selectable model on this endpoint.
 
 ## Escalation
 
-- The chunks are for RAG indexing: load `references/rag/situations/design-rag-pipeline.md`.
-- The chunks are for classification: load `situations/classify-documents.md`.
-- The text is too large for a single request: split the input first and segment each part. Or load `references/batch/`.
+- The segments are for RAG: load `references/rag/situations/design-rag-pipeline.md`.
+- The segments are for classification: load `situations/classify-documents.md`.
+- A source cannot be processed in one request: split it at meaningful boundaries in the application and preserve the source-to-segment mapping.

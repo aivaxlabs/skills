@@ -15,8 +15,8 @@ Produce a pipeline that returns the right evidence for the user's queries, with 
 ## Decision Tree
 
 1. What is the source of the documents? Files, URLs, internal data, or a mix. The ingestion path differs for each.
-2. How should the documents be chunked? Short chunks (a few hundred tokens) for precise retrieval; long chunks (a few thousand tokens) for context-heavy questions. Use `references/text-tools/situations/segment-text.md` to choose.
-3. What metadata should the documents have? Tags, references, owners, and dates help the model reason about the source. Add metadata at ingestion time.
+2. How should the documents be chunked? Keep each document self-contained and focused. Upsert and JSONL import do not segment long sources automatically; use `references/text-tools/situations/segment-text.md` before ingestion when needed.
+3. What exact constraints must retrieval enforce? Add consistent tags and typed metadata at ingestion time, then use `filter` with search terms. Use filter-only `/api/v1/query` for exact lookups, not relevance evaluation. Automatic gateway retrieval does not apply filters; use the gateway `query` tool or direct retrieval when filtering is required.
 4. How many collections? One per domain. Splitting by domain reduces cross-contamination and improves precision.
 5. What query strategy? `Plain` for direct lookups; `FullRewrite` for conversational queries; `UserRewrite` when the user often refers to earlier turns; `QueryFunction` for custom transformation.
 6. What reranker? Default is `lexical` (no charge, but subject to the reranking request quota). Reflex is the default AIVAX reranker for low-latency semantic reranking. See `references/rerankers/`.
@@ -30,7 +30,7 @@ Produce a pipeline that returns the right evidence for the user's queries, with 
 ```text
 1. Create a collection
    POST /api/v1/collections
-   { "name": "<domain>", "context": "<what this collection is authoritative for>", "tags": "<comma-separated>" }
+   { "collectionName": "<domain>", "context": "<what this collection is authoritative for>", "tags": "<comma-separated>" }
 
 2. Index the documents
    PUT /api/v1/collections/<id>/documents

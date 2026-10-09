@@ -1,6 +1,6 @@
 # Transient Failure
 
-Use when an AIVAX endpoint returns a transient error: 5xx, 408, 504, or any error class the platform flags as temporary.
+Use for an unavailable dependency (`503` with `Retry-After`), a safe bounded retry after an unexpected AIVAX failure (`500`), or an evidenced temporary transport failure.
 
 ## Objective
 
@@ -8,16 +8,15 @@ Recover from a temporary failure without losing the user's work, without spendin
 
 ## Preconditions
 
-- A 5xx, 408, 504, or another clearly temporary error class.
-- The error message or AIVAX docs flag the error as transient, or the agent has prior evidence that the same call succeeded recently.
+- The actual status and error envelope have been classified; a generic message alone does not establish a transient failure.
+- The retry is safe for the operation and its possible partial effects. Dependency timeouts normally surface as `503`, not necessarily `408` or `504`.
 
 ## Decision Tree
 
-1. Is the error class clearly transient? If not, do not retry — load `references/platform-rules/error-handling.md` and classify again.
-2. Did the response include a `Retry-After` header? If yes, sleep for that duration and retry once.
-3. If no `Retry-After`, back off exponentially with jitter, starting at 500ms, doubling, capping at 30s. Three attempts is usually enough.
-4. After three failures with the same class, open the circuit breaker. Switch to a fallback or surface the error.
-5. If the call is a mutation that may have partially applied, do not retry. Inspect the resource to determine actual state. See `situations/partial-failure.md`.
+1. Is the status a client error? Do not treat an unchanged `400` as retryable, even if a dependency's message says it is temporarily unavailable. Load `references/platform-rules/error-handling.md`; route `429` to the rate-limit scenario.
+2. Could the call have partially applied? Inspect the resource before any retry. See `situations/idempotent-retry.md` and `situations/partial-failure.md`.
+3. Did the response include `Retry-After`? Wait for that interval before a safe retry. Otherwise back off exponentially with jitter, starting at 500ms, doubling, capping at 30s.
+4. After three failures with the same class, open the circuit breaker. Switch to an approved fallback or surface the error. A `500` does not guarantee that another attempt will succeed.
 
 ## Actions
 

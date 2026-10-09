@@ -27,13 +27,13 @@ A fallback model is a cheaper or more available model that meets the same capabi
 | Primary | Typical fallback | Trade-off |
 | --- | --- | --- |
 | A high-intelligence reasoning model | A medium-intelligence model | Faster, cheaper, less rigorous on hard reasoning |
-| A vision model | A text-only model with `multimodal_preprocess` | Lower quality on image-specific tasks |
+| A vision model | A text-only model with `multimodal_resolver.imageEngine` configured | Possible loss of detail on image-specific tasks |
 | A premium model | A mid-tier model from the same provider | Cheaper, similar style, possibly weaker on edge cases |
 | An integrated model | A gateway that uses a different model | More configuration, possibly different cost |
 
 ## Retry Mechanics
 
-- Exponential backoff with jitter: start at 500ms, double, cap at 30s, jitter up to 250ms.
+- Use bounded exponential backoff with jitter; honor `Retry-After` and the caller's retry budget.
 - Honor `Retry-After` when present.
 - Pass the AIVAX-specific `idempotency_key` on chat completions to correlate the retry with the same conversation record (it does not avoid a duplicate execution or charge).
 - Three attempts is the default. Five is the absolute cap.

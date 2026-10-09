@@ -16,9 +16,9 @@ Generate images from one or more prompts and handle their URLs according to the 
 ## Decision Tree
 
 1. For one image, send one `input` prompt with `count: 1` (or omit `count`).
-2. For a few alternatives, set `count` from 2 to 4 per prompt; an array of prompts produces a separate group for each input.
+2. For alternatives, increase `count` within the current [Limits](https://docs.aivax.net/docs/limits) and agreed budget; an array of prompts produces a separate group for each input.
 3. For many independent requests, load `references/batch/situations/design-batch-workflow.md`.
-4. For a reference-guided change, use up to four `referenceImages` URLs with a model that supports them. The endpoint has no mask or separate editing operation.
+4. For a reference-guided change, use `referenceImages` URLs within the current request limit, with a model that supports them. The endpoint has no mask or separate editing operation.
 5. Put style, framing, and exclusions in the prompt. This endpoint does not accept `seed`, `negative_prompt`, `quality`, or `size`; do not promise reproducible reruns.
 
 ## Construction

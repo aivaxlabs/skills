@@ -10,14 +10,15 @@ Convert media into a textual description that the main model can reason over, wi
 
 - A media input (image, audio, video, file) is in the request.
 - The main model is text-only or the agent wants the model to receive a description.
-- The account balance meets the minimum for the chosen modality (image/audio $0.10, file/video $0.50).
+- The selected path meets the account requirements in [Limits](https://docs.aivax.net/docs/limits); check [Pricing](https://docs.aivax.net/docs/pricing) before processing at scale.
 
 ## Decision Tree
 
-1. What modalities need preprocessing? Use one of the flags: `Image`, `Audio`, `Video`, `File`, `OtherFiles`, or `All`. Multiple flags are not combinable; use a single flag that covers all required modalities, or send two requests.
-2. Does the user want the main model to see the media directly? Do not preprocess. The preprocess is for text-first models.
-3. Is the same media sent repeatedly? The resolver caches descriptions by content hash. Re-sending the same content is cheaper on the second call.
-4. Is the description quality critical? Use a higher-quality describe model via `references/text-tools/situations/describe-media.md` for the critical parts, and the default preprocess for the rest.
+1. Which media types need preprocessing? Set their engines in `multimodal_resolver`; configure several types in the same object when needed. Null or omitted engines keep those types unchanged. See `references/multimodal/SKILL.md` for accepted engines.
+2. Is the task text extraction? Prefer `imageEngine: "Ocr"` or `fileEngine: "Ocr"`; for spoken words use `audioEngine: "Stt"`. Use `InferenceLow` or `InferenceHigh` when the task needs a media description rather than only extracted text.
+3. Does the user want the main model to see media directly? Leave those engines null; ensure the main model supports the remaining raw media. An empty request object disables inherited preprocessing.
+4. Is the same media sent repeatedly? Cache reuse depends on the account, content-part hash, and selected engine. Do not promise a cache hit or fresh remote content.
+5. Is description fidelity critical? Consider `InferenceHigh` for that media type, compare it with direct multimodal input, and validate the relevant facts.
 
 ## Construction
 
@@ -30,9 +31,11 @@ Convert media into a textual description that the main model can reason over, wi
       { "type": "image_url", "image_url": { "url": "<url>" } }
     ] }
   ],
-  "multimodal_preprocess": "Image"
+  "multimodal_resolver": { "imageEngine": "InferenceLow" }
 }
 ```
+
+The request resolver replaces, rather than merges with, the gateway resolver. Preserve all intended engines when overriding it. It takes precedence over deprecated `multimodal_preprocess`; absent request overrides, the gateway's `parameters.multimodalResolverParameters` applies.
 
 ## Validation
 
@@ -45,7 +48,7 @@ Convert media into a textual description that the main model can reason over, wi
 
 - Preprocess fails (modality unsupported, balance too low, content unreachable): the inference fails. Inspect the error and the resource.
 - Preprocess produces a poor description: switch to a more specific describe model or send the media directly to a multimodal model.
-- Preprocess changes the description between calls: the cache key changed. The content is the same; the cache key is the content hash, not the URL. If the URL serves different content on each call, the cache miss is expected.
+- Unexpected reuse or changed descriptions: compare the content part and selected engine. URL-backed cache keys include the supplied URL, not a freshness check of the downloaded bytes; a changed resource at the same URL does not guarantee a cache miss.
 
 ## Escalation
 

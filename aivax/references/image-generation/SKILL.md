@@ -33,9 +33,9 @@ Do not use this sub-skill for:
 The request accepts only:
 
 - `input` (required): a non-empty prompt string or a non-empty array of prompt strings.
-- `count` (optional): an integer from 1 to 4; defaults to 1 and applies to each prompt.
+- `count` (optional): an integer; defaults to one image per prompt. Check [Limits](https://docs.aivax.net/docs/limits) before increasing it.
 - `model` (required): an image model identifier from `GET /api/v1/information/image-models.json`.
-- `referenceImages` (optional): up to four safe absolute HTTP(S) image URLs. Use this only when the selected model has the reference-image capability flag in the catalog.
+- `referenceImages` (optional): safe absolute HTTP(S) image URLs, within the current request limit. Use this only when the selected model has the reference-image capability flag in the catalog.
 
 ```json
 {
@@ -60,6 +60,16 @@ The response groups generated image URLs by input prompt:
 ```
 
 Do not assume a base64 response or a URL expiration policy not stated by the endpoint.
+
+## Media Generation MCP
+
+When configured, use the Streamable HTTP server at `https://inference.aivax.net/v1/mcp/media-generation`, authenticated with an account bearer key. Keep credentials in the client's secret storage.
+
+- Discover models with `list_models({ "type": "image" })`; check reference-image support before selecting one.
+- Call `generate_image` with required `prompt` and `model`, optional integer `count` (defaults to one), and optional `reference_images` URLs. Do not copy REST's `input` or `referenceImages` field names into this tool call.
+- Read generated URLs from MCP text, not a REST `data` array. These URLs are public; do not use this path for confidential assets unless that exposure is acceptable. Saving another copy does not make the original URL private.
+- Restrict tools with `X-Mcp-Enabled-Tools: list_models, generate_image`. Omitting the header exposes all media tools; an empty or unrecognized allowlist exposes none. Refresh MCP discovery after changing it.
+- Generation remains billable. Consult [Pricing](https://docs.aivax.net/docs/pricing) and [Limits](https://docs.aivax.net/docs/limits) rather than hardcoding charges or quotas.
 
 ## Models
 

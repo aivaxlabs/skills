@@ -10,7 +10,7 @@ Any AIVAX sub-skill can fail. The patterns for surviving failure are reusable: t
 ## Operating Files
 
 - `situations/rate-limit-429.md`: how to handle 429 from any endpoint.
-- `situations/transient-failure.md`: 5xx, 408, 504, and similar temporary errors.
+- `situations/transient-failure.md`: dependency failures (`503`), safe retries of unexpected failures (`500`), and evidenced temporary transport failures.
 - `situations/idempotent-retry.md`: how to retry without creating duplicates.
 - `situations/partial-failure.md`: a chain of calls where one stage failed mid-way.
 
@@ -20,8 +20,8 @@ This sub-skill defines the patterns. The decision of when to apply them belongs 
 
 ## Resilience Decision Order
 
-1. **Is the error class transient?** Load `situations/transient-failure.md`. If not, do not retry — the error will not resolve on its own.
-2. **Is the error class a rate limit?** Load `situations/rate-limit-429.md`. Apply exponential backoff with jitter; respect the `Retry-After` header when present.
+1. **What failed?** Classify the actual status and response with `references/platform-rules/error-handling.md`. Correct invalid input, auth, permission, or balance/storage gates before retrying; an upstream request-content rejection is also a client error.
+2. **Is it a rate limit or a service failure?** For `429`, load `situations/rate-limit-429.md`. For `503`, honor `Retry-After` and load `situations/transient-failure.md`; for `500`, use that same bounded policy only when retrying is safe. Do not assume every `5xx` will resolve or every provider error is retryable.
 3. **Is the call idempotent?** Load `situations/idempotent-retry.md`. If the call mutates state and is not idempotent, retry only with user approval.
 4. **Did a chain fail partway through?** Load `situations/partial-failure.md`. Decide whether to rollback, skip the failed stage, or report partial state.
 

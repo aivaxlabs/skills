@@ -19,8 +19,17 @@ This sub-skill owns text-to-speech and speech-to-text generation through AIVAX. 
 
 Both endpoints accept AIVAX API keys (private or public, depending on the workflow).
 
-- TTS accepts `model`, `input`, optional `voice`, optional `format`, and optional `raw`. With the default `raw=false`, it returns the standard JSON envelope whose `data` contains `{ "format", "mimeType", "data" }`, with audio base64 in `data`. Binary audio is returned only with `raw=true` (`OpenIndexer.Alpha2/Api/Modules/Generations/SpeechGenerationsApi.cs:59-126`).
+- TTS accepts `model`, `input`, optional `voice`, optional `format` (`mp3`, `wav`, or `ogg`; default `wav`), and optional `raw`. With the default `raw=false`, it returns the standard JSON envelope whose `data` contains `{ "format", "mimeType", "data" }`, with audio base64 in `data`. Binary audio is returned only with `raw=true`. Do not send MCP-only `instructions`, or invent `speed`, `language`, `sample_rate`, or `metadata` controls for this REST endpoint.
 - STT accepts only optional `model`, required `input_audio.data`, required `input_audio.format`, and optional `language`; diarization is not a request parameter (`OpenIndexer.Alpha2/Api/Modules/Generations/AudioTranscriptionsApi.cs:58-76`). Use `GET /api/v1/information/audio-transcription-models.json` for the live STT catalog (`OpenIndexer.Alpha2/Api/Modules/InformationApi.cs:63`).
+
+## Media Generation MCP
+
+When configured, use the Streamable HTTP server at `https://inference.aivax.net/v1/mcp/media-generation`, authenticated with an account bearer key. Keep credentials in the client's secret storage.
+
+- Discover TTS models with `list_models({ "type": "audio" })`, then call `generate_speech` with required `input` and `model`, and optional `voice` and `instructions` (tone, emotion, pacing).
+- The result is MCP text containing a public MP3 URL, not inline audio or the REST JSON envelope. It has no `format` or `raw` option. Prefer REST when public hosting is unsuitable or WAV/OGG output is needed.
+- Narrow discovery with `X-Mcp-Enabled-Tools: list_models, generate_speech`. Omitting the header exposes all media tools; an empty or unrecognized allowlist exposes none. Refresh MCP discovery after changing it.
+- This server does not transcribe audio; use the STT endpoint for that task. Generation remains billable; consult [Pricing](https://docs.aivax.net/docs/pricing) and [Limits](https://docs.aivax.net/docs/limits).
 
 ## When To Use Speech
 
@@ -38,7 +47,7 @@ Do not use this sub-skill for:
 
 ## Models
 
-Speech models vary by language coverage, voice quality, latency, and cost. Verify TTS models with `aivax_list_models` and STT models with `GET /api/v1/information/audio-transcription-models.json`. Common axes:
+Speech models vary by language coverage, voice quality, latency, and cost. Verify TTS models with `GET /api/v1/information/speech-models.json` or the media MCP's `list_models` with `type: "audio"`; use `GET /api/v1/information/audio-transcription-models.json` for STT. Do not confuse these with the text-model catalog. Common axes:
 
 - Language coverage: multilingual models cover more languages but may be weaker per language than a monolingual model.
 - Voice quality: some models are tuned for natural-sounding speech, others for clarity or speed.
@@ -57,8 +66,8 @@ Both endpoints have per-account quotas. Verify before running large jobs. For ba
 
 ## Limits
 
-- The account balance must meet the minimum for media generation (typically $0.10 for audio).
-- Some models support only a subset of languages or voices. Verify with `aivax_list_models`.
+- Check current balance requirements and quotas in [Limits](https://docs.aivax.net/docs/limits), and charges in [Pricing](https://docs.aivax.net/docs/pricing).
+- Some models support only a subset of languages or voices. Verify the selected speech model's documentation.
 - Long audio can hit a per-request duration limit. Split into segments when needed.
 
 ## Escalation

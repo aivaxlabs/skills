@@ -28,7 +28,7 @@ Produce a messages array that the model can act on correctly, that fits the cont
 - **Tool messages**: the `tool` role message has `tool_call_id` matching the assistant's `tool_calls[i].id`, and `content` is the tool result. Do not include unrelated text in a tool message.
 - **Multimodal content**: `content` may be a string or an array of parts. Each part has a `type` (`text`, `image_url`, `video_url`, `input_audio`, `file`). See `references/multimodal/`.
 - **Length**: keep each message under the model context window. For long contexts, prefer truncation with a clear summary over silent drops.
-- **Caching**: keep the system message and any long prefix identical across calls when input caching matters. The cached input cost is typically 5x to 10x cheaper.
+- **Caching**: keep the system message and any long prefix identical across calls when input caching matters. Check the selected model's cache rules in [Pricing](https://docs.aivax.net/docs/pricing); do not assume a fixed discount.
 
 ## Content Hygiene
 

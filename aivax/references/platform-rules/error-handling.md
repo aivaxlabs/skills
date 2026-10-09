@@ -4,11 +4,11 @@ AIVAX errors fall into a small number of classes. The agent should classify befo
 
 ## First Response Pattern
 
-1. Preserve the exact status code, error code, and short message. Do not paraphrase away identifiers.
+1. Preserve the exact status code, available error code, safe short message, and `Retry-After`. Read either the standard `error` string with optional `details` or the OpenAI-compatible `error.message`, `error.type`, and `error.code` object. Auth/balance responses can use the standard envelope even on OpenAI-compatible routes.
 2. Do not retry mutations blindly. Re-read the target resource; the error may be caused by stale state.
 3. Search AIVAX context (`aivax_search_context` or the public docs) if the error names an unknown field, endpoint, state, or enum.
 4. If the error involves permission, auth, or plan limits, inspect account state before changing any resource.
-5. Decide the class using the table below. Escalate to `references/resilience/` for the retry policy.
+5. Decide the class using the guidance below. Escalate to `references/resilience/` for the retry policy.
 
 ## Error Classes
 
@@ -25,31 +25,44 @@ AIVAX errors fall into a small number of classes. The agent should classify befo
 - Check whether the resource belongs to another account, environment, or region.
 - Avoid creating duplicates until the missing resource is confirmed.
 
-### Validation or Schema Error (400, 422)
+### Invalid Request (400; endpoint-specific 422)
 
+- Malformed input and request-content rejections from a model or dependency return `400`; do not retry the unchanged payload, even if the message mentions a temporarily unavailable service.
+- Treat `422` according to the endpoint contract; it is not the default schema-validation status.
 - Compare the payload to the live API reference with `aivax_search_context`.
 - Remove fields that were copied from a full object but are not part of the update.
 - Check enum casing, array replacement semantics, and date format (ISO 8601 UTC).
 - Re-read the current resource; the agent may have patched a field that has since been replaced or removed.
 
-### Insufficient Balance, Quota, or Plan Limit (402, 429)
+### Balance Or Storage Gate (402), Rate Limit (429)
 
-- Inspect `GET /api/v1/information/balance` and the relevant `usage` period.
-- Quotas may be per-minute request, token-rate, or storage. Plans have commission multipliers (Free 1.25x, Pro 1.05x, Max 1.00x) that affect how balance translates to capacity.
-- Do not start large jobs or media-heavy inference until cost is understood.
-- For 429 specifically, load `references/resilience/situations/rate-limit-429.md`.
+- Inspect `GET /api/v1/information/balance` and the relevant `usage` period. `402` can indicate insufficient balance or exceeded storage; use the message to distinguish them.
+- `429` indicates a rate limit, not a request to top up. Balance and usage are not live rate-limit counters, and `Retry-After` is not guaranteed on a rate-limit response.
+- Consult [Pricing](https://docs.aivax.net/docs/pricing) and [Plans and limits](https://docs.aivax.net/docs/limits), not fixed commercial figures in a skill. Do not start large jobs until cost is understood.
+- For `429`, load `references/resilience/situations/rate-limit-429.md`.
 
-### Provider or Model Error (5xx with provider in the message)
+### Unavailable Dependency (503)
 
-- Use `aivax_list_models` to verify the model is available on the current plan.
-- Inspect gateway model, base address, and api key without exposing secrets.
-- Check recent conversations for repeated failures; if the failure is systemic, do not keep retrying.
+- Dependency failures and HTTP dependency timeouts normally return `503` with `Retry-After`. A vendor name is not required in the message; classify by status and code, not provider-name matching.
+- Dependency-side auth, balance, timeout, and throttling failures can surface as `503`; do not mistake them for the caller's `401`, `402`, `403`, or `429`.
+- For model failures, verify availability with `aivax_list_models` and inspect gateway model, base address, and key configuration without exposing secrets.
+- Use bounded retries through `references/resilience/situations/transient-failure.md`; honor `Retry-After` and inspect mutation state first.
 
-### Timeout or Latency (504, 408, or slow 200)
+### Unexpected AIVAX Failure (500)
 
-- Inspect recent conversations, usage, RAG transactions, tool calls, and batch job state.
-- Do not raise limits before finding the bottleneck; raise limits last.
+- The response uses a generic message, not internal failure details. Do not treat this as a payload-validation failure or guess a root cause from the text.
+- Preserve request identifiers; retry only when safe and bounded. Escalate repeated failures with `references/observability/situations/diagnose-degradation.md`.
+
+### Timeout Or Slow Response
+
+- Do not require `408` or `504` to identify a dependency timeout; it normally surfaces as `503`. If another layer returns a timeout status or the connection drops, preserve that evidence and inspect operation state before retrying.
+- Inspect recent conversations, usage, RAG transactions, tool calls, and batch job state. Do not raise limits before finding the bottleneck.
 - Cross-reference with `references/observability/situations/diagnose-degradation.md`.
+
+### OpenAI-Compatible Error Codes And Streams
+
+- For HTTP exception responses, `error.code` is `invalid_request_error` for client failures, `service_unavailable` for dependency failures, or `server_error` for unexpected AIVAX failures. Use HTTP status to distinguish auth, balance, permission, and rate-limit cases within `invalid_request_error`.
+- Once chat-completion streaming starts, inspect error chunks even after a successful HTTP status. A chunk can contain `finish_reason: "error"` and an `error` object before `[DONE]`; its code may be provider-specific. Neither the initial status nor `[DONE]` proves successful generation.
 
 ### Tool or MCP Failure (tool or MCP surfaced inside a chat completion)
 
@@ -67,4 +80,4 @@ AIVAX errors fall into a small number of classes. The agent should classify befo
 - Never swallow an error class into a generic "failed" message. Report the class, the IDs, and the next action.
 - Never log secrets when reporting an error. The hook key, provider key, and access key are always redacted.
 - For a chain of calls, the first error stops the chain. Do not continue executing later steps if an earlier step failed; partial state may be more dangerous than full rollback.
-- For destructive operations, the error response is the only signal that the operation may have been partially applied. Inspect the resource before deciding to retry.
+- An error response or lost connection does not prove that a mutation had no effect. Inspect the resource before deciding to retry.

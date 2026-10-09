@@ -8,18 +8,18 @@ Produce an audio file that matches the input text, in the requested voice, langu
 
 ## Preconditions
 
-- A TTS model is available on the account. Verify with `aivax_list_models`.
+- A TTS model is available on the account. Discover it with `GET /api/v1/information/speech-models.json` or the media MCP's `list_models({ "type": "audio" })`.
 - The account balance is sufficient.
 - The agent has a place to store the audio (S3, GCS, local disk, the user's CMS).
 
 ## Decision Tree
 
 1. What is the language? Pick a model that covers it natively. Multilingual models are a fallback when a native model is not available.
-2. What is the voice? Pick a voice that matches the brand or the user's preference. The catalog usually lists the available voices per model.
-3. What is the output format? MP3 is the most portable. WAV is higher fidelity. OGG and Opus are smaller.
-4. What is the speed? 1.0 is normal. Faster is better for notifications; slower is better for clarity.
-5. Is the text long? Long inputs may hit a per-request character limit. Split into segments and concatenate, or use a streaming TTS endpoint.
-6. Does the user want SSML or prosody control? Verify the model supports it with `aivax_search_context` before relying on it.
+2. What is the voice? Pick a supported voice that matches the user's preference, or omit `voice` for the model default. Check the model documentation; the speech catalog does not list voice options.
+3. What is the delivery path? REST supports `mp3`, `wav`, and `ogg` (default `wav`) as inline binary or base64 JSON. The media MCP returns a public MP3 URL; use it only when public hosting is appropriate.
+4. Are tone or pacing instructions needed? Only MCP `generate_speech` exposes `instructions`; REST has no `speed` or `instructions` control. Verify the selected model supports the intended guidance.
+5. Is the text long? Check [Limits](https://docs.aivax.net/docs/limits) and [Pricing](https://docs.aivax.net/docs/pricing). Split and concatenate if needed; do not assume this endpoint streams audio.
+6. Does the user want SSML or voice customization? Check the selected model's documented capabilities before promising them.
 
 ## Construction
 
@@ -29,19 +29,18 @@ Produce an audio file that matches the input text, in the requested voice, langu
   "input": "<text>",
   "voice": "<voice-id>",
   "format": "mp3",
-  "speed": 1.0,
-  "metadata": { "trace_id": "tr_..." }
+  "raw": true
 }
 ```
 
-Some models accept `language` (when not auto-detected) and `sample_rate`. Verify with `aivax_search_context`.
+Do not add `language`, `sample_rate`, `speed`, or `metadata` to this REST request; the handler does not consume them. For MCP, call `generate_speech` with `input`, `model`, optional `voice`, and optional `instructions` instead; do not send `raw` or `format`.
 
 ## Response Handling
 
-1. The response is an audio file in the requested format.
-2. Store the audio in the user's storage of choice.
-3. Pass the stable URL to the user or the downstream system.
-4. Record the model, voice, input, and audio URL in the trace.
+1. With REST `raw: true`, read binary audio. Otherwise decode base64 from `data.data` and check `data.format` and `data.mimeType`. MCP instead returns text containing a public MP3 URL.
+2. Store the audio only when the user's workflow requires it; verify the saved file and its content type.
+3. Deliver the file or returned URL without promising an undocumented URL lifetime.
+4. Record model, voice, and output location in the caller's trace, keeping sensitive input out of logs.
 
 ## Validation
 

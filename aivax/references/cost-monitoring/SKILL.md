@@ -40,7 +40,9 @@ Cost monitoring works through account usage data and resource attribution:
 
 ## Plan Pricing
 
-Consult the current public pricing and limits pages for plan adjustments. Included service items consume their own allowance rather than balance and do not appear as zero-cost billing entries. Uncovered items are charged at applicable account and plan rates; compare billed usage with the separate subscription consumption indicators.
+Consult [Pricing](https://docs.aivax.net/docs/pricing) and [Plans and limits](https://docs.aivax.net/docs/limits) for plan adjustments. Included service items consume their own allowance rather than balance and do not appear as zero-cost billing entries. Uncovered items are charged at applicable account and plan rates; compare billed usage with the separate subscription consumption indicators.
+
+For a `Custom` account, confirm account-specific terms with the authorized administrator rather than assuming standard-plan pricing or unlimited throughput. Keep billing, subscription allowances, and request rate limits separate; a rate-limit adjustment is not a balance top-up or a pricing change. Do not copy negotiated terms or commercial figures into reusable skills.
 
 ## Cost Discipline
 
@@ -69,4 +71,4 @@ Consult the current public pricing and limits pages for plan adjustments. Includ
 - A cost optimization is requested: load `situations/optimize-spend.md`.
 - A new resource is unusually expensive: load `references/observability/situations/diagnose-degradation.md` and confirm the resource is not in a failure loop.
 - A service allowance is exhausted: check `subscriptionModelUsage.consumptions` for its type, usage share, and reset time; compare subsequent billed items separately before recommending a change.
-- The request fails with 429 or a transient error: load `references/resilience/situations/rate-limit-429.md`.
+- The request fails with 429 or a transient error: load `references/resilience/` and classify before retrying.

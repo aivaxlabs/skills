@@ -9,7 +9,7 @@ Get the model's reasoning over video content with the right fidelity/cost trade-
 ## Preconditions
 
 - The model supports video input. Verify with `aivax_list_models`.
-- The account balance is at least $0.50 (the minimum for video input).
+- The request meets the current video requirements in [Limits](https://docs.aivax.net/docs/limits); consult [Pricing](https://docs.aivax.net/docs/pricing) for charges.
 - The video is reachable (URL) or can be base64-encoded (data URL).
 
 ## Decision Tree
@@ -51,7 +51,7 @@ Frame sampling:
 
 ## Failure Modes
 
-- The model returns a content error: the video is not reachable, the format is unsupported, or the balance is below $0.50. Inspect the error and the resource.
+- The model returns a content error: the video is not reachable, the format is unsupported, or the account does not meet current balance requirements. Inspect the error and the resource.
 - The model returns a generic answer: the prompt is too vague. Name the time range, the action of interest, or the speaker.
 - The model returns a refusal: moderation is blocking. Do not bypass.
 

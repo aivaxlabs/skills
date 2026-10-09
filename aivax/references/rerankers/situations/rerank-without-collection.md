@@ -32,8 +32,7 @@ POST /api/v1/generations/rerank
     "..."
   ],
   "top_n": 5,
-  "min_score": 0.2,
-  "metadata": { "trace_id": "tr_..." }
+  "min_score": 0.2
 }
 ```
 
@@ -41,17 +40,17 @@ Omit `model` to use Reflex by default. Check the live catalog for document limit
 
 ## Response Handling
 
-1. The response is a list of results in descending relevance order.
+1. Read the raw response object's `results` array, not a `data` envelope. Results are in descending relevance order.
 2. Each result has the original zero-based `index`, the `relevance_score`, and the `document.text`.
 3. For Reflex, `usage` reports `input_tokens`, `cached_input_tokens`, `total_tokens`, and `cost`. Other models can report different usage fields. Covered Reflex calls report no account charge and appear in subscription consumption, not billing history.
 4. The agent uses the result to feed the top-N to the next stage of the pipeline (typically a chat completion).
 
 ## Validation
 
-- The response is a list in descending relevance order.
+- The response's `results` array is in descending relevance order.
 - The result's `index` matches the original document's position.
 - The relevance score is between 0 and 1.
-- The trace ID is preserved.
+- The response `id` is recorded with the application's trace; request metadata is not echoed.
 - The usage object is inspected to confirm cache hits when expected.
 
 ## Failure Modes

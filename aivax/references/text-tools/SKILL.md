@@ -22,7 +22,7 @@ This sub-skill owns AIVAX's non-chat text tools: document classification, text s
 None of these endpoints accepts a `model` field. Their request bodies and response shapes are distinct:
 
 - Classification accepts `documents` and `labels`; the response envelope contains `{ "results": [...] }` in `data` (`OpenIndexer.Alpha2/Api/Modules/Generations/ClassificationsApi.cs:39-64,74-81`).
-- Segmentation accepts `documents` and optional `sanitize`; the response envelope contains `{ "result": [...], "usage": {...} }` in `data` (`OpenIndexer.Alpha2/Api/Modules/Generations/SegmenterApi.cs:57-61,154-160`).
+- Segmentation accepts `documents` and optional `sanitize` (default `false`); inspect `data.result` by each item's `index`, with `count` and `segments`, and `data.usage.processing_units` / `cost`. `sanitize: true` may omit content and can return per-document `error` entries; do not assume HTTP success means every document succeeded. See `situations/segment-text.md`.
 - Media description accepts `input`, optional `extractionGuidance`, and optional `preset`; `preset` is `auto` (default) or `high`. The response envelope's `data` is an array with one resolver-generated object per input item (`OpenIndexer.Alpha2/Api/Modules/Generations/MediaDescriptionsApi.cs:117-121,174`).
 
 ## When To Use Text Tools
@@ -42,11 +42,11 @@ Do not use this sub-skill for:
 
 ## Quotas
 
-Text-classification and text-segmentation quotas each count every item in the request's `documents` array, not each HTTP request. A request that sends 100 documents consumes 100 quota items. Plan accordingly; for large jobs, load `references/batch/`.
+Text-classification and text-segmentation quotas each count every item in the request's `documents` array, not each HTTP request. Do not confuse the quota count with billing units; plan batches around the live account limits.
 
 ## Cost Awareness
 
-These tools are priced per item, not per token. A request that sends 1,000 documents can cost more than a long chat completion. Set a cost cap with the user before running large jobs.
+Verify the current pricing for the selected tool rather than assuming per-document billing. Segmentation reports processing units and account cost in `data.usage`; inspect them and set a cost cap with the user before running large jobs.
 
 ## Validation
 
