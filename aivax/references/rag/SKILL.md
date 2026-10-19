@@ -32,7 +32,8 @@ Do not use this sub-skill for:
 
 ## Core Concepts
 
-- **Collection**: a semantic knowledge library that stores documents and indexes them with embeddings.
+- **Collection**: a semantic knowledge library that stores documents and indexes them with embeddings. Names starting with `@` are reserved for system collections (for example `@memories`, which holds long-term user memories; see `references/memories/`): creating or renaming to such a name, or editing or generating context for one, returns 403. Do not use them for application knowledge.
+- **Embedder**: one platform-wide embedder indexes and queries every collection; it is not selectable per collection or request, and it is not part of the model catalog. Do not look for an embedding model setting.
 - **Document**: a single piece of collection knowledge, such as an article chunk, a manual section, a product description, or another RAG item.
 - **Embedding**: a vector representation of the document, computed at indexing time. Semantic queries embed the search terms; filter-only requests do not.
 - **Semantic search**: the process of finding the most relevant documents for a query, by embedding similarity and (optionally) a reranker.
@@ -47,7 +48,7 @@ Do not use this sub-skill for:
 - `POST /api/v1/collections`: create an empty collection from `collectionName` with optional `context` and `tags`.
 - `GET /api/v1/collections/<id>`: view a collection.
 - `GET /api/v1/collections/<id>/export.jsonl`: export all documents as JSONL.
-- `GET /api/v1/collections/<id>/documents`: browse documents.
+- `GET /api/v1/collections/<id>/documents`: browse documents (query `filter`, `order_by`, `state`). Items carry `id`, `createdAt`, `updatedAt`, `name`, `reference`, `tags`, `contentsPreview`, `indexState`, and `approximateTokenCount` (an estimate from text length, useful for spotting documents that need segmentation).
 - `GET /api/v1/collections/<id>/documents/<document-id>`: view one document.
 - `GET /api/v1/collections/<id>/transactions`: list recent, low-quality, or high-quality transactions.
 - `GET /api/v1/collections/<id>/transactions/<transaction-id>`: view one transaction in detail.
@@ -56,13 +57,14 @@ Do not use this sub-skill for:
 - `POST /api/v1/collections/<id>/deduplication?delta=<level>`: start the corresponding duplicate removal (destructive; require explicit approval).
 - `PUT /api/v1/collections/<id>`: edit collection metadata.
 - `PUT /api/v1/collections/<id>/documents`: upsert one document.
-- `POST /api/v1/collections/<id>/documents`: import JSONL through the multipart file field `documents` (route name: `system.v1.documents.index-jsonl`, not a URL suffix). The optional `insert-mode=sync` also deletes documents absent from the upload; use only with explicit authorization.
+- `GET /api/v2/collections/<id>/documents/index-jsonl` (WebSocket upgrade): preferred JSONL import for new integrations. Send text messages with complete JSONL lines (`docId` and `text` required; optional `__ref`, `__tags`, `__meta`) and finish with a line containing only `END`. The server replies with JSON `progress` (`committed`, `updated`, `skipped`), `completed` (`received`, `updated`, `skipped`, `removed`), or `error` (`message`, `line`, `committed`) messages. Lines are committed and queued in blocks, so after a failure or disconnect before `END`, resend only the lines after the reported `committed` count. Only one import per collection runs at a time (409 when another does not finish in time), and a long pause between messages closes the connection. Browsers can authenticate with the `api-key` query parameter. `insert-mode=sync` applies as below.
+- `POST /api/v1/collections/<id>/documents`: deprecated multipart JSONL import through the file field `documents` (route name: `system.v1.documents.index-jsonl`, not a URL suffix); it accepts a smaller per-request line limit than the WebSocket import (see Plans and Limits). The optional `insert-mode=sync` (both imports) also deletes documents absent from the upload; use only with explicit authorization.
 - `POST /api/v1/collections/<id>/documents/media/chunk`: append a binary chunk identified by the required media-upload headers.
 - `POST /api/v1/collections/<id>/documents/media/complete`: queue processing of the uploaded media chunks.
 - `DELETE /api/v1/collections/<id>/documents/<document-id>`: delete one document; `include-references` also deletes documents sharing its reference (destructive; require explicit approval).
 - `DELETE /api/v1/collections/<id>`: delete the collection and its documents (destructive; require explicit approval).
 - `DELETE /api/v1/collections/<id>/reset-only`: delete every document while retaining the collection configuration (destructive; require explicit approval).
-- `DELETE /api/v1/collections/<id>/vectors-only`: delete and rebuild the vector index while preserving documents (destructive mutation; require explicit approval).
+- `DELETE /api/v1/collections/<id>/vectors-only`: clear the vectors of documents that are not indexed or were embedded by a different embedder, and re-queue them for indexing; documents and already-current vectors are preserved. Returns how many documents were enqueued (mutation; require explicit approval). It does not force a rebuild of healthy vectors.
 
 ## Choose The Retrieval Mode
 
@@ -111,6 +113,7 @@ Use Media Injector when the useful knowledge sits inside a source file (PDF repo
 
 - Inspect `/query` results in `data`, or `/answer` results in `data.queryResults` alongside `data.answer`.
 - Matched collection documents include `timestamps.createdAt` and `timestamps.updatedAt` as date-time strings in `yyyy-MM-ddTHH:mm:ss` form, without a timezone suffix. Do not read them as Unix timestamps or silently assume UTC; referenced-document entries do not carry these fields.
+- Imported or upserted documents are searchable only after `indexState` is `indexed`; confirm with the browse `state` filter before testing retrieval.
 - The retrieved documents match the expected evidence and filter. Filter-only results prove eligibility, not semantic relevance.
 - The generated answer cites the retrieved documents.
 - The grounding score is acceptable. See `situations/evaluate-groundedness.md`.
@@ -119,7 +122,8 @@ Use Media Injector when the useful knowledge sits inside a source file (PDF repo
 ## Limits
 
 - Per-collection and per-account quotas exist. Plan limits control collection count, search rate, insertion rate, and JSONL import size.
-- Search and insertion embeddings share the plan's daily RAG embedding allowance. Each uncached embedding item is either fully covered or billed normally; cached query embeddings do not consume it. Included items appear in subscription consumption, not billing history.
+- Search and insertion embeddings share the plan's daily RAG embedding allowance. Each uncached embedding item is either fully covered or billed normally; cached query embeddings do not consume it. Included items appear in subscription consumption, not billing history. Billed embeddings are charged from the cost actually reported for that embedding call, not from a catalog price, so use the Pricing page and the account's usage records rather than estimating from a model list.
+- Indexing is asynchronous and shared across accounts. Queued documents are drained in batches that interleave collections, so a large import in one collection does not starve others but a backlog still delays searchability. A failed embedding batch stays `queued` and is retried by the next run; the document is not lost and not marked as an error. If documents stay `queued` for long, wait and recheck before re-uploading; re-uploading unchanged text does not speed indexing.
 - Reflex reranking uses a separate allowance; answer generation and other rerankers are billed separately. Allowances do not bypass balance requirements or rate limits.
 - Some query strategies are more expensive than others. `FullRewrite` and `UserRewrite` consume tokens; `Plain` does not.
 

@@ -42,6 +42,8 @@ Cost monitoring works through account usage data and resource attribution:
 
 Consult [Pricing](https://docs.aivax.net/docs/pricing) and [Plans and limits](https://docs.aivax.net/docs/limits) for plan adjustments. Included service items consume their own allowance rather than balance and do not appear as zero-cost billing entries. Uncovered items are charged at applicable account and plan rates; compare billed usage with the separate subscription consumption indicators.
 
+Keep four things separate: prepaid balance (credit top-ups), the subscription fee (a plan invoice, not balance), service allowances, and rate limits. A subscription charge appears in `invoices` of the usage response with type `SubscriptionPayment` or `SubscriptionRenewal`; it does not reduce `balance` and is not a usage spike. Only `CreditAddition` invoices add balance. Top-ups and payment methods are handled in the account console; for subscription state and invoices load `references/account/situations/manage-subscription.md`.
+
 For a `Custom` account, confirm account-specific terms with the authorized administrator rather than assuming standard-plan pricing or unlimited throughput. Keep billing, subscription allowances, and request rate limits separate; a rate-limit adjustment is not a balance top-up or a pricing change. Do not copy negotiated terms or commercial figures into reusable skills.
 
 ## Cost Discipline
@@ -62,6 +64,7 @@ For a `Custom` account, confirm account-specific terms with the authorized admin
 ## Limits
 
 - Balance is cached briefly; usage reflects recorded billing rows, while included items appear in subscription consumption. Do not promise immediate cost deltas.
+- Batch items using a bare model name take the cheapest provider; batch calls never use subscription allowances for inference coverage and are billed under batch categories with workflow, job, and item resources.
 - A change in cost may be the intended effect of a previous change (a model swap, a new gateway, a new chat client). Verify the history before reverting.
 - Some optimizations (storage cleanup, batch finish, model swap) are destructive. Confirm with the user.
 

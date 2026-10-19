@@ -17,7 +17,7 @@ Recover from failure without losing the user's work, without spending more than 
 2. Is the error class transient? Load `references/resilience/situations/transient-failure.md` and apply the retry policy.
 3. Is the error a 429? Load `references/resilience/situations/rate-limit-429.md` and apply the rate-limit policy.
 4. Is the error a model or provider error (model not available, model returned an error class)? Decide whether to swap to a fallback model.
-5. Is the error a validation or schema error? The fix is not a retry. Adjust the payload, the schema, or the model.
+5. Is the error a validation or schema error? The fix is not a retry. Adjust the payload, the schema, or the model. This includes provider rejections of the request contents (for example an exceeded context or unsupported media): AIVAX reports them as client errors with the provider's message, including on integrated gateways and in stream error chunks. Other upstream failures on integrated gateways surface in streams as a generic "provider unavailable" message; those are the retryable ones. Failures reading the HTTP request itself (such as a dropped or malformed connection) are client errors, not `server_error`; do not retry them unchanged.
 6. After three failed retries, open the circuit breaker. Do not retry further.
 
 ## Fallback Model

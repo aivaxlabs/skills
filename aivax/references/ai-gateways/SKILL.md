@@ -56,7 +56,8 @@ A gateway has:
 - `parameters.knowledgeUseMetaDescriptions`: include metadata descriptions in retrieved context.
 - `parameters.temperature`, `parameters.topP`, `parameters.presencePenalty`, `parameters.frequencyPenalty`, `parameters.stop`, `parameters.maxCompletionTokens`, `parameters.reasoningEffort`, `parameters.verbosity`: sampling and output.
 - `parameters.userPromptTemplate`, `parameters.assistantPrefill`, `parameters.includePrefillingInMessages`: prompt shaping.
-- `parameters.systemInstructionsSources`: external text resources appended to the system prompt.
+- `parameters.systemInstructionsSources`: external text resources appended to the system prompt. Final order is deterministic: base `systemInstruction`, then MCP-source instructions, then the sources in array order. Put the most important source first and do not rely on fetch speed.
+- `parameters.hideToolsWithoutSkill` and `parameters.alwaysVisibleTools`: with the flag on, a skill's `allowedToolsNames` become visible only after a `read_skill` call that actually returned that skill's content. Blocked, rejected, or failed `read_skill` calls expose nothing. Only the latest `read_skill` result counts, so activate every needed skill in one call; a later call (including one with an empty `skills` list) replaces the earlier visible set. `read_skill` and `alwaysVisibleTools` stay visible.
 
 ## Endpoints
 
@@ -100,6 +101,7 @@ A gateway is the dominant cost driver for most accounts. The model choice, the R
 - `PATCH /api/v1/ai-gateways/<id>` shallow-merges top-level gateway fields and top-level `parameters` fields. Send only the fields that should change.
 - Arrays are usually replacements during patching. Verify with `aivax_search_context` when the merge behavior is unclear.
 - Public keys cannot use gateway slugs. Use the full UUID.
+- Account-level `zeroDataRetentionOnly` applies to integrated gateways only: a model without a zero-retention provider fails with a client error naming the restriction, regardless of `allowedProviders`. BYOK gateways are unaffected. Chat completions accept `allow_logging: false` per request to skip conversation logging (private keys only); gateway edits are not needed for it.
 
 ## Escalation
 

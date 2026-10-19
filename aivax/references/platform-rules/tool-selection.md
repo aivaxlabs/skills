@@ -102,6 +102,16 @@ DELETE /api/v1/accounts/api-key/<key-id>
 
 PUT  /api/v1/accounts
 POST /api/v1/accounts/roll-salt
+
+GET  /api/v1/subscriptions
+POST /api/v1/subscriptions/plan
+POST /api/v1/subscriptions/cancel
+POST /api/v1/subscriptions/resubscribe
+GET  /api/v1/subscriptions/payment-methods
+POST /api/v1/subscriptions/payment-methods/portal
+
+GET  /api/v1/notifications
+GET  /api/v1/notifications/unread/count
 ```
 
 ## When To Use The MCP And When To Use Direct HTTP

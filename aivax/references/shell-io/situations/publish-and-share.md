@@ -44,5 +44,5 @@ GET /api/v1/shell/io/file/public-address?path=<file>
 
 ## Limits
 
-- The upload endpoint declares a 100 MB request cap; global enforcement may still apply.
+- The upload endpoint declares a request size cap in its description; global enforcement may still apply (see Plans and Limits).
 - Nonexistent files return 404 on details and public-address calls.

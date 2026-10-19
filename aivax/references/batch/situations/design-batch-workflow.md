@@ -54,7 +54,8 @@ Reuse or minimally edit an existing matching workflow rather than creating dupli
 
 - Workflow instruction has one consistent job for each item.
 - Schema accepts the intended useful result and rejects malformed output without requiring unsupported detail.
-- Model or gateway is available and appropriate for the target cost/quality balance.
+- Model or gateway is available and appropriate for the target cost/quality balance. A bare model name takes the cheapest provider, which can differ in latency or variant from a gateway with the default routing; use a gateway to control routing.
+- If the account restricts inference to zero data retention providers, the model has an eligible provider.
 - Failure thresholds and retries reflect the risk of the operation.
 - A 5–20 item pilot is ready through `situations/run-and-monitor-job.md`.
 

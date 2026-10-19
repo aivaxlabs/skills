@@ -52,6 +52,10 @@ Compare `modelName`, `providerName`, `modelVariant`, and `routingOption` to dist
 
 In a conversation detail, inspect `usageObject.prompt_tokens`, `usageObject.completion_tokens`, `usageObject.cost`, and `usageObject.performance.total_time` for the corresponding measurements. Do not assume the listing's derived fields are also top-level detail fields. Preserve unknown provider, policy, or usage values as unknown.
 
+## Missing Records Are Not Failures
+
+A conversation exists only when it was stored. No record is written when the account has `allowConversationsLogging` off, when the chat-completion request sent `allow_logging: false`, or for batch item, image generation, and media description calls. RAG transaction telemetry also follows `allowConversationsLogging`. Before calling a missing record a failure or data loss, check those settings (`references/account/`) and fall back to the response, usage, batch item, or error evidence. Changing logging settings only to investigate needs explicit user approval, because it changes what is retained.
+
 ## Bulk Export Options
 
 - `period`: `2h`, `1d`, `7d`, `30d`.

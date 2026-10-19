@@ -7,6 +7,8 @@ description: Work with the per-account shell file sandbox — list, download, in
 
 This sub-skill owns the shell file sandbox. The sandbox is an isolated filesystem scoped by the authenticated account and the `X-Shell-User-Id` header. Different shell user IDs never see each other's files, even under the same account.
 
+The same sandbox backs the gateway's virtual Bash (`parameters.enableBash`) when `bashOptions.allowDataPersistence` is on: the shell user ID here must equal the end user's external ID used in the conversation, and the files appear to the model under `/home/workspace`. Without persistence, or without an external user ID, the model's shell filesystem is temporary and nothing appears here.
+
 All routes share the prefix `/api/v1/shell/io` and require the `X-Shell-User-Id` header. All file and directory operations take a required `path` query parameter naming a path inside the sandbox.
 
 ## Operating Files
@@ -32,7 +34,7 @@ Use this sub-skill when the agent must list a sandbox directory, download or ins
 
 Do not use this sub-skill for:
 
-- Persisted user memories. Use `references/memories/` instead.
+- Long-term user memories. Use `references/memories/` instead.
 - Account skills or gateway configuration. Use `references/skill-development/` or `references/ai-gateways/` instead.
 
 ## Endpoints
@@ -61,13 +63,13 @@ Do not use this sub-skill for:
 
 ## Limits
 
-- The upload endpoint declares a 100 MB request cap, but `Api/Modules/IoShellApi.cs:217-236` shows no local size validation in the handler; global enforcement may still apply.
+- The upload endpoint declares a request size cap in its description, but the handler has no local size validation; global enforcement may still apply. Check Plans and Limits for the current value.
 - The sandbox root cannot be deleted; root delete attempts return 400.
 - Nonexistent files and directories return 404 on read, details, public-address, and delete calls.
 
 ## Escalation
 
 - The wrong file set is visible: the `X-Shell-User-Id` is probably wrong. Confirm which shell user ID owns the data before retrying.
-- The task needs persisted user memory rather than files: load `references/memories/`.
+- The task needs long-term user memory rather than files: load `references/memories/` (memories live in the `@memories` RAG collection, not in the sandbox).
 - The upload exceeds the size cap: ask the user to split the content or provide another delivery path instead of retrying.
 - A destructive call was not approved: stop and ask for explicit approval with the exact path.

@@ -27,6 +27,8 @@ Produce an audit conclusion that is anchored in evidence, redacted of sensitive 
    - Post-mortem: full trace, root cause, fix, validation.
    - Customer support: focused excerpt, no internal IDs, redacted PII.
 4. Is the audit destructive (e.g. deletion for privacy cleanup)? Confirm with the user before any destructive action.
+5. Is the expected conversation absent? It may never have been stored: the account has conversation logging off, the request sent `allow_logging: false`, or it was a batch item, image generation, or media description call. Report absence as "no stored record", not as a failure.
+6. Is the audit about data retention? `providerDataCollection` records the provider policy used. The account `zeroDataRetentionOnly` setting limits integrated text inference to zero data retention providers, but a stored conversation record is still AIVAX's own copy governed by logging settings and deletion.
 
 ## Construction
 

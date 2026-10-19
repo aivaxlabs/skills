@@ -20,7 +20,7 @@ This sub-skill defines the patterns. The decision of when to apply them belongs 
 
 ## Resilience Decision Order
 
-1. **What failed?** Classify the actual status and response with `references/platform-rules/error-handling.md`. Correct invalid input, auth, permission, or balance/storage gates before retrying; an upstream request-content rejection is also a client error.
+1. **What failed?** Classify the actual status and response with `references/platform-rules/error-handling.md`. Correct invalid input, auth, permission, or balance/storage gates before retrying; an upstream request-content rejection, an unreadable or interrupted HTTP request, and a zero data retention provider mismatch are also client errors (`400`) that an unchanged retry cannot fix.
 2. **Is it a rate limit or a service failure?** For `429`, load `situations/rate-limit-429.md`. For `503`, honor `Retry-After` and load `situations/transient-failure.md`; for `500`, use that same bounded policy only when retrying is safe. Do not assume every `5xx` will resolve or every provider error is retryable.
 3. **Is the call idempotent?** Load `situations/idempotent-retry.md`. If the call mutates state and is not idempotent, retry only with user approval.
 4. **Did a chain fail partway through?** Load `situations/partial-failure.md`. Decide whether to rollback, skip the failed stage, or report partial state.

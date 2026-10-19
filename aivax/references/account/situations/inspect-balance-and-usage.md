@@ -41,7 +41,7 @@ The balance response includes:
 
 The usage response includes:
 
-- `currentBalance` and invoices.
+- `currentBalance` and `invoices`: each has `invoiceId`, `createdAt`, `paidAt`, `expiresAt`, `amount`, `description`, `isExpired`, `type` (`CreditAddition`, `SubscriptionPayment`, or `SubscriptionRenewal`), `paymentLocation` (only while the invoice is open), and `receiptLocation` (only when paid). Only `CreditAddition` invoices add prepaid balance; do not read subscription invoices as top-ups. Do not echo payment or receipt links in reports; cite the invoice ID and state. Load `situations/manage-subscription.md` to act on them.
 - `usageDetails.modelUsageDiscriminations`: spend and token counts by model and category.
 - `usageDetails.categoryDiscriminations`: spend by SKU and category.
 - `usageDetails.resourceDiscriminations`: spend by resource type and resource ID.
@@ -65,6 +65,7 @@ The usage response includes:
 ## Escalation
 
 - Balance is low: load `references/cost-monitoring/situations/optimize-spend.md`.
+- An invoice is open or a renewal failed: load `situations/manage-subscription.md`.
 - A spike is detected: load `references/cost-monitoring/situations/investigate-cost-spike.md`.
 - Storage is approaching the plan limit: identify the largest collections and consider cleanup. Confirm with the user.
 - A service allowance is exhausted early: inspect its consumption details and reset time; items that do not fit are billed normally. Compare billed usage before recommending a change.

@@ -47,7 +47,7 @@ Do not use this sub-skill for:
 
 ## Models
 
-Speech models vary by language coverage, voice quality, latency, and cost. Verify TTS models with `GET /api/v1/information/speech-models.json` or the media MCP's `list_models` with `type: "audio"`; use `GET /api/v1/information/audio-transcription-models.json` for STT. Do not confuse these with the text-model catalog. Common axes:
+Speech models vary by language coverage, voice quality, latency, and cost. Verify TTS models with `GET /api/v1/information/speech-models.json` or the media MCP's `list_models` with `type: "audio"`; use `GET /api/v1/information/audio-transcription-models.json` for STT. Do not confuse these with the text-model catalog. TTS `model` is the catalog `name` (an enum-style identifier, not a provider slug); STT `model` is the catalog `name` and defaults to the catalog entry flagged `isDefault` when omitted. Both catalogs change, so re-read them rather than hardcoding names. Some TTS models take inline speech direction (for example bracketed cues before a line); the catalog `description` says which, and only those models should receive such cues. Common axes:
 
 - Language coverage: multilingual models cover more languages but may be weaker per language than a monolingual model.
 - Voice quality: some models are tuned for natural-sounding speech, others for clarity or speed.

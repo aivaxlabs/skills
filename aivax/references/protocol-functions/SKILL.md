@@ -31,7 +31,7 @@ Do not use this sub-skill for AIVAX-maintained capabilities (web search, code ex
 | --- | --- |
 | One or a few stable HTTP callbacks owned by your app | Protocol functions |
 | A larger tool catalog, standardized discovery, or an existing MCP server | MCP (`references/ai-gateways/situations/attach-skills-and-tools.md`) |
-| Web search, URL reading, code execution, image generation, memory, calendar, or HTTP request tools maintained by AIVAX | Built-in tools (`references/text-inference/situations/inference-with-tools.md`) |
+| Web search, URL reading, code execution, image generation, memory, or HTTP request tools maintained by AIVAX | Built-in tools (`references/text-inference/situations/inference-with-tools.md`) |
 | Event-time policy, message rewriting, dynamic tool injection, or blocking a tool call before execution | Workers (`references/gateway-workers/`) |
 | Provider-native tool definitions that your own client will execute | Raw `tools` in an OpenAI-compatible request |
 

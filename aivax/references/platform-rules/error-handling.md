@@ -28,6 +28,8 @@ AIVAX errors fall into a small number of classes. The agent should classify befo
 ### Invalid Request (400; endpoint-specific 422)
 
 - Malformed input and request-content rejections from a model or dependency return `400`; do not retry the unchanged payload, even if the message mentions a temporarily unavailable service.
+- Failures raised while the server reads or handles the HTTP request itself (unreadable request, dropped or cancelled client connection) are classified as client errors (`400`), not `500`. Fix the request or connection; do not retry it unchanged.
+- A model with no eligible provider for the account's zero data retention restriction returns a client error naming that restriction, before inference and without charge. Choose another model or ask the user to review the account setting; do not retry.
 - Treat `422` according to the endpoint contract; it is not the default schema-validation status.
 - Compare the payload to the live API reference with `aivax_search_context`.
 - Remove fields that were copied from a full object but are not part of the update.
@@ -50,7 +52,7 @@ AIVAX errors fall into a small number of classes. The agent should classify befo
 
 ### Unexpected AIVAX Failure (500)
 
-- The response uses a generic message, not internal failure details. Do not treat this as a payload-validation failure or guess a root cause from the text.
+- The response uses a generic message, not internal failure details. Request-reading and client-disconnect problems are reported as client errors, not `500`; do not treat a `500` as a payload-validation failure or guess a root cause from the text.
 - Preserve request identifiers; retry only when safe and bounded. Escalate repeated failures with `references/observability/situations/diagnose-degradation.md`.
 
 ### Timeout Or Slow Response

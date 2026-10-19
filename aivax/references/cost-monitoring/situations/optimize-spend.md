@@ -55,6 +55,7 @@ Chat clients and sessions:
 Batch:
 
 - Run a small sample before activating large jobs.
+- A workflow with a bare model name already takes the cheapest provider; do not claim extra savings from provider selection, and use a gateway only when another routing preference is required.
 - Use strict result schemas and validation only when the business value justifies the extra calls.
 - Export low-confidence and error items before retrying.
 - Retry targeted modes rather than all failed items.

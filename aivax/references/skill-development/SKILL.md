@@ -24,6 +24,8 @@ An AIVAX account skill has:
 - `options.instructionSources`: external instruction resources stored and exported with the skill, but not injected by the current runtime.
 - `options.allowedToolsNames`: tool names this skill may request in tool-enabled flows.
 
+Activation is the model calling the runtime tool `read_skill` with skill slugs. Its result wraps each activated skill's instructions in `<skill:slug>` blocks, and that tool result (not the call arguments) defines what is active. Activation is not cumulative: only the most recent `read_skill` result that is either a skill block or empty counts, so a later call replaces the earlier set, and a call naming no existing slug (empty result) or an empty list clears it. A `read_skill` call that is blocked by a gateway worker or fails validation returns an error, not a skill block: it activates nothing and is ignored, leaving the previous activation in place, and its skill's `allowedToolsNames` never become visible. Slugs match case-insensitively.
+
 Gateway attachment is flat: a gateway has `parameters.skills` as an array of skill IDs. There is no native priority, no weights, and no primary skill. Base behavior belongs in gateway `systemInstruction`; reusable task-specific behavior belongs in skills.
 
 ## Discovery And Management Workflow
@@ -98,7 +100,8 @@ Skill instructions are injected into the conversation context only when the skil
 
 ## Limits
 
-- `allowedToolsNames` is enforced only when the gateway has `hideToolsWithoutSkill` set. The list is matched by name; typos silently disable the tool.
+- `allowedToolsNames` is enforced only when the gateway has `hideToolsWithoutSkill` set. The list is matched by name; typos silently disable the tool. While enforcing, the visible tools are `read_skill`, the gateway's `alwaysVisibleTools`, and the allowed tools of the skills from the latest successful `read_skill` result. Tools of a previously activated skill disappear when a later activation does not include that skill (or comes back empty), so list every skill that is needed together in one call.
+- To test activation, check the conversation for a `read_skill` call with a non-empty result, not only for the tool call.
 - `instructionSources` is stored and exported but is not consumed by the current runtime. Do not rely on it for active behavior or store secrets in it.
 - The skill's `description` is the trigger. A vague description means the skill rarely activates.
 

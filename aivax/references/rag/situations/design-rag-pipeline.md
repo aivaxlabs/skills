@@ -15,7 +15,7 @@ Produce a pipeline that returns the right evidence for the user's queries, with 
 ## Decision Tree
 
 1. What is the source of the documents? Files, URLs, internal data, or a mix. The ingestion path differs for each.
-2. How should the documents be chunked? Keep each document self-contained and focused. Upsert and JSONL import do not segment long sources automatically; use `references/text-tools/situations/segment-text.md` before ingestion when needed.
+2. How should the documents be chunked? Keep each document self-contained and focused. Upsert and JSONL import do not segment long sources automatically; use `references/text-tools/situations/segment-text.md` before ingestion when needed. After ingestion, the browse listing's `approximateTokenCount` flags oversized or tiny documents. Do not name collections with a leading `@`: that prefix is reserved.
 3. What exact constraints must retrieval enforce? Add consistent tags and typed metadata at ingestion time, then use `filter` with search terms. Use filter-only `/api/v1/query` for exact lookups, not relevance evaluation. Automatic gateway retrieval does not apply filters; use the gateway `query` tool or direct retrieval when filtering is required.
 4. How many collections? One per domain. Splitting by domain reduces cross-contamination and improves precision.
 5. What query strategy? `Plain` for direct lookups; `FullRewrite` for conversational queries; `UserRewrite` when the user often refers to earlier turns; `QueryFunction` for custom transformation.
@@ -35,8 +35,10 @@ Produce a pipeline that returns the right evidence for the user's queries, with 
 2. Index the documents
    PUT /api/v1/collections/<id>/documents
    { "name": "<doc-name>", "contents": "<text>", "reference": "<url>", "tags": ["..."], "metadata": { "owner": "..." } }
-   or
-   POST /api/v1/collections/<id>/documents (JSONL import)
+   or, for bulk loads (preferred)
+   GET /api/v2/collections/<id>/documents/index-jsonl (WebSocket: JSONL lines, then END)
+   or, deprecated
+   POST /api/v1/collections/<id>/documents (multipart JSONL import)
 
 3. Wait for indexing to complete (browse documents with ?state=queued to confirm)
 

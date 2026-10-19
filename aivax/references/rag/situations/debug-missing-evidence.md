@@ -21,7 +21,7 @@ Determine whether the document is missing from the collection, not yet indexed, 
 6. Is the top K too low? Increase it. A low top K drops relevant documents.
 7. Is the query strategy wrong? `Plain` does not transform the query. For conversational or ambiguous queries, switch to `FullRewrite` or `UserRewrite`.
 8. Is the reranker demoting the document? Run `/api/v1/query` with `reranker: "none"` and see if the document appears. If it does, the reranker is the problem.
-9. Are the vectors stale? Rebuild vectors with `DELETE /api/v1/collections/<id>/vectors-only`. The collection documents are preserved.
+9. Are the vectors stale? Re-queue them with `DELETE /api/v1/collections/<id>/vectors-only`. Documents are preserved; only documents that are not indexed or were embedded by a previous embedder are re-queued, so it will not fix an indexed document whose text is wrong. Update the document text instead.
 
 ## Actions
 

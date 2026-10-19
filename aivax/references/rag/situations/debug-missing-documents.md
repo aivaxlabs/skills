@@ -15,6 +15,8 @@ GET /api/v1/collections/<collection-id>/documents?state=queued
 GET /api/v1/collections/<collection-id>/documents?order_by=updated_at_desc
 ```
 
+Each item shows `createdAt`, `updatedAt`, `indexState`, and `approximateTokenCount`; use them to tell a stale or unindexed document from one that was never imported, and to spot empty or oversized texts.
+
 3. View the document only when the listing suggests a match.
 4. Check collection state, tags, context, statistics, and indexing status.
 5. Check whether the gateway includes the collection ID.

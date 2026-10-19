@@ -40,7 +40,9 @@ Capture the item input shape, output, validation result, error message, confiden
 - Input lines are malformed JSONL, use an unsupported import shape, or omit stable record IDs.
 - The result schema is too strict or contradicts the instruction.
 - The validation instruction rejects useful output or asks for evidence absent from the input.
-- The model or gateway is unavailable or too weak for the task.
+- The model or gateway is unavailable or too weak for the task. A bare model name always takes the cheapest provider, which may be slower or weaker than the provider a gateway would choose; route through a gateway to change that.
+- The account restricts inference to zero data retention providers and the model has none.
+- Batch calls are not stored as conversations; do not look for the failure in the conversation listing.
 - A required tool fails repeatedly.
 - Retry policy is too low to recover transient faults or too high for deterministic faults.
 - The job was scaled without a pilot.

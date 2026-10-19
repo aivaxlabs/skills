@@ -47,7 +47,9 @@ Request shape:
 }
 ```
 
-Rules: `model` must match a registered identifier exactly, including `@`; discover canonical names and aliases with `GET /api/v1/information/decisions-models.json`. `state` is any present JSON value (including `null`, an empty string, object, or array) evaluated by every question. `questions` is a non-empty object keyed by question name (names cannot be empty). Each question needs non-empty `instructions` plus `criteria`: an object with non-empty `true`/`false` strings for `noul`, a non-empty object mapping choice names to non-empty descriptions for `choice`, or a non-empty ordered array of non-empty strings for `score` (starting at index 0). Any other `type` returns 400.
+Rules: `model` must match a registered identifier exactly, including `@`; discover canonical names and aliases with `GET /api/v1/information/decisions-models.json`, whose `maxImages` tells how many images a model accepts per request (`0` means text-only). `state` is any present JSON value (including `null`, an empty string, object, or array) evaluated by every question.
+
+Image-capable models (`maxImages` above `0`) also take images in a `state` that is a top-level array, mixed with plain-string text items: `{ "type": "image_url", "image_url": { "url": "data:image/png;base64,..." } }`. Only base64 data URLs of `image/png`, `image/jpeg`, or `image/webp` are accepted; remote URLs are never fetched, and images nested inside objects are not read. Images sent to a text-only model, more images than `maxImages`, or any other image URL return 400, so check `maxImages` before attaching images. `questions` is a non-empty object keyed by question name (names cannot be empty). Each question needs non-empty `instructions` plus `criteria`: an object with non-empty `true`/`false` strings for `noul`, a non-empty object mapping choice names to non-empty descriptions for `choice`, or a non-empty ordered array of non-empty strings for `score` (starting at index 0). Any other `type` returns 400.
 
 Illustrative Julia-1 response shape (`id`, `model`, `provider`, `answers` keyed by question name, `usage`; numbers are not a measured result):
 
@@ -88,7 +90,8 @@ Answer fields by type: `noul` carries a numeric result for the true criterion; `
 ## Limits
 
 - Unknown `type` values, missing `state`, missing/empty `model`, `instructions`, or `criteria`, and empty question names or choice names return 400. A present empty `state` is valid. Fix invalid payloads rather than retrying unchanged.
-- Unknown model returns 400. Check the exact registered identifier (including `@`) in the decision-model catalog before retrying.
+- Unknown model returns 400. Check the exact registered identifier (including `@`) in the decision-model catalog before retrying. Catalog entries change: a model may gain a newer canonical name and keep the old one as an alias, so prefer the returned canonical `name` and re-read the catalog instead of hardcoding identifiers.
+- A provider that rejects the request contents (for example an over-long state) is reported as 400 with the provider's message, not as a retryable failure.
 - Missing or invalid API key returns 401; insufficient balance or quota returns 402. Top up or switch credentials; do not retry the same call.
 - Account-level rate limits are shared across API keys and models: a request above the limit returns 429 before evaluation. Back off rather than switching keys on the same account.
 - Model-specific context, question, option, and payload limits differ; consult the current [semantic decision model limits](https://docs.aivax.net/docs/limits.html#semantic-decision-model-limits) rather than applying one model's limits to all. Julia-1 requires 1–32 questions and 2–20 choices or score levels per question; it rejects over-budget inputs and the reserved `<mask>` marker.

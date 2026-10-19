@@ -37,4 +37,4 @@ Pick an available image model that fits the prompt, reference-image requirement,
 ## Escalation
 
 - No catalog model meets the reference-image or budget requirement: explain the constraint and ask the user which requirement to relax.
-- A model is marked deprecated: choose another catalog model when possible.
+- A model carries the `Deprecated` flag: choose another catalog model when possible; it may be removed, and the media MCP no longer lists it.

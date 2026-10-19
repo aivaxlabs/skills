@@ -15,7 +15,7 @@ This sub-skill owns rerankers on AIVAX. A reranker takes a query and a list of c
 
 ## Endpoint
 
-`POST /api/v1/generations/rerank`. The endpoint accepts a query, a list of candidate document strings, an optional model name, an optional `top_n`, and an optional `min_score`. Read the raw response object's `results` array (no `data` envelope), alongside `id`, `model`, and `usage`. Each result carries the original zero-based `index`, `relevance_score`, and `document.text`.
+`POST /api/v1/generations/rerank`. The endpoint accepts a query, a list of candidate document strings, an optional model name, an optional `top_n`, and an optional `min_score`. `top_n` defaults to a small number of results capped by the document count and must be between 1 and the document count; Reflex also caps `top_n` (see the error message or live catalog). `min_score` must be between 0 and 1. Read the raw response object's `results` array (no `data` envelope), alongside `id`, `model`, and `usage`. Each result carries the original zero-based `index`, `relevance_score`, and `document.text`.
 
 The legacy `/api/v1/generations/reflex/rerank` route is a deprecated alias for the same endpoint. Use the generic route for new integrations.
 
@@ -35,7 +35,9 @@ Rerankers differ in language coverage, context window, document limits, latency,
 - **Reflex** (`@aivax/reflex-v1`): default AIVAX reranker. Low latency, bounded lexical evidence, account-scoped cache. Best general default.
 - **Qwen 3 Reranker** (`@qwen/qwen3-reranker-0.6b`, `4b`, `8b`): three sizes for different quality/latency trade-offs.
 - **Jina Reranker v3** (`@jina/reranker-v3`): useful for long documents; check the live catalog's context limit.
-- **Cohere Rerank 4** (`@cohere/rerank-4-pro`, `@cohere/rerank-4-fast`): search-unit pricing, large document support.
+- **Cohere Rerank** (`@cohere/rerank-4-pro`, `@cohere/rerank-4-fast`, `@cohere/rerank-3.5`): search-unit pricing, large document support.
+- **Voyage AI Rerank** (`@voyageai/rerank-3`, `@voyageai/rerank-3-lite`): multilingual, long-context, token-based pricing; the `lite` variant is the cheaper, faster one.
+- Names come from the live catalog; if a name is rejected as unknown, re-read the catalog instead of guessing.
 - **NVIDIA Nemotron** (`@nvidia/llama-nemotron-rerank-vl-1b-v2`): vision-language reranker, useful when the candidates include images.
 - **Lexical**: word-aware reranking without a usage charge; the reranking request quota still applies. Useful when the candidates are already high-quality.
 - **RRF**: rank fusion for vector and lexical ranks. RAG only.
@@ -48,7 +50,7 @@ For managed RAG, `filter` restricts the candidates before semantic search and re
 
 ## Cost Awareness
 
-Reflex calls consume the plan's daily reranking allowance when fully covered; otherwise they are billed at the cache-miss and cache-hit token rates. Both cached and uncached input count toward coverage. Other paid rerankers are metered by tokens or search units, without this allowance; lexical, RRF, and none carry no usage charge. Included calls appear in subscription consumption, not billing history. Reflex usage reports `input_tokens`, `cached_input_tokens`, `total_tokens`, and `cost` (the account charge, which is zero when covered); other providers may report different usage fields.
+Reflex calls consume the plan's daily reranking allowance when fully covered; otherwise they are billed at the cache-miss and cache-hit token rates. Both cached and uncached input count toward coverage. Other paid rerankers are metered by tokens or search units, without this allowance; lexical, RRF, and none carry no usage charge. Included calls appear in subscription consumption, not billing history. Reflex usage reports `input_tokens`, `cached_input_tokens`, `total_tokens`, and `cost` (the account charge, which is zero when covered); other providers may report different usage fields (token counts, search units, or both), so do not parse a single fixed shape.
 
 ## Validation
 

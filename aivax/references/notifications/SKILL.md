@@ -26,6 +26,10 @@ Do not use this sub-skill to investigate spend behind an alert or to audit conve
 - `GET /api/v1/notifications`: list notification summaries, newest first, then mark all account notifications as read. Each returned item contains `id`, `createdAt`, `type`, `subject`, `message`, and `readAt` (`readAt` is null when the item was unread at listing time).
 - `GET /api/v1/notifications/unread/count`: return `{"count": N}` with the number of unread notifications without marking them as read.
 
+## Notification Types
+
+The `type` field is a string and new types can appear; do not hard-code an exhaustive list. Types produced by the platform include `LowBalanceNotification`, `DeprecatedModelsNotification`, `FreeAccountInactivityNotification`, `WeeklyTestingSummary`, `SubscriptionRenewalFailureNotification`, and `AdministrativeNotification`. Which preferences generate them (low balance, deprecated models, weekly testing summary, repeated test failures) are `parameters.notifications` settings, edited through `references/account/`.
+
 ## Validation
 
 1. Call `GET /api/v1/notifications/unread/count` first when the pre-list unread count is needed.
@@ -40,4 +44,6 @@ Do not use this sub-skill to investigate spend behind an alert or to audit conve
 ## Escalation
 
 - A `LowBalanceNotification` needs spend analysis: load `references/cost-monitoring/`.
+- A `SubscriptionRenewalFailureNotification` means a subscription invoice is unpaid and the account may return to `Free`: load `references/account/situations/manage-subscription.md`. Do not pay or retry the charge for the user.
+- A `DeprecatedModelsNotification` means a gateway or workflow may depend on a retiring model: load `references/ai-gateways/` or `references/text-inference/situations/choose-model.md`.
 - The alert points to a production failure or needs an audit trail: load `references/observability/`.

@@ -55,7 +55,7 @@ For each requested tool call:
 5. Append the tool result to the conversation using the tool-call identifier returned by the model.
 6. Call `/v1/chat/completions` again so the model can produce the final answer.
 
-Use `builtin_tools` only for documented available AIVAX built-in tools such as `WebSearch`, `OpenUrl`, `Code`, `Request`, `Calendar`, `DateTime`, and `Remember`. Verify supported tools and options with `aivax_search_context`.
+Use `builtin_tools` only for documented available AIVAX built-in tools such as `WebSearch`, `OpenUrl`, `Code`, `Request`, `DateTime`, and `Remember`. Verify supported tools and options with `aivax_search_context`.
 
 ## Web Research Depth
 
@@ -63,7 +63,7 @@ Use `builtin_tools` only for documented available AIVAX built-in tools such as `
 - `AdvancedWebUsage` (`advanced_web_search`) is unavailable: calling it returns `this tool is not available in the moment`. Do not enable or recommend it for deep research. `WebSearch` and `OpenUrl` do not provide an equivalent deep research pass.
 - `OpenUrl` reads a user-provided URL; use it instead of search when the source is already known.
 - Searching the web or extracting URL/file content as a direct agent-called API step (`POST /api/v1/web/search`, `POST /api/v1/web/fetch`): load `references/web/` instead of a built-in tool.
-- `get_date_time` returns the current date, time, day of the week, time zone, UTC offset, and date/time in ISO 8601. It takes no arguments; configure the zone with `builtin_tools.options.dateTimeTimeZone`.
+- `get_date_time` returns a JSON object with `date`, `time`, `day_of_week`, `time_zone`, `utc_offset`, and `date_time` (ISO 8601). Parse it as JSON; it no longer returns prose and has no day-of-year field. It takes no arguments; configure the zone with `builtin_tools.options.dateTimeTimeZone`.
 
 ## Validation
 

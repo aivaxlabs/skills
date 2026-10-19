@@ -93,7 +93,8 @@ Fetch request with structured extraction:
 
 ## Limits
 
-- Each fetch item is limited to 10 MB: fetched URL content and decoded data-URI bytes alike. Oversize items fail with an error entry (or omission when `returnErrors` is false).
+- Each fetch item has a maximum content size, applied to fetched URL content and decoded data-URI bytes alike. Do not rely on a remembered number (the endpoint's own description text can lag behind the enforced size); the error message states the enforced limit. Oversize items fail with an error entry (or omission when `returnErrors` is false). See Plans and Limits for plan-level constraints.
+- Large scanned documents are converted page by page and can take minutes: keep batches small, set a generous client timeout, and retry only the failed `index` entries rather than the whole batch.
 - Search: `topn` must be between 1 and 25; `country` must be a two-letter ISO 3166-1 code; `language` must be a valid language code such as `pt` or `pt-BR`; `includeDomains` cannot contain empty values.
 - Fetch: `contents` must contain at least one item; each item must be non-empty.
 - Rate limits apply per account (429 on excess); search carries an additional web-search-specific limit.

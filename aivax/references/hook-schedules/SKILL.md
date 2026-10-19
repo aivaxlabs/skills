@@ -53,5 +53,5 @@ The list response marks each one-time schedule with a derived `state` of `Pendin
 ## Escalation
 
 - The owning chat client is misconfigured: load `references/web-chat/`.
-- The user context behind a schedule is missing: use the memories generate/migration flows to rebuild it first.
+- The user context behind a schedule is missing: rebuild it first from the `@memories` collection (`references/memories/`).
 - The cancel hits rate-limit or transient failures: load `references/resilience/`.

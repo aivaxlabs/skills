@@ -8,52 +8,45 @@ Produce a transcript that is faithful to the audio, with the right language, spe
 
 ## Preconditions
 
-- A STT model is available on the account. Verify with `aivax_list_models`.
-- The audio is in a supported format (e.g. `wav`, `mp3`, `m4a`, `flac`).
+- A STT model is available in `GET /api/v1/information/audio-transcription-models.json` (`aivax_list_models` is the text catalog, not this one). `model` is optional; omitting it uses the catalog's default.
+- The audio is in a format listed in the catalog's `supportedFormats` and is sent as base64 (`wav`, `mp3`, `m4a`, `flac`, `ogg`, `webm`, or `aac`). URLs and `data:` strings are not accepted.
 - The account balance is sufficient.
 - The agent has a place to store the transcript.
 
 ## Decision Tree
 
 1. What is the language? Set `language` explicitly when known. Auto-detect only when the language is unknown.
-2. Is the audio multi-speaker? Enable diarization when supported. The output will include speaker labels.
-3. Is the audio long (>10 minutes)? Split into segments. Some models have a per-request duration limit.
-4. Does the user want timestamps? Set `response_format: "verbose_json"` or the equivalent when supported. The output will include start and end times per segment.
-5. Does the user want a custom vocabulary? Some models accept a `prompt` with key terms to bias recognition. Verify with `aivax_search_context`.
+2. Is the audio multi-speaker, or are timestamps or a custom vocabulary needed? This endpoint exposes none of them (no diarization, `response_format`, or `prompt`); the response is plain `text`. If those are required, say so instead of sending unsupported fields.
+3. Is the audio long? Check the request size and duration limits in [Limits](https://docs.aivax.net/docs/limits) and split into segments when needed. Billing is by audio duration.
 
 ## Construction
 
 ```text
 {
   "model": "<stt-model>",
-  "file": "<url or data:>",
-  "language": "<iso-code>",
-  "response_format": "verbose_json",
-  "metadata": { "trace_id": "tr_..." }
+  "input_audio": { "data": "<base64>", "format": "wav" },
+  "language": "<iso-code>"
 }
 ```
 
-Some models accept `diarize: true` for speaker labels and `prompt` for custom vocabulary.
+`model` and `language` are optional. Do not add `file`, `response_format`, `metadata`, `diarize`, or `prompt`; the handler does not read them.
 
 ## Response Handling
 
-1. The response is a transcript in the requested format.
-2. Normalize the transcript for downstream use: strip filler words, fix obvious punctuation, identify speakers.
+1. The standard envelope's `data` carries `text` and `usage` (`cost`, `process_time`).
+2. Normalize the transcript for downstream use: strip filler words and fix obvious punctuation, keeping the original text when fidelity matters.
 3. Store the normalized transcript in the user's storage of choice.
 4. Record the model, language, parameters, and the transcript location in the trace.
 
 ## Validation
 
 - The transcript is faithful to the audio. Sample a few segments.
-- Speaker labels (when enabled) are accurate.
-- Timestamps (when enabled) align with the audio.
 - The trace ID is preserved.
 
 ## Failure Modes
 
-- The model returns no transcript: the audio is unsupported, the language is wrong, or the audio is too long. Inspect the error.
-- The transcript is wrong: the model is not strong on the language or accent. Switch the model or set a custom vocabulary.
-- Speaker labels are wrong: the model does not support diarization, or the audio has overlapping speakers. Try a different model.
+- 400: unknown `model`, unsupported `input_audio.format`, empty or invalid base64, or audio that cannot be decoded or has no measurable duration. Fix the payload; do not retry unchanged.
+- The transcript is wrong: the model is not strong on the language or accent. Set `language` or switch the model.
 
 ## Escalation
 

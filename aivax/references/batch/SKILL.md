@@ -45,7 +45,7 @@ Define these before creating a workflow:
 - **Goal:** the same operation every item should perform.
 - **Input unit:** one JSON object, text line, plain-text file, ZIP entry, or text payload per item.
 - **Output contract:** JSON Schema for successful outputs.
-- **Model or gateway:** available to the account and suitable for the quality, cost, and latency target.
+- **Model or gateway:** `modelName` accepts an integrated model name or an AI gateway reference. A model name alone always routes to the cheapest available provider, ignoring the default routing preference; use a gateway when the workflow needs another routing preset, provider list, or fixed instructions. Check the model and provider in `aivax_list_models` before a large run.
 - **Validation:** optional criteria for output correctness and confidence.
 - **Tools:** only the tools required for every item.
 - **Failure policy:** `errorStopThreshold` and `maxRetries`.
@@ -60,6 +60,11 @@ Jobs begin **paused**. Import and inspect items before spending credits. Import 
 Use `Active` to start a job, `Paused` to stop it temporarily, and `Finished` to terminate it. Pilot 5–20 representative items before processing the full workload.
 
 Item states include `Pending`, `Finished`, `Refused`, `ExecutionError`, `ValidationError`, and `Cancelled`. Retry modes are `errors`, `execution-error`, `validation-error`, and `low-confidence`. A retry moves matching non-running items to `Pending` and automatically starts a non-active job if at least one item is retried.
+
+## Privacy And Observability
+
+- Batch item calls are not written to the conversation log. Diagnose an item through its own state, output, validation result, and cost, not through `GET /api/v1/conversations`.
+- The account's `zeroDataRetentionOnly` setting applies to integrated models: items fail when the chosen model has no zero data retention provider. Choose another model or route through a gateway on an eligible model.
 
 ## Safety And Cost Control
 

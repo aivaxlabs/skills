@@ -98,6 +98,8 @@ A stage is substitutable when its contract is. To substitute:
 
 Do not substitute silently. Record the change so the pipeline's behavior is auditable.
 
+Also check account-level constraints before substituting: an account restricted to zero data retention providers rejects integrated text models without one, and a batch stage that names a model instead of a gateway takes the cheapest provider. Record both as pipeline preconditions (`references/account/`, `references/batch/`). Stored conversations are not a universal trace source: logging settings, `allow_logging: false`, and batch calls leave no record, so keep stage IDs in the pipeline's own report.
+
 ## Cross-Skill Observability
 
 Correlate each stage through fields its contract actually supports: propagate caller-defined `metadata`, record a supplied `idempotency_key` as a conversation correlation field, capture the conversation `requestId` when returned, and record returned resource IDs such as conversation, collection transaction, batch job, item, run, or hook schedule. Do not require a universal trace or parent request ID from endpoints that do not expose one. The final report links the chain stage by stage.

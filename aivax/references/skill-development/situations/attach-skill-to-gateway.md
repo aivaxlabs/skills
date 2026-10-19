@@ -41,14 +41,14 @@ GET /api/v1/ai-gateways/<gateway-id>
 - The gateway has the full intended skill ID list.
 - The new skill remains task-specific and does not duplicate the gateway system instruction.
 - A representative conversation activates the skill for its target trigger and not for unrelated requests.
-- Required tools are available when the gateway uses `hideToolsWithoutSkill`.
+- Required tools are available when the gateway uses `hideToolsWithoutSkill`: they appear only after a successful `read_skill` result that includes the skill, and only for the latest activation.
 - Conversation traces have no unexpected prompt growth or tool failures.
 
 ## Failure Modes
 
 - Existing skill vanished: restore the captured full list; the array was replaced.
 - Skill does not activate: refine its description and trigger language through `situations/author-skill.md`.
-- A required tool is hidden: correct `allowedToolsNames` or gateway tool visibility after inspecting the current configuration.
+- A required tool is hidden after activation: check that the last `read_skill` call returned the skill block (a blocked or rejected call does not activate it) and that the call listed every skill whose tools are needed. Otherwise correct `allowedToolsNames` or gateway tool visibility after inspecting the current configuration.
 - The skill includes tenant secrets: remove them, rotate affected credentials, and load `references/account/situations/secret-hygiene.md`.
 
 ## Escalation

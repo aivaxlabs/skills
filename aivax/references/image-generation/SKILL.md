@@ -73,7 +73,7 @@ When configured, use the Streamable HTTP server at `https://inference.aivax.net/
 
 ## Models
 
-Use `GET /api/v1/information/image-models.json` as the image model catalog. Check the selected model's flags before sending `referenceImages`, and expose only models returned by this public catalog.
+Use `GET /api/v1/information/image-models.json` as the image model catalog; it changes often, so re-read it instead of hardcoding names. Check the selected model's `flags` (an array) before sending `referenceImages`, and skip models flagged `Deprecated` unless the user asks for one (the media MCP `list_models` already hides them). Expose only models returned by this public catalog.
 
 ## Cost Awareness
 

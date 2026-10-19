@@ -60,6 +60,7 @@ To replace the result, return `Content-Type: application/json+worker-action` wit
 
 - Blocking by throwing an exception-shaped body: return non-OK status instead; the body is not the blocking mechanism.
 - Returning internal errors verbatim: translate them into a short result telling the model what to ask the user next.
+- Blocking `read_skill` and expecting the skill to still work: with `hideToolsWithoutSkill`, a blocked or failed `read_skill` does not expose that skill's allowed tools, so the model cannot call them afterwards.
 - Trusting `toolArguments` without validation: treat them as untrusted input and verify IDs and ownership.
 
 ## Limits

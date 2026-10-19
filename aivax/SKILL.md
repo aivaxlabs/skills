@@ -50,7 +50,7 @@ Map the user intent to a sub-skill. Load only what you need. When in doubt, pref
 | Build a RAG pipeline: collection, ingestion, query, answer, grounding | `references/rag/` |
 | Rerank candidate documents; choose Reflex, Cohere, Qwen, Jina, NVIDIA, or lexical reranker | `references/rerankers/` |
 | Create, run, evaluate, or compare agentic tests | `references/agentic-tests/` |
-| Create, list, rotate, or delete API keys; inspect account, plan, protected contact/agreement fields, or salt | `references/account/` |
+| Create, list, rotate, or delete API keys; inspect account, plan, subscription, invoices, privacy settings (zero data retention, conversation logging), or salt | `references/account/` |
 | Investigate a cost spike, balance drop, or spend optimization | `references/cost-monitoring/` |
 | Correlate traces, diagnose latency/error, audit a conversation | `references/observability/` |
 | Create, edit, or operate an AI gateway (model + instructions + RAG + tools + skills) | `references/ai-gateways/` |
@@ -60,7 +60,7 @@ Map the user intent to a sub-skill. Load only what you need. When in doubt, pref
 | Operate a web chat client, session, or messaging integration | `references/web-chat/` |
 | Inspect or cancel scheduled hook activations for a web chat client | `references/hook-schedules/` |
 | Read or mutate files inside the shell sandbox (account + X-Shell-User-Id) | `references/shell-io/` |
-| Inspect, migrate, or delete persisted user memories by external user ID | `references/memories/` |
+| Save, search, or manage persisted memories in the `@memories` collection | `references/memories/` |
 | Check account notifications or the unread count | `references/notifications/` |
 | Design or debug a batch workflow/job/items | `references/batch/` |
 | Combine multiple AIVAX capabilities into a single workflow | `references/composition/` |
@@ -159,7 +159,9 @@ These apply in addition to the rules inside each sub-skill.
 | `references/rag/` | RAG pipeline design, evaluation, and grounding diagnosis |
 | `references/rerankers/` | Reranker selection, catalog, and collection-less rerank (Reflex) |
 | `references/agentic-tests/` | Test creation, runs, evaluation, comparison, and trace analysis |
-| `references/account/` | API keys, account state, plan, salt, secret hygiene |
+| `references/decisions/` | Named noul/choice/score evaluations in one billed call |
+| `references/web/` | Direct web search and URL/file text extraction |
+| `references/account/` | API keys, account state, plan, subscription and invoices, privacy settings, salt, secret hygiene |
 | `references/cost-monitoring/` | Cost spike investigation and spend optimization |
 | `references/observability/` | Trace correlation, degradation diagnosis, conversation audit |
 | `references/ai-gateways/` | Gateway design, skills and tools attachment, safe editing |
@@ -169,6 +171,6 @@ These apply in addition to the rules inside each sub-skill.
 | `references/web-chat/` | Web chat clients, sessions, and messaging integrations |
 | `references/hook-schedules/` | Scheduled hook activations and recurring tasks for a web chat client |
 | `references/shell-io/` | Shell sandbox file operations scoped by account and shell user ID |
-| `references/memories/` | Persisted user memories by external user ID |
+| `references/memories/` | Persisted memories in the `@memories` RAG collection |
 | `references/notifications/` | Account notifications and unread count (read-only) |
 | `references/batch/` | Batch workflow design, job execution, and failure analysis |

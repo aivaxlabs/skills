@@ -14,7 +14,7 @@ Report the current alerts newest-first while preserving an accurate pre-list unr
 
 1. Is the pre-list unread count needed? Call `GET /api/v1/notifications/unread/count` first; it does not mark anything as read.
 2. List with `GET /api/v1/notifications` only when the alert contents are actually needed. Listing marks all account notifications as read.
-3. Does an alert need follow-up? Escalate by type: spend behind a `LowBalanceNotification` goes to cost-monitoring; production failure or audit trail goes to observability.
+3. Does an alert need follow-up? Escalate by type: spend behind a `LowBalanceNotification` goes to cost-monitoring; a `SubscriptionRenewalFailureNotification` goes to `references/account/situations/manage-subscription.md`; production failure or audit trail goes to observability.
 
 ## Construction
 

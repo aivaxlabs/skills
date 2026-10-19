@@ -34,6 +34,7 @@ Identify the cost driver, connect it to account resources, and recommend safe sa
 - Chat session context growth.
 - Storage growth from stale collections.
 - Subscription service allowance exhausted.
+- A subscription plan charge or upgrade invoice mistaken for a balance drop: it is a plan invoice, not usage.
 
 ## Approval Gates
 

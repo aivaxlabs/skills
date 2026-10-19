@@ -11,7 +11,7 @@ Use `GET /api/v1/information/rerankers-models.json` to inspect current names, `a
 - **Autonomous**: whether the model can be used in the standalone `/api/v1/generations/rerank` endpoint. `rrf` and `none` are RAG-only.
 - **Context**: the maximum total tokens (query + documents) the model can process in a single call. Documents longer than the context are rejected; segment them first with `references/text-tools/situations/segment-text.md`.
 - **Documents**: the maximum number of candidate documents the model accepts in a single call, when declared. The result limit may be smaller.
-- **Pricing**: token rates or search-unit rates for metered calls. Reflex first uses its separate daily allowance when the entire call fits; otherwise cache-miss and cache-hit rates apply. Cached and uncached input both count toward the allowance. Covered calls appear in subscription consumption, not billing history.
+- **Pricing**: token rates (for example Voyage) or search-unit rates (for example Cohere) for metered calls. Reflex first uses its separate daily allowance when the entire call fits; otherwise cache-miss and cache-hit rates apply. Cached and uncached input both count toward the allowance. Covered calls appear in subscription consumption, not billing history.
 
 ## Selection By Use Case
 
@@ -19,7 +19,8 @@ Use `GET /api/v1/information/rerankers-models.json` to inspect current names, `a
 | --- | --- | --- |
 | Default general use | `@aivax/reflex-v1` | Low latency, account-scoped cache, good quality. |
 | Very long documents | Jina | Check the current context limit. |
-| Multilingual retrieval | Qwen | Verify language coverage in the live catalog. |
+| Multilingual retrieval | Qwen or `@voyageai/rerank-3` | Verify language coverage in the live catalog. |
+| Multilingual, low cost | `@voyageai/rerank-3-lite` | Token-priced; smaller than `rerank-3`. |
 | Vision-language candidates | `@nvidia/llama-nemotron-rerank-vl-1b-v2` | Accepts image-based candidates. |
 | High-volume, low-cost | `lexical` | No usage charge; reranking request quota still applies. |
 | High-volume with semantic quality | Reflex (allowance/cache) | Covered calls incur no charge; metered cache hits cost less than misses. |

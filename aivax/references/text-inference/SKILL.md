@@ -47,9 +47,10 @@ The endpoint accepts OpenAI-compatible payloads plus AIVAX extensions:
 - `prompt`: alternative to `messages` for simple text completions.
 - `stream`: `true` to receive SSE; `false` for a single response.
 - `temperature`, `top_p`, `top_k`, `seed`, `max_completion_tokens`, `reasoning_effort`, `stop`: standard sampling parameters.
+- `reasoning_effort`: take the value from the model's published list, `_details.provider_model.model_information.reasoningEfforts` in `/v1/models` (`modelInformation.reasoningEfforts` in `GET /api/v1/information/models.json`), in the order the source reports it. An empty list means no list is published, not that reasoning is unsupported. Some models reject the parameter outright; gateways fail validation when it is set for them.
 - `tools`: an array of OpenAI-compatible tool definitions (function calling).
 - `tool_choice`: optional tool-selection behavior forwarded to compatible gateways.
-- `builtin_tools`: AIVAX-specific on-demand built-in tools (`WebSearch`, `Code`, `OpenUrl`, `Remember`, `ImageGeneration`, `XPostsSearch`, `GenerateDocument`, `GenerateWebPage`, `Request`, `Calendar`, `DateTime`). Include `DateTime` in `tools` to expose `get_date_time`.
+- `builtin_tools`: AIVAX-specific on-demand built-in tools (`WebSearch`, `Code`, `OpenUrl`, `Remember`, `ImageGeneration`, `XPostsSearch`, `GenerateDocument`, `GenerateWebPage`, `Request`, `DateTime`). Include `DateTime` in `tools` to expose `get_date_time`.
 - `builtin_tools.options.dateTimeTimeZone`: time zone returned by `get_date_time`. Use an IANA identifier such as `America/Los_Angeles` or `America/Sao_Paulo`. Defaults to `America/Los_Angeles` (Pacific Time), automatically following daylight-saving changes. Independent of the browser time zone. Invalid identifiers are rejected.
 - `user`: optional external user identifier attached to the gateway inference context.
 - `extra_body`: provider-specific request fields, supported only with BYOK AI Gateways.
@@ -62,6 +63,7 @@ The endpoint accepts OpenAI-compatible payloads plus AIVAX extensions:
 - `multimodal_resolver`: per-media engines (`imageEngine`, `audioEngine`, `videoEngine`, `fileEngine`) that convert selected inputs into text. It takes precedence over the deprecated `multimodal_preprocess` flags and the gateway's resolver configuration. See `references/multimodal/`.
 - `idempotency_key`: AIVAX-specific optional non-empty string (not part of the OpenAI spec; check [Limits](https://docs.aivax.net/docs/limits) for its size constraint), mapped to `ConversationToken` for stored-conversation correlation. Reusing it may update the same stored conversation record, but does not deduplicate inference execution; each request still executes.
 - `metadata`: a JSON object of string key/value pairs, stored with the conversation record for correlation.
+- `allow_logging`: optional boolean, default `true`. Send `false` to keep this request out of the account conversation logs; it then cannot be found in `references/observability/` afterwards, so use it only when that loss is intended. It does not change provider-side retention (see Limits). Private keys only.
 - `tool_invocation_explanations`: when supported, expose tool-call explanations in the response.
 
 These fields are implemented in `OpenIndexer.Alpha2/Api/Modules/OpenAi.cs`. The built-in names come from `OpenIndexer.Alpha2/Inference/ReasoningChainResolverOptions.cs`.
@@ -124,5 +126,6 @@ Every inference call consumes balance, request quota, and possibly token-rate qu
 
 - The Free plan has a context cap. Confirm the selected model and prompt fit before sending.
 - Some models support only a subset of the parameters. Verify with `aivax_list_models` or `aivax_search_context`.
+- The account option `parameters.zeroDataRetentionOnly` (set through `PUT /api/v1/accounts`, which replaces `parameters`: read first and preserve the rest) restricts integrated text inference to providers with zero data retention, before routing options are applied. A model with no such provider fails with a client error that names the restriction; choose another model or ask the account owner to change the setting. It does not affect BYOK gateways. Per-provider policy is in `technicalInfo.dataCollection` of `providers[]` in `models.json`.
 - Public keys (`pk-aiv-`) cannot call integrated models directly. They call only the full AI Gateway UUID, with stripped tool surfaces.
 - Tool calls inside a public-key call are limited to `tools` (OpenAI-compatible). `builtin_tools`, MCP sources, protocol functions, skills, and Bash are stripped.

@@ -49,7 +49,7 @@ The main client parameters include:
 - `allowedFrameOrigins` for embedding control.
 - `inputModes` (`Image`, `Document`, `Audio`) and `uploadUnsupportedFiles` for uploads.
 - `showToolCalls` and `debug` for diagnostics; disable `debug` after troubleshooting.
-- `audioSynthesisSource`, `audioSynthesisVoice`, `audioSynthesisInstruction`, and `summarizeTextBeforeAudioSynthesis` for spoken replies.
+- `audioSynthesisSource`, `audioSynthesisVoice`, `audioSynthesisInstruction`, and `summarizeTextBeforeAudioSynthesis` for spoken replies. `audioSynthesisSource` takes a TTS model `name` from `GET /api/v1/information/speech-models.json`, or `None` to disable audio.
 - `allowScheduledContinuations`, `splitAnswerIntoMessageChunks`, `maxScheduledIgnoredZone`, and `messageDebounceInterval` for messaging-channel behavior.
 
 The principal limits are `messagesPerHour` and `maxMessages`. Set them deliberately: overly permissive values increase cost and abuse exposure, while overly restrictive values harm the user experience.
