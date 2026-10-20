@@ -45,6 +45,7 @@ A gateway has:
 - `parameters.builtinFunctionsOptions`: options for built-in web search, image generation, memory, and related tools.
 - `parameters.sentinelOptions.enabledFunctions`: built-in tools exposed through Sentinel reasoning.
 - `parameters.enableBash` and `parameters.bashOptions`: controlled virtual Bash behavior. `bashOptions.toolList` takes case-insensitive runtime tool names or `*`/`?` wildcard patterns (for example `web_*`, matching `web_search`), interpreted by `bashOptions.toolExclusionMode`: `WhiteList` moves only matching tools into the shell, `BlackList` keeps matching tools as direct model functions and moves the rest. `shell` and `read_skill` are always reserved; `allowDataPersistence` needs a user external ID to persist files.
+- `parameters.timeZone`: IANA time zone in which the model reads and writes dates and times (`get_date_time`, scheduled messages, recurring jobs, and the Bash tool). Defaults to `America/Sao_Paulo`; invalid identifiers are rejected. A request-level `time_zone` overrides it for that call. Set it to the end users' zone so cron expressions and unzoned schedule times mean what they expect.
 - `parameters.toolContextCount`: how many previous tool results stay in context.
 - `parameters.contextMaximumSize` and `parameters.contextOverflowAction`: cap and handle long context.
 - `parameters.moderationParameters`: safety thresholds.
