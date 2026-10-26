@@ -33,7 +33,7 @@ Do not use this sub-skill for:
 ## Core Concepts
 
 - **Collection**: a semantic knowledge library that stores documents and indexes them with embeddings. Names starting with `@` are reserved for system collections (for example `@memories`, which holds long-term user memories; see `references/memories/`): creating or renaming to such a name, or editing or generating context for one, returns 403. Do not use them for application knowledge.
-- **Embedder**: one platform-wide embedder indexes and queries every collection; it is not selectable per collection or request, and it is not part of the model catalog. Do not look for an embedding model setting.
+- **Embedder**: one platform-wide embedder indexes and queries every collection; it is not selectable per collection or request, and it is not part of the model catalog. Do not look for an embedding model setting. To read the current embedder name, context size, and recommended chunk size (use it to size chunks), call `GET /api/v1/information/collection-embedding-model.json`; it needs no authentication and the embedder can change over time.
 - **Document**: a single piece of collection knowledge, such as an article chunk, a manual section, a product description, or another RAG item.
 - **Embedding**: a vector representation of the document, computed at indexing time. Semantic queries embed the search terms; filter-only requests do not.
 - **Semantic search**: the process of finding the most relevant documents for a query, by embedding similarity and (optionally) a reranker.

@@ -51,6 +51,7 @@ The main client parameters include:
 - `showToolCalls` and `debug` for diagnostics; disable `debug` after troubleshooting.
 - `audioSynthesisSource`, `audioSynthesisVoice`, `audioSynthesisInstruction`, and `summarizeTextBeforeAudioSynthesis` for spoken replies. `audioSynthesisSource` takes a TTS model `name` from `GET /api/v1/information/speech-models.json`, or `None` to disable audio.
 - `allowScheduledContinuations`, `splitAnswerIntoMessageChunks`, `maxScheduledIgnoredZone`, and `messageDebounceInterval` for messaging-channel behavior.
+- On messaging channels, a user message that arrives while a reply is being generated is steered into the running inference between its rounds, so the agent can react without waiting for a new turn. Messages not delivered before the run ends start the next generation after the debounce interval. `/reset` and `/usage` are not steered.
 
 The principal limits are `messagesPerHour` and `maxMessages`. Set them deliberately: overly permissive values increase cost and abuse exposure, while overly restrictive values harm the user experience.
 
