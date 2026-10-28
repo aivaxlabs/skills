@@ -10,7 +10,7 @@ Every AIVAX account mutation follows the same contract. The contract exists beca
 4. **Export or copy current configuration** when rollback matters: gateway rewrites, skill imports, collection resets, batch workflow edits that alter validation, account or salt changes, production model swaps.
 5. **Patch only the fields that should change.** For shallow-merge endpoints, do not send a copied full object unless the user asked for a full replacement and you verified the shape.
 6. **Verify resource state after the mutation.** `GET` again and confirm the change landed only where intended.
-7. **Validate through the relevant product path.** Gateway: a real or test conversation. RAG: `/api/v1/query` or a transaction. Chat client: a session or talk URL. Batch: items view or export. Skill: gateway attachment and a test conversation. Cost: re-check usage after the next window.
+7. **Validate through the relevant product path.** Gateway: a real or test conversation. RAG: `/api/v2/query` or a transaction. Chat client: a session or talk URL. Batch: items view or export. Skill: gateway attachment and a test conversation. Cost: re-check usage after the next window.
 8. **Report what changed, what was verified, and what risk remains.** Include resource IDs, request IDs, and the next observation window.
 
 ## Approval Gates
@@ -23,7 +23,7 @@ Ask for explicit user confirmation before any of the following. The classificati
 - Rotating salts, hook keys, or other secrets.
 - Pausing, finishing, or cancelling active production jobs.
 - Changing plan, subscription, rate limits, storage cleanup, or cost controls. A plan change can charge the account immediately.
-- Changing account `parameters` that affect privacy or availability (`zeroDataRetentionOnly`, `allowConversationsLogging`). `PUT /api/v1/accounts` replaces all `parameters`, so omitted settings revert to defaults.
+- Changing account `parameters` that affect privacy or availability (`zeroDataRetentionOnly`, `allowConversationsLogging`, `allowRagLogging`). `PUT /api/v1/accounts` replaces all `parameters`, so omitted settings revert to defaults.
 - Creating payment invoices or charging a saved payment method. Agents never do this on their own.
 - Changing production gateway model, routing, tool access, moderation, or chat delivery behavior when impact is uncertain.
 - Bulk removing batch items or any operation that touches more than 100 records.
@@ -43,7 +43,7 @@ When a class of mutation is already explicitly authorized, do not re-ask. When t
 ## Validation By Resource
 
 - **Gateway**: view gateway, run a test prompt, inspect the resulting conversation.
-- **RAG**: run `/api/v1/query`, inspect top results and a recent transaction.
+- **RAG**: run `/api/v2/query`, inspect top results and a recent transaction.
 - **Chat client**: view client, create or refresh a session when appropriate, verify talk URL without exposing access key.
 - **Batch**: view workflow, job, items, inspect sample output, export only when needed.
 - **Skill**: view skill, view gateway attachment, run a test conversation, verify tool visibility.

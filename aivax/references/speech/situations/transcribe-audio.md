@@ -16,7 +16,7 @@ Produce a transcript that is faithful to the audio, with the right language, spe
 ## Decision Tree
 
 1. What is the language? Set `language` explicitly when known. Auto-detect only when the language is unknown.
-2. Is the audio multi-speaker, or are timestamps or a custom vocabulary needed? This endpoint exposes none of them (no diarization, `response_format`, or `prompt`); the response is plain `text`. If those are required, say so instead of sending unsupported fields.
+2. Is the audio multi-speaker, or are timestamps or a custom vocabulary needed? This endpoint exposes none of them (no diarization, `response_format`, or `prompt`); the response is plain `text`, even for models whose catalog description mentions timestamps or speaker diarization. If those are required, say so instead of sending unsupported fields.
 3. Is the audio long? Check the request size and duration limits in [Limits](https://docs.aivax.net/docs/limits) and split into segments when needed. Billing is by audio duration.
 
 ## Construction

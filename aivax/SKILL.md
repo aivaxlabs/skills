@@ -1,6 +1,6 @@
 ---
 name: aivax
-description: Operate AIVAX as a unified agent platform. Use when an agent needs to plan, execute, or validate work that touches AIVAX inference, RAG, rerankers, agentic tests, voice (TTS, STT, realtime), image generation, text tools (classify, segment, describe), AI gateways, gateway workers, protocol functions, batch, web chat, account operations, cost monitoring, or observability. Routes to focused sub-skills instead of duplicating endpoint documentation. Covers the case when the AIVAX MCP is available and when only public docs are reachable.
+description: Operate AIVAX as a unified agent platform. Use when an agent needs to plan, execute, or validate work that touches AIVAX inference, RAG, rerankers, agentic tests, voice (TTS, STT, realtime), image generation, text tools (classify, segment, describe, extract, summarize, translate), AI gateways, gateway workers, protocol functions, batch, web chat, account operations, cost monitoring, or observability. Routes to focused sub-skills instead of duplicating endpoint documentation. Covers the case when the AIVAX MCP is available and when only public docs are reachable.
 ---
 
 # AIVAX
@@ -15,7 +15,7 @@ Use this skill when the task involves any of the following:
 - Configuring or operating an AI gateway, RAG collection, batch workflow, or chat client.
 - Generating, transcribing, or describing media (speech, image, video, file).
 - Opening or designing a realtime voice session.
-- Classifying, segmenting, or extracting structure from text or media.
+- Classifying, segmenting, summarizing, translating, or extracting structure from text or media.
 - Evaluating one text against fixed criteria in a single call (semantic decisions).
 - Searching the web or extracting content from URLs or files via direct API calls.
 - Searching and reranking a knowledge base, with or without a collection.
@@ -44,13 +44,13 @@ Map the user intent to a sub-skill. Load only what you need. When in doubt, pref
 | Synthesize speech from text (TTS) | `references/speech/` (TTS) |
 | Transcribe audio to text (STT) | `references/speech/` (STT) |
 | Open a realtime bidirectional voice session | `references/voice-realtime/` |
-| Classify documents, segment text, or describe media into text | `references/text-tools/` |
+| Classify documents, segment text, describe media into text, extract schema fields, summarize, or translate documents | `references/text-tools/` |
 | Evaluate one text against fixed noul/choice/score criteria in a single call | `references/decisions/` |
 | Search the web or extract content from URLs/files via direct API calls | `references/web/` |
 | Build a RAG pipeline: collection, ingestion, query, answer, grounding | `references/rag/` |
 | Rerank candidate documents; choose Reflex, Cohere, Qwen, Jina, NVIDIA, or lexical reranker | `references/rerankers/` |
 | Create, run, evaluate, or compare agentic tests | `references/agentic-tests/` |
-| Create, list, rotate, or delete API keys; inspect account, plan, subscription, invoices, privacy settings (zero data retention, conversation logging), or salt | `references/account/` |
+| Create, list, rotate, or delete API keys; inspect account, plan, subscription, invoices, privacy settings (zero data retention, conversation and RAG logging), console two-factor sign-in, or salt | `references/account/` |
 | Investigate a cost spike, balance drop, or spend optimization | `references/cost-monitoring/` |
 | Correlate traces, diagnose latency/error, audit a conversation | `references/observability/` |
 | Create, edit, or operate an AI gateway (model + instructions + RAG + tools + skills) | `references/ai-gateways/` |
@@ -113,7 +113,7 @@ Every sub-skill follows the same contract, so the agent can chain them safely.
 1. **One capability per sub-skill.** Do not re-implement a contract in two places. Compose, do not duplicate.
 2. **Discover first, mutate second.** Always read current state with `aivax_invoke_function GET` or the public equivalent before any `POST`, `PUT`, `PATCH`, or `DELETE`.
 3. **Smallest safe change.** Patch only the fields that must change. For shallow-merge endpoints, do not send a copied full object.
-4. **Validate through the same path the user will use.** A gateway change is validated by a real or test conversation. A RAG change is validated by `/api/v1/query` or a real conversation. A chat-client change is validated by a session or talk URL. A batch change is validated by item inspection or export.
+4. **Validate through the same path the user will use.** A gateway change is validated by a real or test conversation. A RAG change is validated by `/api/v2/query` or a real conversation. A chat-client change is validated by a session or talk URL. A batch change is validated by item inspection or export.
 5. **Preserve secrets.** API keys, provider keys, salts, integration tokens, webhook secrets, and access keys never appear in final responses or logs.
 6. **Approval gates.** Destructive operations (delete, reset, clear, roll salt, sync imports that remove records, bulk cancellation, model swaps in production, rate-limit changes) require explicit user approval before execution.
 7. **Observability is a first-class concern.** Every multi-step workflow records request IDs, conversation IDs, transaction IDs, item IDs, balance snapshots, and a one-line cost estimate. This is what makes escalation and post-mortem analysis possible.
@@ -155,7 +155,7 @@ These apply in addition to the rules inside each sub-skill.
 | `references/image-generation/` | Text-to-image generation and storage |
 | `references/speech/` | Text-to-speech and speech-to-text generation |
 | `references/voice-realtime/` | Realtime bidirectional voice sessions |
-| `references/text-tools/` | Document classification, text segmentation, and media description |
+| `references/text-tools/` | Document classification, segmentation, media description, extraction, summarization, and translation |
 | `references/rag/` | RAG pipeline design, evaluation, and grounding diagnosis |
 | `references/rerankers/` | Reranker selection, catalog, and collection-less rerank (Reflex) |
 | `references/agentic-tests/` | Test creation, runs, evaluation, comparison, and trace analysis |

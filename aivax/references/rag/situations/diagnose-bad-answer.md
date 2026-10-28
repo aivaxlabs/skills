@@ -12,14 +12,14 @@ Goal: determine whether the issue is retrieval, ranking, source data, gateway RA
 4. Run direct retrieval:
 
 ```text
-POST /api/v1/query
+POST /api/v2/query
 {
   "terms": ["<original or rewritten query>"],
   "collections": ["<collection-id>"],
-  "top": 10,
+  "limit": 10,
   "minScore": 0.2,
   "reranker": "lexical",
-  "includeReferences": true
+  "include": ["content", "metadata", "references"]
 }
 ```
 
