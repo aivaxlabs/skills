@@ -32,6 +32,6 @@ Each item shows `createdAt`, `updatedAt`, `indexState`, and `approximateTokenCou
 ## Validation
 
 - Confirm document listing shows the expected source.
-- Run `/api/v1/query`.
+- Run `/api/v2/query`.
 - Confirm gateway retrieval if the issue was gateway-only.
 
