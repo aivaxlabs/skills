@@ -31,7 +31,7 @@ When the agent writes a server-side integration, use a private key. When the age
 - `GET /api/v1/information/balance`: get the current balance, plan, storage usage, and subscription allowance consumption.
 - `GET /api/v1/information/usage?timeStart=<iso>&timeEnd=<iso>&dayCount=<n>`: get usage details; use the API parameters to select the period and listing size.
 - `GET /api/v1/information/usage/monthly-report?month=YYYY-MM`: get monthly insights and top-cost model, resource, and SKU tables.
-- `PUT /api/v1/accounts`: replace the account name and the whole `parameters` object (`allowConversationsLogging`, `automaticJsonHealing`, `allowSemanticDataCollection`, `zeroDataRetentionOnly`, `notifications`). Omitted settings revert to their defaults, so send every setting that must be kept. No documented account endpoint returns the current `parameters`; confirm the values to keep with the user before replacing. Administrator-managed account data is stored separately and is never changed by this call.
+- `PUT /api/v1/accounts`: replace the account name and the whole `parameters` object (`allowConversationsLogging`, `allowRagLogging`, `automaticJsonHealing`, `allowSemanticDataCollection`, `zeroDataRetentionOnly`, `notifications`). Omitted settings revert to their defaults, so send every setting that must be kept. No documented account endpoint returns the current `parameters`; confirm the values to keep with the user before replacing. Administrator-managed account data is stored separately and is never changed by this call. Authenticator (2FA) state is kept and cannot be changed through `parameters`.
 - `GET /api/v1/subscriptions`: subscription state and purchasable plans. `POST /api/v1/subscriptions/plan`, `POST /api/v1/subscriptions/cancel`, `POST /api/v1/subscriptions/resubscribe`: change, cancel, or undo a pending change. `GET /api/v1/subscriptions/payment-methods` and `POST /api/v1/subscriptions/payment-methods/portal`: saved cards and a short-lived management link. See `situations/manage-subscription.md`.
 - `POST /api/v1/accounts/roll-salt`: roll the hook salt. Destructive: invalidates existing worker and integration validation secrets.
 
@@ -45,16 +45,27 @@ When the agent writes a server-side integration, use a private key. When the age
 
 ## Privacy Settings
 
-- `parameters.allowConversationsLogging` (default on): stores conversation records and RAG transaction telemetry. Turning it off removes the evidence used by `references/observability/`.
+- `parameters.allowConversationsLogging` (default on): stores conversation records. Turning it off removes the evidence used by `references/observability/`.
+- `parameters.allowRagLogging` (default on): stores RAG search transactions (queries, matches, scores, timing, cost) shown by the collection transaction endpoints. Turning it off removes the evidence used by `references/rag/` diagnostics.
 - `parameters.zeroDataRetentionOnly` (default off): restricts integrated text inference to providers whose catalog `dataCollection` is `Zero`. A model without such a provider fails with a client error before inference and without charge; choose another model or turn the setting off. It is enforced on integrated-model gateway and chat-completion routing; BYOK gateways and other generation endpoints are not documented as covered.
 - A chat completion can also send `allow_logging: false` to skip the conversation record for that call. The account setting still applies.
 - Changing any of these affects availability or audit evidence: require explicit user approval, and verify with a test call.
+
+## Console Sign-In And Two-Factor Authentication
+
+Two-factor authentication (TOTP) protects console sign-in only. API keys (`sk-aiv-acc`, `pk-aiv-`) are not checked against it, so integrations and automation keep working when 2FA is enabled, removed, or the login key is reset.
+
+- `POST /api/v1/auth/login` takes `loginKey` and optional `totpCode`. With 2FA on, a call without a code returns `requiresTwoFactor: true` and no session; repeat it with the six-digit code. A successful login returns a 180-day console session token, not an API key.
+- `POST /api/v1/auth/recovery` e-mails a one-time sign-in link and a login-key reset link (one hour); the reply is the same for unknown e-mails. `recovery/sign-in` follows the same 2FA step; `recovery/reset-key` e-mails a new login key.
+- `GET /api/v1/accounts/security`: whether 2FA is enabled and authenticator names. `POST /api/v1/accounts/security/totp` returns a pending secret and `otpauth` URI once (10 minutes); `POST .../totp/confirm` stores it after a valid code, plus a current code when another authenticator exists. `POST .../totp/<key-id>/remove` needs a current code; removing the last authenticator disables 2FA.
+- `POST /api/v1/accounts/login-key/reset` and `recovery/reset-key` sign out every console session but do not revoke API keys and keep 2FA enabled.
+- An agent cannot complete these steps without the user's authenticator or mailbox. Do not request, store, or print TOTP secrets, `otpauth` URIs, codes, login keys, or recovery links; send the user to the console.
 
 ## Public Key Restrictions
 
 Public keys can call only the following routes:
 
-- RAG semantic search (`/api/v1/query`).
+- RAG search (`/api/v2/query`, `/api/v2/query/similar`, `/api/v2/query/browse`, and the deprecated `/api/v1/query`).
 - RAG answer generation (`/api/v1/answer`).
 - Speech generation (`/api/v1/generations/speech`).
 - Speech-to-text transcription (`POST /api/v1/generations/audio/transcriptions`).

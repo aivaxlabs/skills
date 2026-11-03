@@ -54,7 +54,7 @@ In a conversation detail, inspect `usageObject.prompt_tokens`, `usageObject.comp
 
 ## Missing Records Are Not Failures
 
-A conversation exists only when it was stored. No record is written when the account has `allowConversationsLogging` off, when the chat-completion request sent `allow_logging: false`, or for batch item, image generation, and media description calls. RAG transaction telemetry also follows `allowConversationsLogging`. Before calling a missing record a failure or data loss, check those settings (`references/account/`) and fall back to the response, usage, batch item, or error evidence. Changing logging settings only to investigate needs explicit user approval, because it changes what is retained.
+A conversation exists only when it was stored. No record is written when the account has `allowConversationsLogging` off, when the chat-completion request sent `allow_logging: false`, or for batch item, image generation, and media description calls. RAG transaction telemetry follows `allowRagLogging` instead. Before calling a missing record a failure or data loss, check those settings (`references/account/`) and fall back to the response, usage, batch item, or error evidence. Changing logging settings only to investigate needs explicit user approval, because it changes what is retained.
 
 ## Bulk Export Options
 

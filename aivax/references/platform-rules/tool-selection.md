@@ -29,6 +29,7 @@ GET  /api/v1/information/balance
 GET  /api/v1/information/usage?timeStart=<iso>&timeEnd=<iso>
 GET  /api/v1/information/rerankers-models.json
 GET  /api/v1/information/audio-transcription-models.json
+GET  /api/v1/information/plans.json
 
 GET  /api/v1/ai-gateways
 GET  /api/v1/ai-gateways/<gateway-id>
@@ -43,7 +44,9 @@ PUT  /api/v1/collections/<collection-id>/documents
 POST /api/v1/collections/<collection-id>/documents (JSONL import)
 DELETE /api/v1/collections/<collection-id>/vectors-only
 
-POST /api/v1/query
+POST /api/v2/query
+POST /api/v2/query/similar
+POST /api/v2/query/browse
 POST /api/v1/answer
 
 GET  /api/v1/skills
@@ -90,6 +93,9 @@ POST /api/v1/generations/rerank
 POST /api/v1/generations/segment
 POST /api/v1/generations/classify
 POST /api/v1/generations/descriptions
+POST /api/v1/generations/extract
+POST /api/v1/generations/summarize
+POST /api/v1/generations/translate
 POST /api/v1/generations/speech
 POST /api/v1/generations/images
 POST /api/v1/generations/audio/transcriptions

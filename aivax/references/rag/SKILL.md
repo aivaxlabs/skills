@@ -5,7 +5,7 @@ description: Build and operate Retrieval-Augmented Generation on AIVAX — colle
 
 # RAG
 
-This sub-skill owns retrieval-augmented generation on AIVAX: collections, documents, semantic search, answer generation, and grounding evaluation. The endpoint surface is `POST /api/v1/query` (semantic search) and `POST /api/v1/answer` (answer generation). The collections and documents are managed through the account API.
+This sub-skill owns retrieval-augmented generation on AIVAX: collections, documents, semantic search, answer generation, and grounding evaluation. The endpoint surface is `POST /api/v2/query` (semantic search), `POST /api/v2/query/similar` and `POST /api/v2/query/browse` (similar documents and listing), and `POST /api/v1/answer` (answer generation). `POST /api/v1/query` is deprecated but still served. The collections and documents are managed through the account API.
 
 ## Operating Files
 
@@ -42,7 +42,10 @@ Do not use this sub-skill for:
 
 ## Endpoints
 
-- `POST /api/v1/query`: semantic search or filter-only retrieval. Returns documents with scores in `data`.
+- `POST /api/v2/query`: semantic search with optional reranking and cursor pages. See Query v2 below.
+- `POST /api/v2/query/similar`: documents closest to one indexed document, from its stored vector.
+- `POST /api/v2/query/browse`: list indexed documents in a fixed order, optionally filtered, without semantic search.
+- `POST /api/v1/query`: deprecated semantic search or filter-only retrieval. Returns documents with scores in `data`.
 - `POST /api/v1/answer`: answer generation. Returns a generated answer that cites the evidence.
 - `GET /api/v1/collections`: list collections.
 - `POST /api/v1/collections`: create an empty collection from `collectionName` with optional `context` and `tags`.
@@ -50,7 +53,7 @@ Do not use this sub-skill for:
 - `GET /api/v1/collections/<id>/export.jsonl`: export all documents as JSONL.
 - `GET /api/v1/collections/<id>/documents`: browse documents (query `filter`, `order_by`, `state`). Items carry `id`, `createdAt`, `updatedAt`, `name`, `reference`, `tags`, `contentsPreview`, `indexState`, and `approximateTokenCount` (an estimate from text length, useful for spotting documents that need segmentation).
 - `GET /api/v1/collections/<id>/documents/<document-id>`: view one document.
-- `GET /api/v1/collections/<id>/transactions`: list recent, low-quality, or high-quality transactions.
+- `GET /api/v1/collections/<id>/transactions`: list recent, low-quality, or high-quality transactions. Transactions are recorded only while the account's `allowRagLogging` is on (`references/account/`).
 - `GET /api/v1/collections/<id>/transactions/<transaction-id>`: view one transaction in detail.
 - `GET /api/v1/collections/<id>/transactions/export/jsonl?view=<mode>`: export the selected transaction view as JSONL.
 - `GET /api/v1/collections/<id>/deduplication/estimate?delta=<level>`: estimate exact and semantic duplicate removal; `delta` accepts `low`, `medium`, or `high` and defaults to `medium`.
@@ -66,7 +69,19 @@ Do not use this sub-skill for:
 - `DELETE /api/v1/collections/<id>/reset-only`: delete every document while retaining the collection configuration (destructive; require explicit approval).
 - `DELETE /api/v1/collections/<id>/vectors-only`: clear the vectors of documents that are not indexed or were embedded by a different embedder, and re-queue them for indexing; documents and already-current vectors are preserved. Returns how many documents were enqueued (mutation; require explicit approval). It does not force a rebuild of healthy vectors.
 
+## Query v2
+
+- Shared fields: `collections` (IDs, or `{ "id", "filter" }` objects whose filter is combined with the top-level `filter`; listing a collection twice is `400`), `filter` (string or array combined with `and`), `sort` (`{ "by": "score" | "createdAt" | "updatedAt" | "indexedAt" | "name", "dir": "asc" | "desc" }`), `limit` (1 to 128, default 10), `cursor`, and `include` (`content`, `metadata`, `references`; default content and metadata).
+- `/api/v2/query`: `terms` is required; each document is scored by its best match among the terms. `minScore` is 0 to 0.99 (default 0.2). `candidates` is the pool that is reranked, sorted, and paged: from `limit` to 1000, default `limit × 3`, and at most the reranker's document limit. `reranker` is `smart` (Reflex, the default), `lexical`, `rrf`, `none`, or a full reranker name. An explicit reranker with a sort other than score is `400`; without one, a non-score sort disables reranking.
+- `/api/v2/query/similar`: `documentId` (an indexed document of the account) is required; `collections` defaults to the source document's collection. Nothing is embedded or reranked, so there is no embedding or reranking cost, and the source document is never returned.
+- `/api/v2/query/browse`: `collections` is required and no terms are read. Only indexed documents are listed; `sort` defaults to `createdAt` ascending, and sorting by score is `400`. A filter that takes too long is `400`; make it more selective.
+- Response `data`: `results[]` with `rank`, `document` (`id`, `collectionId`, `name`, `reference`, `tags`, `createdAt`, `updatedAt`, `indexedAt`, plus `content` and `metadata` when included), `scores` (`similarity`, `rerank`, `final`, which is the rerank score when a reranker ran, otherwise the similarity), and `references[]` (`id`, `content`) when requested; `page` (`cursor`, `hasMore`, `candidates`); and `reranker`. Browse results have no `rank` or `scores`, and their `page` has no `candidates`; browse responses have no `reranker`.
+- Paging: resend the same body with `page.cursor`; a different body is `400`. Query and similar pages reuse the pool without new cost, and their cursors expire after 10 minutes without use (`410`: repeat without a cursor). Browse cursors do not expire.
+- All three accept public keys, require a positive balance, and count against the plan's search rate limit; reranked queries also count against the reranking limit.
+
 ## Choose The Retrieval Mode
+
+These rules describe the deprecated `/api/v1/query` and `/api/v1/answer`.
 
 - Send `collections` and use `terms` as the canonical search field on both `/query` and `/answer`. `terms` accepts a string or an array of strings; blank terms are discarded.
 - Terms only: semantic search. Terms plus `filter`: restrict eligible documents before semantic ranking. Filter only: return matching indexed documents newest first, up to `top`, with `score: 1`; no query embedding or reranking runs. This score is not relevance, and `minScore` does not narrow filter-only results.
@@ -76,22 +91,33 @@ Do not use this sub-skill for:
 ## Apply Exact Constraints
 
 - Use the singular `filter`, never `filters` (which is ignored). HTTP requests accept a filter string or an array of strings combined with `and`. Omitted, `null`, or an empty array means no filter; an empty string is invalid.
-- Filter fields are `name`, `content`, `tags`, `createdAt`, `updatedAt`, and `metadata.<key>`. Use `tags has "policy"`, `tags in ("faq", "policy")`, or `metadata.region = "latam"`; combine with `and`, `or`, `not`, and parentheses. Use terms for meaning, filters for exact constraints.
+- Filter fields are `name`, `content`, `reference`, `tags`, `createdAt`, `updatedAt`, and `metadata.<key>`. Use `tags has "policy"`, `tags in ("faq", "policy")`, or `metadata.region = "latam"`; combine with `and`, `or`, `not`, and parentheses. Use terms for meaning, filters for exact constraints.
 - Text comparisons ignore case and accents. Metadata comparisons preserve value types: a number does not match a numeric string. Prefer an explicit offset or `Z` in date conditions. Consult [Document Filters](https://docs.aivax.net/docs/filters/document-filters) for operators, date syntax, and validation limits rather than guessing.
 - Invalid types, syntax, fields, operators, or filter-limit violations return `400`; parse errors identify the problem and, for arrays with multiple expressions, the failing item index. A filter evaluation timeout also returns `400`: make the conditions more selective rather than retrying unchanged. No matching documents is a successful empty result, not an error, and skips query embedding and reranking.
 - Collections MCP search and the gateway `query` tool accept an optional filter string. Automatic gateway retrieval does not apply filters; do not invent a gateway-level filter setting.
 - Filters constrain matched documents, not authorization. With `includeReferences: true`, `referencedDocuments` are expanded separately without reapplying the filter. Keep it false when all returned content must satisfy the constraint.
-- The document-browsing endpoint's query-string `filter` uses a different search syntax; do not copy RAG filter expressions into it.
+- The document-browsing endpoint's query-string `filter` uses a different search syntax; do not copy RAG filter expressions into it. `/api/v2/query/browse` takes RAG filter expressions.
+
+## Collections MCP
+
+The Streamable HTTP server at `https://inference.aivax.net/v1/mcp/collections` exposes collections as tools, authenticated with an account bearer key.
+
+- Configure it with headers: `X-Mcp-Collection-Id` (required, comma-separated collection IDs), `X-Mcp-Collection-Name` (tool name prefix), `X-Mcp-Naming-Convention` (`default` or `agent`), `X-Mcp-Top-K`, `X-Mcp-Min-Score`, `X-Mcp-Reranker`, and `X-Mcp-Allow-Write: yes` for the write and delete tools.
+- Tools, as `default` / `agent` names after the prefix: search (`_search` / `_read`), browse (`_browse_documents` / `_list`), get document (`_get_document` / `_get`), write (`_create_or_update_document` / `_write`), and delete (`_delete_document` / `_delete`).
+- Browse lists indexed documents without semantic search: optional `filter`, `sort` (`createdAt` default, `updatedAt`, `indexedAt`, `name`), `descending`, `include_content` (default false), `limit` (1 to 50, default 20), and `cursor` (the returned `next_cursor`, sent with the same sort, descending, and filter).
+- Get document reads one document by its exact `name`, including documents not yet indexed, with optional 1-based `start_line` and `end_line`. One call returns at most 100,000 characters; read long documents in line ranges.
+- Select tools with `X-Mcp-Enabled-Tools: search, browse` (keys `search`, `browse`, `write`, `delete`; `browse` also exposes get document; write and delete still need `X-Mcp-Allow-Write: yes`). Omitting the header exposes all tools; an empty or unrecognized allowlist exposes none. Refresh MCP discovery after changing it.
+- Search, browse, and get document count against the plan's search rate limit.
 
 ## Minimal Examples
 
 ```json
-POST /api/v1/query
+POST /api/v2/query
 {
   "collections": ["<collection-id>"],
   "terms": "how do refunds work?",
   "filter": "tags has \"policy\"",
-  "top": 5
+  "limit": 5
 }
 ```
 
@@ -111,7 +137,7 @@ Use Media Injector when the useful knowledge sits inside a source file (PDF repo
 
 ## Validation
 
-- Inspect `/query` results in `data`, or `/answer` results in `data.queryResults` alongside `data.answer`.
+- Inspect `/api/v2/query` results in `data.results`, `/api/v1/query` results in `data`, or `/answer` results in `data.queryResults` alongside `data.answer`.
 - Matched collection documents include `timestamps.createdAt` and `timestamps.updatedAt` as date-time strings in `yyyy-MM-ddTHH:mm:ss` form, without a timezone suffix. Do not read them as Unix timestamps or silently assume UTC; referenced-document entries do not carry these fields.
 - Imported or upserted documents are searchable only after `indexState` is `indexed`; confirm with the browse `state` filter before testing retrieval.
 - The retrieved documents match the expected evidence and filter. Filter-only results prove eligibility, not semantic relevance.

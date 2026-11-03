@@ -14,7 +14,7 @@ Report the real plan and payment state, and change it only with explicit user ap
 
 ## Decision Tree
 
-1. Need the current state? `GET /api/v1/subscriptions`.
+1. Need the current state? `GET /api/v1/subscriptions`. Need only public list prices, without authentication? `GET /api/v1/information/plans.json` returns `plan` and `monthlyPrice` (USD) for `Free`, `Pro`, and `Max`; it excludes negotiated prices, so use `GET /api/v1/subscriptions` for the account's price.
 2. Upgrade or first subscription? `POST /api/v1/subscriptions/plan` with `{"plan": "Pro" | "Max"}`. It is charged now with a pro-rata discount and applied only after payment is confirmed.
 3. Downgrade? Same call; it is scheduled for the next renewal (`scheduled: true`) and nothing is charged now.
 4. Stop renewing? `POST /api/v1/subscriptions/cancel`. The paid plan stays active until the end of the paid cycle, then the account returns to `Free`.

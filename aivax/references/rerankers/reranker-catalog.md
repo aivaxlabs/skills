@@ -18,10 +18,11 @@ Use `GET /api/v1/information/rerankers-models.json` to inspect current names, `a
 | Use case | Recommended reranker | Why |
 | --- | --- | --- |
 | Default general use | `@aivax/reflex-v1` | Low latency, account-scoped cache, good quality. |
-| Very long documents | Jina | Check the current context limit. |
+| Very long documents | Jina (`@jina/reranker-v3`, `@jina/reranker-v3.5`) | Check the current context limit. |
 | Multilingual retrieval | Qwen or `@voyageai/rerank-3` | Verify language coverage in the live catalog. |
 | Multilingual, low cost | `@voyageai/rerank-3-lite` | Token-priced; smaller than `rerank-3`. |
 | Vision-language candidates | `@nvidia/llama-nemotron-rerank-vl-1b-v2` | Accepts image-based candidates. |
+| High-quality text relevance | `@nvidia/nemotron-3.5-rerank-8b` | Token-priced; check the current context limit. |
 | High-volume, low-cost | `lexical` | No usage charge; reranking request quota still applies. |
 | High-volume with semantic quality | Reflex (allowance/cache) | Covered calls incur no charge; metered cache hits cost less than misses. |
 | High precision, low volume | `@cohere/rerank-4-pro` | High quality, search-unit pricing. |

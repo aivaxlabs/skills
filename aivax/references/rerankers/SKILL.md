@@ -34,11 +34,11 @@ Rerankers differ in language coverage, context window, document limits, latency,
 
 - **Reflex** (`@aivax/reflex-v1`): default AIVAX reranker. Low latency, bounded lexical evidence, account-scoped cache. Best general default.
 - **Qwen 3 Reranker** (`@qwen/qwen3-reranker-0.6b`, `4b`, `8b`): three sizes for different quality/latency trade-offs.
-- **Jina Reranker v3** (`@jina/reranker-v3`): useful for long documents; check the live catalog's context limit.
+- **Jina Reranker** (`@jina/reranker-v3`, `@jina/reranker-v3.5`): useful for long documents; check the live catalog's context limit.
 - **Cohere Rerank** (`@cohere/rerank-4-pro`, `@cohere/rerank-4-fast`, `@cohere/rerank-3.5`): search-unit pricing, large document support.
 - **Voyage AI Rerank** (`@voyageai/rerank-3`, `@voyageai/rerank-3-lite`): multilingual, long-context, token-based pricing; the `lite` variant is the cheaper, faster one.
 - Names come from the live catalog; if a name is rejected as unknown, re-read the catalog instead of guessing.
-- **NVIDIA Nemotron** (`@nvidia/llama-nemotron-rerank-vl-1b-v2`): vision-language reranker, useful when the candidates include images.
+- **NVIDIA Nemotron** (`@nvidia/llama-nemotron-rerank-vl-1b-v2`): vision-language reranker, useful when the candidates include images. `@nvidia/nemotron-3.5-rerank-8b` is the text relevance variant.
 - **Lexical**: word-aware reranking without a usage charge; the reranking request quota still applies. Useful when the candidates are already high-quality.
 - **RRF**: rank fusion for vector and lexical ranks. RAG only.
 
@@ -46,7 +46,7 @@ Rerankers differ in language coverage, context window, document limits, latency,
 
 The rerank endpoint accepts only models with `autonomousUse: true`. `rrf` and `none` are RAG-only and are not accepted here.
 
-For managed RAG, `filter` restricts the candidates before semantic search and reranking; the standalone rerank endpoint has no filter field. A filter-only `/api/v1/query` skips reranking entirely. Do not tune or replace the reranker to fix filter eligibility or the newest-first order of that mode.
+For managed RAG, `filter` restricts the candidates before semantic search and reranking; the standalone rerank endpoint has no filter field. A filter-only `/api/v1/query` and `/api/v2/query/browse` skip reranking entirely, and `/api/v2/query` reranks only when sorting by score. Do not tune or replace the reranker to fix filter eligibility or the newest-first order of that mode.
 
 ## Cost Awareness
 

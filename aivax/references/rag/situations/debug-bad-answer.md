@@ -13,10 +13,10 @@ Identify the failure layer: retrieval, ranking, source data, gateway RAG setting
 
 ## Decision Tree
 
-1. Run a direct semantic search (`POST /api/v1/query`) with the original terms and filter, and a low min score. Confirm whether the failing path applied a filter; automatic gateway retrieval does not. Are the expected documents in the candidates?
+1. Run a direct semantic search (`POST /api/v2/query`) with the original terms and filter, and a low min score. Confirm whether the failing path applied a filter; automatic gateway retrieval does not. Are the expected documents in the candidates?
    - No: the issue is retrieval. Load `situations/debug-missing-evidence.md`.
    - Yes: the retrieval works. The issue is downstream.
-2. With the expected documents in the candidates, is the reranker demoting them? Run `/api/v1/query` with `reranker: "none"` and see if the documents rise. If they do, the reranker is the problem. Load `references/rerankers/`.
+2. With the expected documents in the candidates, is the reranker demoting them? Run `/api/v2/query` with `reranker: "none"` and see if the documents rise. If they do, the reranker is the problem. Load `references/rerankers/`.
 3. Is the top K too low? Increase it. A low top K drops relevant documents before the model sees them.
 4. Is the min score too high? Lower it. A high min score rejects documents that would otherwise be returned.
 5. Is the query strategy rewriting the query poorly? Try `Plain` to see if the rewritten query is the problem. Switch to a different strategy.

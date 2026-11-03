@@ -43,7 +43,7 @@ Memories are RAG documents: a new or changed memory is searchable only after ind
 ```text
 GET    /api/v1/collections
 GET    /api/v1/collections/<id>/documents?filter=<externalUserId>
-POST   /api/v1/query   { "collections": ["<id>"], "filter": "metadata.external_user_id = \"<externalUserId>\"" }
+POST   /api/v2/query/browse   { "collections": ["<id>"], "filter": "metadata.external_user_id = \"<externalUserId>\"" }
 GET    /api/v1/collections/<id>/documents/<memory-id>
 DELETE /api/v1/collections/<id>/documents/<memory-id>
 ```
