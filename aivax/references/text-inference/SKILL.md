@@ -42,7 +42,7 @@ Do not use this sub-skill for:
 
 The endpoint accepts OpenAI-compatible payloads plus AIVAX extensions:
 
-- `model`: an integrated model name, an AI gateway UUID, or an AI gateway slug (private keys only).
+- `model`: an integrated model name, an AI gateway UUID, or an AI gateway slug (private keys only). An integrated model name accepts an inline routing suffix after `#`: a preset such as `@provider/model#cheapest` or a provider tag such as `@provider/model#azure-us`; `routing_options` takes precedence over it.
 - `messages`: an OpenAI-compatible messages array. Multimodal content parts are described in `references/multimodal/`.
 - `prompt`: alternative to `messages` for simple text completions.
 - `stream`: `true` to receive SSE; `false` for a single response.
@@ -54,7 +54,7 @@ The endpoint accepts OpenAI-compatible payloads plus AIVAX extensions:
 - `time_zone`: optional IANA time zone, such as `America/Sao_Paulo`, used by `get_date_time`, the scheduling tools, and the Bash tool for this request only. It overrides the AI gateway `parameters.timeZone`, which defaults to `America/Sao_Paulo`. Independent of the browser time zone. Invalid identifiers are rejected. The old `builtin_tools.options.dateTimeTimeZone` option no longer exists.
 - `user`: optional external user identifier attached to the gateway inference context.
 - `extra_body`: provider-specific request fields, supported only with BYOK AI Gateways.
-- `routing_options`: private-key-only integrated-model routing override, with `preset` (`Balanced`, `Cheapest`, `Fastest`, or `Quality`) and ordered `allowed_providers` tags. Omitted fields inherit the gateway's `routingOption` and `allowedProviders`; defaults are `Balanced` and `["*"]`. Matching is case-insensitive; empty lists or blank tags are rejected. Include `"*"` last only when any-provider fallback is intended; otherwise the request fails if no listed provider is available. It does not change the saved gateway.
+- `routing_options`: private-key-only integrated-model routing override, with `preset` (`Balanced`, `Cheapest`, `Fastest`, `Quality`, or `Special`) and ordered `allowed_providers` tags. `Special` behaves like `Balanced` but also includes and prioritizes special providers; `Balanced` never uses them, and the other presets use them only when the account allows special providers in its settings. Omitted fields inherit the gateway's `routingOption` and `allowedProviders`; defaults are `Balanced` and `["*"]`. Matching is case-insensitive; empty lists or blank tags are rejected. Include `"*"` last only when any-provider fallback is intended; otherwise the request fails if no listed provider is available. It does not change the saved gateway.
 - `routing_preset`: deprecated preset override; `routing_options.preset` takes precedence when both are supplied. Public keys cannot send either routing extension.
 - `rendering_mode`: set to `textual_blocks` to normalize reasoning into textual think blocks.
 - `response_format` with `json_schema`: provider-compatible structured output.

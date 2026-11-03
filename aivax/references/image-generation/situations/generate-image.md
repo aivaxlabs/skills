@@ -48,8 +48,8 @@ For reference-guided generation, choose a reference-capable model:
 
 ## Response Handling
 
-1. Read `data` from the JSON response. It contains one `{ "input": "<prompt>", "images": ["<url>"] }` group per prompt; image entries are URLs, not base64 payloads.
-2. Check each group's `images` array. A provider failure may leave fewer images than requested; do not assume every successful response has `count` images.
+1. Read `data` from the JSON response. It contains one `{ "input", "images", "outputs", "cost" }` group per prompt; image entries are URLs, not base64 payloads.
+2. Check each group's `outputs`: one entry per requested image with `url`, `cost` and `error`. A failed image has a `null` URL, zero cost and an `error` message; do not assume every successful response has `count` images.
 3. Deliver the returned URLs, or download and store the images if the user's workflow requires durable storage. The endpoint does not specify a URL expiration time.
 4. Record the model, prompts, `count`, reference URLs when used, and returned URLs in the caller's own trace if needed; the endpoint does not accept `metadata` or a trace ID in its body.
 
@@ -63,8 +63,8 @@ For reference-guided generation, choose a reference-capable model:
 ## Failure Modes
 
 - Invalid prompts, `count`, model, or reference URLs return a validation error: fix the reported field before retrying.
-- An empty or short `images` array does not establish why generation failed; inspect the result and provider status before deciding whether to retry.
-- The output misses the brief: refine the prompt or try another catalog model; there is no caller-controlled quality tier.
+- An empty or short `images` array: read `outputs[].error` for each failed image before deciding whether to retry.
+- The output misses the brief: refine the prompt or try another catalog model. `quality` only sets the `jpeg`/`webp` encoding, not the generation quality.
 - A returned URL is unavailable: report the failed retrieval rather than claiming a seeded rerun will reproduce the image.
 - Usage exceeds the estimate: stop further generation and recheck the selected model's catalog pricing and request volume.
 
