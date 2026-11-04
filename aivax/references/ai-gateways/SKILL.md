@@ -48,7 +48,7 @@ A gateway has:
 - `parameters.timeZone`: IANA time zone in which the model reads and writes dates and times (`get_date_time`, scheduled messages, recurring jobs, and the Bash tool). Defaults to `America/Sao_Paulo`; invalid identifiers are rejected. A request-level `time_zone` overrides it for that call. Set it to the end users' zone so cron expressions and unzoned schedule times mean what they expect.
 - `parameters.toolContextCount`: how many previous tool results stay in context.
 - `parameters.contextMaximumSize` and `parameters.contextOverflowAction`: cap and handle long context.
-- `parameters.moderationParameters`: safety thresholds.
+- `parameters.moderationParameters`: safety thresholds and `mode`. `LayeredGuardrail` (the default) classifies the conversation before inference and blocks flagged requests. `SelfAssessment` makes the gateway model enforce the policy itself and requires a model that supports function calling; otherwise the request fails before inference. Do not send the internal refusal tool from the client. If every layered classifier fails, the runtime forwards safety instructions to the primary model instead of failing open.
 - `parameters.multimodalResolverParameters`: per-media engines that convert selected inputs into text. This replaces the deprecated `parameters.enabledMultimodalFeatures`; see `references/multimodal/`.
 - `parameters.queryStrategy`: `Plain`, `Concatenate`, `FullRewrite`, `UserRewrite`, or `QueryFunction`.
 - `parameters.knowledgeBaseMaximumResults`: number of documents injected.

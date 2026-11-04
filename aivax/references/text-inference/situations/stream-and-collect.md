@@ -19,6 +19,7 @@ Stream a chat completion to the user or to a downstream system, accumulate the a
 3. Is the consumer a pipeline that does not need incremental text? Buffer and parse. Streaming adds complexity with no value.
 4. Does the consumer need tool calls as they happen? Stream and parse `tool_calls` deltas. Most tool-calling pipelines stream because the tool call appears before the assistant's natural-language text.
 5. Does the conversation have a `metadata.trace_id`? Pass it on the request and confirm it surfaces in the final conversation record.
+6. Does a caller need the in-progress conversation, not the token stream? That is a different SSE surface: `GET /api/v1/conversations/management/live` and `GET /api/v1/conversations/<id>/sse`. Load `references/observability/`.
 
 ## Stream Parsing
 

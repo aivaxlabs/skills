@@ -17,7 +17,7 @@ Pick an available image model that fits the prompt, reference-image requirement,
 1. Consult `GET /api/v1/information/image-models.json` for current model names, descriptions, `flags`, and `pricingDescription`.
 2. Does the task require an existing image? Choose a model with the reference-image flag before sending `referenceImages`. References guide the output; do not assume a separate mask or inpainting control.
 3. Compare the model descriptions with the requested style and text-rendering needs. Treat these as selection clues, then inspect the generated result.
-4. Is the requested size or aspect ratio important? Describe the desired framing in `input` and verify the output; this endpoint has no size or aspect-ratio parameter.
+4. Is the requested size or aspect ratio important? Send `size` as `"<width>x<height>"` or `{ "width", "height" }`, each side 64–4096 px. The model may still adjust it, so verify the output. Describe style and exclusions in the prompt; there is no `seed` or `negative_prompt`.
 5. Compare the catalog's pricing descriptions with the budget and the planned number of prompts and images per prompt. They are estimates, not a guaranteed charge or a quality-tier selector.
 6. Select a candidate that meets the reference requirement and budget; if the first result misses the brief, refine the prompt or switch models.
 

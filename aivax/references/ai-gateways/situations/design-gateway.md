@@ -22,7 +22,7 @@ Produce a gateway definition that meets the user's goal with the right balance o
 6. What skills? Skills are reusable instruction bundles attached by ID. Load `references/skill-development/situations/attach-skill-to-gateway.md` for the pattern.
 7. What tools? MCP sources, protocol functions, built-in functions. Enable only what is needed. See `references/ai-gateways/situations/attach-skills-and-tools.md`.
 8. What multimodal inputs need conversion to text? Set `multimodalResolverParameters` per media type; leave raw media only when the main model supports it. See `references/multimodal/`.
-9. What moderation? Set `moderationParameters` to the safety threshold the user requires. Do not loosen moderation without a clear user requirement.
+9. What moderation? Set `moderationParameters` to the safety threshold the user requires, and set `mode` to `LayeredGuardrail` unless the user wants the gateway model to enforce the policy itself (`SelfAssessment`, which needs function calling). Do not loosen moderation without a clear user requirement.
 10. What context size? Choose `contextMaximumSize` within the model and plan limits. Choose overflow handling deliberately; do not assume truncation preserves every instruction or fact.
 11. What sampling? `temperature`, `topP`, `maxCompletionTokens`, `reasoningEffort`, `verbosity`. Set only what the chosen model supports.
 12. What is the access pattern? Public keys (for browser or widget) or private keys (for server-side). Public keys strip tool surfaces.

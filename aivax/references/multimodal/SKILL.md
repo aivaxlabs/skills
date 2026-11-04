@@ -74,6 +74,10 @@ Multimodal calls can be expensive. Compare the cost of a multimodal-capable mode
 - Some models support a subset of modalities. Verify with `aivax_list_models`.
 - Insufficient balance returns 402.
 
+## Related Contracts
+
+This sub-skill does not generate images or own gateway moderation. Image generation `size`, `format`, `quality`, and per-image `outputs[].cost` belong to `references/image-generation/`. Gateway `moderationParameters.mode` (`LayeredGuardrail` or `SelfAssessment`) belongs to `references/ai-gateways/`. A chat turn that mixes built-in tools and client tools is restored on the follow-up; see `references/text-inference/situations/inference-with-tools.md`. A moderation refusal is a policy result: do not bypass it.
+
 ## Escalation
 
 - The model returns a content error: load `references/platform-rules/error-handling.md` and classify.

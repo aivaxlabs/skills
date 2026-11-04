@@ -59,6 +59,41 @@ For any task that touches AIVAX, follow this order:
 - For integrated models, prefer `baseAddress: "@integrated"` and a model returned by `aivax_list_models`.
 - For external providers, preserve existing `apiKey` values when patching unrelated gateway parameters.
 
+## Model Names
+
+Public model names are `@provider/model-name`, lowercase. `provider` is the creator organization, not the host that serves the request. Send the `name` from `aivax_list_models` or the matching `GET /api/v1/information/*-models.json`. Do not invent a slug, and do not put a hosting or routing provider in the prefix.
+
+- An alias ends with a `:marker` and points to one model. `:latest` tracks the newest version of that family. `@model-router/` is reserved for cross-family routing aliases. A `:marker` on a non-alias name is a mode of that same model (currently `:pro`).
+- Reranker selectors `none`, `lexical`, `rrf`, and `smart` stay unprefixed. Do not rename embedding model names; that re-queues documents.
+- Public catalogs, MCP model listings, and chat-completion responses do not include upstream provider model IDs or provider base URLs. Route with `routingTag` or `tag`, not an upstream ID.
+- Names from before the 2026-11-01 review still resolve until 2026-12-01. After that date, send only the catalog name. Do not store a legacy name in a new gateway.
+
+## Application Authorization
+
+A third-party application obtains an application key (`sk-aiv-apk`) through OAuth. Do not call the internal `/api/v1/auth` login, recovery, or registration routes; they are omitted from the public API reference.
+
+Create a request without authentication:
+
+```json
+POST /api/v1/auth/oauth
+{
+  "clientName": "My application",
+  "reason": "Generate answers with your AI gateways.",
+  "permissions": ["InferenceText", "InferenceGenerations"],
+  "returnUrl": "https://example.com/oauth/callback"
+}
+```
+
+- `clientName` is 3–64 characters and `reason` is 3–500 characters, after trimming. `returnUrl` must be an absolute `http` or `https` URL without credentials, a fragment, repeated query keys, or the keys `access_token`, `expires_in`, or `error`. It cannot point at the AIVAX console.
+- Request at least one permission. Names are case-insensitive: `InferenceText`, `InferenceGenerations`, `ResourcesWrite`, `ResourcesRead`, `RagWrite`, `RagRead`, `ManagementAnalytics`, `Account`, `InferenceRealtime`, `WebUtilities`, `AccountIdentity`. `ManagementKeys`, `All`, `None`, and unknown names are rejected. Each route declares the permission it requires. A key missing that permission receives 403 naming the missing flags.
+- The response is `authorizationUrl` and `expiresIn`. The request expires in one hour and can be used once. Send the account holder to `authorizationUrl`. Approval happens in the console; do not call an authorize route from the agent.
+- On approval, the console redirects to `returnUrl` with `access_token` and `expires_in`. Denial redirects with `error=access_denied`. No refresh token is issued. The application key always includes `AccountIdentity` plus the approved permissions.
+- List approved applications with `GET /api/v1/accounts/applications` (`id`, `name`, `permissions`, `createdAt`, `expiresAt`, `usedAt`). Revoke one with `DELETE /api/v1/accounts/api-key/<id>` after explicit approval. See `references/account/`.
+
+## Registration Check
+
+Account registration verifies a Cloudflare Turnstile token, not a reCAPTCHA score. The console form sends that token as `captchaToken`; the expected widget action is `register`. A failed check returns `Captcha validation failed. Please, try again later.` Do not script the undocumented registration route. Console OAuth approval uses the same Turnstile check with action `oauth_authorize`.
+
 ## Validation Checklist
 
 A change is only "done" when all relevant items below are verified.
