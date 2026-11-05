@@ -20,7 +20,9 @@ The response is OpenAI-compatible: `{ "object": "list", "data": [ ... ] }`. Each
 
 Use `GET /v1/models?filter=<URL-encoded-model-name>` for a model family and its dated snapshots, ordered by closest match and then newest snapshot. This is not a substring search: matching ignores the vendor prefix and normalizes name separators, so inspect the returned IDs rather than assuming the filter pins a vendor.
 
-For integrated models, discover provider tags in `_details.provider_model.providers[].tag`. Use these exact tags in `routing_options.allowed_providers` or gateway `parameters.allowedProviders`; do not invent tags from vendor display names. In `GET /api/v1/information/models.json` the routing tag is `routingTag`; its `tag` field is the raw provider tag and can differ (for example `/` instead of `-`). Provider order limits the candidate pool before the routing preset chooses within it.
+For integrated models, discover provider tags in `_details.provider_model.providers[].tag`. Use these exact tags in `routing_options.allowed_providers` or gateway `parameters.allowedProviders`; do not invent tags from vendor display names. In `GET /api/v1/information/models.json` the routing tag is `routingTag`; its `tag` field is the raw provider tag and can differ (for example `/` instead of `-`). That catalog no longer returns `modelName` on providers, and `GET /api/v1/information/speech-models.json` no longer returns `providerModel`. Do not look for upstream IDs or provider base URLs in public catalogs or MCP model listings. Provider order limits the candidate pool before the routing preset chooses within it.
+
+Confirm these names in the live catalog before recommending them. `@z-ai/glm-5.3-flashx-legal` accepts text, image, and video, supports tools and structured output, and publishes reasoning efforts `max`, `high`, and `low`. `@particle-ai/particle-1` accepts text and images, supports tools, and publishes reasoning efforts `max`, `xhigh`, `high`, `medium`, `low`, `minimal`, and `none`. Neither name accepts an inline `#routing` suffix.
 
 ## Decision Fields
 

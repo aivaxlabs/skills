@@ -9,17 +9,17 @@ Generate images from one or more prompts and handle their URLs according to the 
 ## Preconditions
 
 - The model is chosen from `GET /api/v1/information/image-models.json` (see `situations/choose-image-model.md`).
-- Each prompt names the subject, style, composition, and important constraints. Describe desired framing in the prompt; there is no size or aspect-ratio field.
+- Each prompt names the subject, style, composition, and important constraints. Set framing with `size` when it matters; the model may still adjust the dimensions.
 - The account has a positive balance, and the intended number of prompts and images fits the agreed budget.
-- If references are needed, the model's catalog flags allow them and the image URLs are safe absolute HTTP(S) URLs.
+- If references are needed, the model's catalog flags allow them and each reference is a safe absolute HTTP(S) URL or an image data URI.
 
 ## Decision Tree
 
 1. For one image, send one `input` prompt with `count: 1` (or omit `count`).
 2. For alternatives, increase `count` within the current [Limits](https://docs.aivax.net/docs/limits) and agreed budget; an array of prompts produces a separate group for each input.
 3. For many independent requests, load `references/batch/situations/design-batch-workflow.md`.
-4. For a reference-guided change, use `referenceImages` URLs within the current request limit, with a model that supports them. The endpoint has no mask or separate editing operation.
-5. Put style, framing, and exclusions in the prompt. This endpoint does not accept `seed`, `negative_prompt`, `quality`, or `size`; do not promise reproducible reruns.
+4. For a reference-guided change, use `referenceImages` within the current request limit, with a model that supports them. Each entry is an HTTP(S) URL or a `data:image/png`, `data:image/jpeg`, `data:image/webp`, or `data:image/gif` data URI. The endpoint has no mask or separate editing operation.
+5. Put style and exclusions in the prompt. Send optional `size`, `format` (`png`, `jpeg`, or `webp`), and `quality` (1–100, used for `jpeg`/`webp` encoding and ignored for `png`). This endpoint does not accept `seed` or `negative_prompt`; do not promise reproducible reruns.
 
 ## Construction
 
@@ -29,9 +29,14 @@ Send `POST /api/v1/generations/images` with a JSON body:
 {
   "input": "<textual description>",
   "count": 1,
-  "model": "<chosen-image-model>"
+  "model": "<chosen-image-model>",
+  "size": "1024x1024",
+  "format": "webp",
+  "quality": 80
 }
 ```
+
+Omit `size`, `format`, and `quality` to keep the model default (1080x1920, the model's own format). `count` must be an integer from 1 to 4.
 
 For reference-guided generation, choose a reference-capable model:
 
@@ -44,7 +49,7 @@ For reference-guided generation, choose a reference-capable model:
 }
 ```
 
-`input` can also be a non-empty array of non-empty prompt strings. Do not send data URLs or unsupported fields as substitutes for the documented controls.
+`input` can also be a non-empty array of non-empty prompt strings. Do not invent fields beyond `input`, `count`, `model`, `referenceImages`, `size`, `format`, and `quality`.
 
 ## Response Handling
 
@@ -62,9 +67,9 @@ For reference-guided generation, choose a reference-capable model:
 
 ## Failure Modes
 
-- Invalid prompts, `count`, model, or reference URLs return a validation error: fix the reported field before retrying.
+- Invalid prompts, `count`, model, `size`, `format`, `quality`, or reference images return a validation error: fix the reported field before retrying.
 - An empty or short `images` array: read `outputs[].error` for each failed image before deciding whether to retry.
-- The output misses the brief: refine the prompt or try another catalog model. `quality` only sets the `jpeg`/`webp` encoding, not the generation quality.
+- The output misses the brief: refine the prompt, change `size`, or try another catalog model. `quality` only sets the `jpeg`/`webp` encoding, not the generation quality.
 - A returned URL is unavailable: report the failed retrieval rather than claiming a seeded rerun will reproduce the image.
 - Usage exceeds the estimate: stop further generation and recheck the selected model's catalog pricing and request volume.
 

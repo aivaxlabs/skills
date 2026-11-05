@@ -36,7 +36,7 @@ The first client message must be a JSON `session.update` event containing a `ses
 
 ## Models
 
-Realtime models are tuned for low-latency two-way audio. They differ in language coverage, voice quality, tool use support, and cost. Verify with `aivax_list_models` and `aivax_search_context`. Common axes:
+Realtime models are tuned for low-latency two-way audio. Send the catalog `@provider/model` name in `session.update`, at the event level or inside `session`. Omitting it uses `@openai/gpt-realtime-2.1`. Unprefixed names from before the 2026-11-01 review still resolve until 2026-12-01. These names do not accept an inline `#routing` suffix. They differ in language coverage, voice quality, tool use support, and cost. Verify with `aivax_list_models` and `aivax_search_context`. Common axes:
 
 - Voice quality vs. latency: higher quality usually means higher latency.
 - Multilingual support: pick a model that covers the user's language.

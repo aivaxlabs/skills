@@ -57,6 +57,8 @@ For each requested tool call:
 
 Use `builtin_tools` only for documented available AIVAX built-in tools such as `WebSearch`, `OpenUrl`, `Code`, `Request`, `DateTime`, and `Remember`. Verify supported tools and options with `aivax_search_context`.
 
+A turn may mix server-side built-in tools and client `tools`. Server tools run before the response returns. The client sees only its own tool calls; echo each returned `id` unchanged in the follow-up `tool` message. Those ids use an `aivx_` turn reference. On that follow-up, AIVAX restores the cached server-side result for the same turn, so do not expect the server result in the first response and do not rerun the server tool to recover it. An unknown `aivx_` id is ignored; the client tool result is still used. A streamed mixed turn emits only the client tool calls.
+
 ## Web Research Depth
 
 - `WebSearch` answers quick current-fact questions (weather, news, scores). Tune with `web_search_max_results` and `web_search_mode` (`full` inserts whole result contents at higher token cost; `summarized` inserts provider summaries). Prefer it for routine lookups.

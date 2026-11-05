@@ -42,7 +42,7 @@ Do not use this sub-skill for:
 
 The endpoint accepts OpenAI-compatible payloads plus AIVAX extensions:
 
-- `model`: an integrated model name, an AI gateway UUID, or an AI gateway slug (private keys only). An integrated model name accepts an inline routing suffix after `#`: a preset such as `@provider/model#cheapest` or a provider tag such as `@provider/model#azure-us`; `routing_options` takes precedence over it.
+- `model`: an integrated model name, an AI gateway UUID, or an AI gateway slug (private keys only). Use the catalog `@provider/model` name. An integrated chat model name accepts an inline routing suffix after the first `#`: a preset (`Balanced`, `Cheapest`, `Fastest`, `Quality`, or `Special`), such as `@provider/model#cheapest`, or a provider tag such as `@provider/model#azure-us`. The suffix is removed before the provider call and is not returned in `model`. `routing_options` takes precedence over it. Image, speech, transcription, decision, and realtime names do not accept the suffix. `@metaai/llama-3.3-70b` and `@metaai/llama-3.1-8b` still resolve to the `@meta/` names until 2026-12-01.
 - `messages`: an OpenAI-compatible messages array. Multimodal content parts are described in `references/multimodal/`.
 - `prompt`: alternative to `messages` for simple text completions.
 - `stream`: `true` to receive SSE; `false` for a single response.
@@ -68,7 +68,9 @@ The endpoint accepts OpenAI-compatible payloads plus AIVAX extensions:
 
 These fields are implemented in `OpenIndexer.Alpha2/Api/Modules/OpenAi.cs`. The built-in names come from `OpenIndexer.Alpha2/Inference/ReasoningChainResolverOptions.cs`.
 
-For integrated models, the response includes the serving provider's routing tag in `provider`, next to `model`, including streamed chunks. BYOK gateways return `provider: null`. Use this observed value rather than inferring the provider from the requested model name.
+For integrated models, the response includes the serving provider's routing tag in `provider`, next to `model`, including streamed chunks. BYOK gateways return `provider: null`. Use this observed value rather than inferring the provider from the requested model name. Public catalogs and responses do not include upstream provider model identifiers or provider base URLs. Do not read a removed `model_name` or `providerModel` field.
+
+Recent catalog additions to confirm with `aivax_list_models` before use: `@z-ai/glm-5.3-flashx-legal` (legal-domain text model with image and video input, tools, and reasoning efforts `max`, `high`, `low`) and `@particle-ai/particle-1` (coding model with image input, tools, and reasoning efforts `max`, `xhigh`, `high`, `medium`, `low`, `minimal`, `none`). Read context and pricing from the catalog. See `model-catalog.md`.
 
 ## Minimal Tool-Call Loop
 
@@ -109,6 +111,10 @@ When the user already maintains a gateway, the gateway is almost always the righ
 ## Modality
 
 The endpoint accepts multimodal content parts: `text`, `image_url`, `video_url`, `input_audio`, and `file`. The model must support the modality unless `multimodal_resolver` converts that media type into text first. See `references/multimodal/`.
+
+## Live Conversations
+
+The chat-completion SSE stream is not the account's live conversation monitor. While a logged request is generating, `GET /api/v1/conversations/<id>` can return the in-progress snapshot, and `GET /api/v1/conversations/management/live` plus `GET /api/v1/conversations/<id>/sse` stream its status. Nothing is tracked when account or request logging is off. See `references/observability/`.
 
 ## Cost Awareness
 

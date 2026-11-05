@@ -33,12 +33,12 @@ Do not use this sub-skill for:
 The request accepts only:
 
 - `input` (required): a non-empty prompt string or a non-empty array of prompt strings.
-- `count` (optional): an integer; defaults to one image per prompt. Check [Limits](https://docs.aivax.net/docs/limits) before increasing it.
-- `model` (required): an image model identifier from `GET /api/v1/information/image-models.json`.
-- `referenceImages` (optional): safe absolute HTTP(S) image URLs, within the current request limit. Use this only when the selected model has the reference-image capability flag in the catalog.
-- `size` (optional): `"1024x1024"` or `{ "width": 1024, "height": 1024 }`, each side 64–4096 px; defaults to 1080x1920. The model may adjust it.
-- `format` (optional): `png`, `jpeg` or `webp`; defaults to the model's own output format.
-- `quality` (optional): integer 1–100 for `jpeg`/`webp` encoding; ignored for `png`.
+- `count` (optional): an integer from 1 to 4; defaults to one image per prompt.
+- `model` (required): the catalog `name` from `GET /api/v1/information/image-models.json`, in `@provider/model` form. Unprefixed names from before the 2026-11-01 review still resolve until 2026-12-01.
+- `referenceImages` (optional): safe absolute HTTP(S) URLs, or `data:image/png`, `data:image/jpeg`, `data:image/webp`, or `data:image/gif` base64 data URIs, within the current request limit. Use this only when the selected model has the reference-image capability flag in the catalog.
+- `size` (optional): `"1024x1024"` or `{ "width": 1024, "height": 1024 }`, each side 64–4096 px; defaults to 1080x1920. The model may adjust it to dimensions it supports.
+- `format` (optional): `png`, `jpeg`, or `webp`; when omitted, the image is returned in the format the model produced.
+- `quality` (optional): integer 1–100 for `jpeg`/`webp` encoding; ignored for `png`. When a conversion happens and `quality` is omitted, encoding uses 90.
 
 ```json
 {

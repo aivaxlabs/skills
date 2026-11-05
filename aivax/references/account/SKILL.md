@@ -20,6 +20,7 @@ AIVAX has two key families because browser-facing and server-side use cases have
 
 - **Private key** (`sk-aiv-acc`): server-side integrations and administrative API calls. Authenticated account APIs and OpenAI-compatible inference.
 - **Public key** (`pk-aiv-`): restricted client-side calls to explicitly public routes (RAG query, RAG answer, speech generation, speech-to-text transcription, image generation, media descriptions, and chat completions with stripped tool surfaces).
+- **Application key** (`sk-aiv-apk`): a third-party OAuth grant. It has `AccountIdentity` plus the permissions the account holder approved. It is not a private or public key. See `references/platform-rules/`.
 
 When the agent writes a server-side integration, use a private key. When the agent writes a browser or widget experience, use a public key and keep the workflow limited to routes designed for public access.
 
@@ -27,7 +28,8 @@ When the agent writes a server-side integration, use a private key. When the age
 
 - `GET /api/v1/accounts/api-key`: list masked keys and the current account `salt`.
 - `POST /api/v1/accounts/api-key`: create a key with a label, expiration, and type.
-- `DELETE /api/v1/accounts/api-key/<key-id>`: delete a key.
+- `DELETE /api/v1/accounts/api-key/<key-id>`: delete a key, including an OAuth application key.
+- `GET /api/v1/accounts/applications`: list OAuth application keys (`id`, `name`, `permissions`, `createdAt`, `expiresAt`, `usedAt`). Revoke one with the delete-key route after explicit approval.
 - `GET /api/v1/information/balance`: get the current balance, plan, storage usage, and subscription allowance consumption.
 - `GET /api/v1/information/usage?timeStart=<iso>&timeEnd=<iso>&dayCount=<n>`: get usage details; use the API parameters to select the period and listing size.
 - `GET /api/v1/information/usage/monthly-report?month=YYYY-MM`: get monthly insights and top-cost model, resource, and SKU tables.

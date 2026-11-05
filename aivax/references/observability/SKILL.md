@@ -31,7 +31,9 @@ Do not use this sub-skill for:
 ## Operating Surfaces
 
 - `GET /api/v1/conversations`: list conversations.
-- `GET /api/v1/conversations/<id>`: view a conversation.
+- `GET /api/v1/conversations/<id>`: view a stored conversation, or the in-progress snapshot when that id is still generating on this instance.
+- `GET /api/v1/conversations/management/live`: SSE stream of in-progress conversations. Each event is `{ "type": "conversations.live.updated", "data": [ ... ] }` with `id`, `version`, `status` (`running`, `persisting`, or `completed`), `origin`, `startedAt`, `completedAt`, `conversationId`, `modelName`, `externalUserId`, token counts, `elapsedTime`, and previews. A finished conversation stays for 10 seconds with `status: "completed"` and the stored `conversationId`, which is `null` when it was not stored. Only conversations served by the same instance, and only while logging is enabled, are listed. Keep-alive pings arrive about every 15 seconds.
+- `GET /api/v1/conversations/<live-id>/sse`: SSE stream of one generating conversation. Events are `{ "type": "conversation.live.updated", "data": { ... } }` in the view-conversation shape, including the growing assistant message. The stream closes after `status: "completed"`. A missing, expired, or foreign id is 404.
 - `DELETE /api/v1/conversations/<id>`: delete a conversation (destructive).
 - `GET /api/v1/conversations/management/export.jsonl?period=<window>&media=<mode>&thinking=<mode>&truncate=<n>`: bulk export.
 - `GET /api/v1/conversations/<id>/export.json`: single conversation export.
