@@ -21,7 +21,7 @@ Compare only implemented data:
 - final top-level `score` / `result.conversation_delta`;
 - `turn_number` and `loss_streak`;
 - total `cost`;
-- retained user, assistant, and judge conversation;
+- retained user, assistant, tool, and judge conversation;
 - per-message prompt, cached prompt, and completion tokens.
 
 There are no per-input scores, input flips, dataset sample size, built-in variance, latency metric, or statistical-significance field.

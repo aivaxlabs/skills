@@ -39,6 +39,8 @@ GET /api/v1/web-chat-client/<client-id>/sessions?filter=<tag>
 
 A non-expired session with the same `tag` is refreshed and returned. Treat `sessionId`, `accessKey`, and `talkUrl` as sensitive operational data.
 
+`extraContext` and the content fetched from `contextLocation` are added to the system instructions of every inference of the session; `contextLocation` is fetched again before each prompt, so use it for context that changes during the conversation. Context needed for one turn only belongs in the prompt `instructions` field instead (see Session Prompts in `SKILL.md`).
+
 ## Validation
 
 - The session is associated with the intended client and stable tag.

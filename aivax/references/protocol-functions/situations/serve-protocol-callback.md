@@ -29,7 +29,7 @@ The callback request carries the function name, the model-supplied arguments, an
 - `context.externalUserId`: session or request user ID, or null when unidentified.
 - `context.metadata`: caller-supplied string pairs (never put secrets here).
 - `context.callSource`: inference origin (`WebChatClient`, `ChatCompletionsApi`, `IntegrationBot`).
-- `context.conversationToken`: correlation token from `idempotency_key` when supplied; shared across calls, not a unique ID.
+- `context.conversationToken`: correlation token from the request `conversation_token` (or its deprecated alias `idempotency_key`) when supplied; shared across calls, not a unique ID.
 - `context.moment`: server-local timestamp of callback preparation.
 
 Custom metadata stays nested under `context.metadata`; it is not merged into `context`.

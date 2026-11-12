@@ -5,7 +5,7 @@ description: Evaluate named noul, choice, and score questions against a shared s
 
 # Decisions
 
-This sub-skill owns semantic decisions: one `POST` evaluates one or more named questions against a shared JSON `state` and returns structured answers plus usage. It is a classifier/router/scorer, not a chat model — there is no message history, no tools, and no free-text reply.
+This sub-skill owns semantic decisions: one `POST` evaluates one or more named questions against a shared JSON `state` (or a conversation sent as `input`) and returns structured answers plus usage. It is a classifier/router/scorer, not a chat model — there is no stored history, no tools, and no free-text reply.
 
 ## When To Use
 
@@ -47,9 +47,18 @@ Request shape:
 }
 ```
 
-Rules: `model` must match a registered identifier exactly, including `@`; discover canonical names and aliases with `GET /api/v1/information/decisions-models.json`. An alias always ends in a marker such as `:latest`; `@typesafe/jev:latest` resolves to a canonical name that can change when a newer version ships, and the response `model` always carries the canonical name; pin the canonical name when you need a fixed version. Aliases without the `:latest` marker still resolve until 2026-12-01. `maxImages` tells how many images a model accepts per request (`0` means text-only). `state` is any present JSON value (including `null`, an empty string, object, or array) evaluated by every question.
+Rules: `model` must match a registered identifier exactly, including `@`; discover canonical names and aliases with `GET /api/v1/information/decisions-models.json`. An alias always ends in a marker such as `:latest`; `@typesafe/jev:latest` resolves to a canonical name that can change when a newer version ships, and the response `model` always carries the canonical name; pin the canonical name when you need a fixed version. Aliases without the `:latest` marker still resolve until 2026-12-01. `maxImages` tells how many images a model accepts per request (`0` means text-only). Catalog `capabilities` lists the question types (`noul`, `choice`, `score`) and the accepted media (`imageinput`, `audioinput`, `videoinput`, `fileinput`). `state` is any present JSON value (including `null`, an empty string, object, or array) evaluated by every question.
 
-Image-capable models (`maxImages` above `0`) also take images in a `state` that is a top-level array, mixed with plain-string text items: `{ "type": "image_url", "image_url": { "url": "data:image/png;base64,..." } }`. Only base64 data URLs of `image/png`, `image/jpeg`, or `image/webp` are accepted; remote URLs are never fetched, and images nested inside objects are not read. Images sent to a text-only model, more images than `maxImages`, or any other image URL return 400, so check `maxImages` before attaching images. `questions` is a non-empty object keyed by question name (names cannot be empty). Each question needs non-empty `instructions` plus `criteria`: an object with non-empty `true`/`false` strings for `noul`, a non-empty object mapping choice names to non-empty descriptions for `choice`, or a non-empty ordered array of non-empty strings for `score` (starting at index 0). Any other `type` returns 400.
+To decide over a conversation, send `input` instead of `state`: a non-empty array of OpenAI-style messages (`role` plus string or multipart `content`). The API turns it into a `state` array whose first item is the conversation as text, followed by every non-text part of the messages as its own media item, validated by the same media rules below. Sending both `input` and `state` returns 400 (`OpenIndexer.Alpha2/Api/Modules/Generations/DecisionsApi.cs:71-91`).
+
+Multimodal models also take media parts in a `state` that is a top-level array, mixed with plain-string text items; media nested inside objects is not read (`OpenIndexer.Alpha2/Api/Modules/Generations/DecisionsApi.cs:93-143`):
+
+- Image (`maxImages` above `0`): `{ "type": "image_url", "image_url": { "url": "data:image/png;base64,..." } }`. Only base64 data URLs of `image/png`, `image/jpeg`, or `image/webp`; remote URLs are never fetched. Images sent to a text-only model, more images than `maxImages`, or any other image URL return 400.
+- Audio (`audioinput`): `{ "type": "input_audio", "input_audio": { "data": "<raw base64>", "format": "wav" } }`. `data` is raw base64 without a `data:` prefix; `format` is one of `wav`, `mp3`, `mpeg`, `m4a`, `mp4`, `aac`, `aiff`, `aif`, `flac`, `ogg`, `opus`, or `webm`.
+- Video (`videoinput`): `{ "type": "video_url", "video_url": { "url": "data:video/mp4;base64,..." } }`. Only base64 `data:video/*` URLs; remote URLs are not fetched.
+- Document (`fileinput`): `{ "type": "file", "file": { "file_data": "data:application/pdf;base64,...", "filename": "doc.pdf" } }`. `file_data` is a base64 data URL or a public `https://` URL.
+
+Audio, video, or documents sent to a model without the matching capability return 400, so check the catalog before attaching media. `questions` is a non-empty object keyed by question name (names cannot be empty). Each question needs non-empty `instructions` plus `criteria`: an object with non-empty `true`/`false` strings for `noul`, a non-empty object mapping choice names to non-empty descriptions for `choice`, or a non-empty ordered array of non-empty strings for `score` (starting at index 0). Any other `type` returns 400.
 
 Illustrative Julia-1 response shape (`id`, `model`, `provider`, `answers` keyed by question name, `usage`; numbers are not a measured result):
 
@@ -89,7 +98,7 @@ Answer fields by type: `noul` carries a numeric result for the true criterion; `
 
 ## Limits
 
-- Unknown `type` values, missing `state`, missing/empty `model`, `instructions`, or `criteria`, and empty question names or choice names return 400. A present empty `state` is valid. Fix invalid payloads rather than retrying unchanged.
+- Unknown `type` values, missing both `state` and `input`, both sent together, an empty or non-array `input`, missing/empty `model`, `instructions`, or `criteria`, and empty question names or choice names return 400. A present empty `state` is valid. Fix invalid payloads rather than retrying unchanged.
 - Unknown model returns 400. Check the exact registered identifier (including `@`) in the decision-model catalog before retrying. Catalog entries change: a model may gain a newer canonical name and keep the old one as an alias, so prefer the returned canonical `name` and re-read the catalog instead of hardcoding identifiers.
 - A provider that rejects the request contents (for example an over-long state) is reported as 400 with the provider's message, not as a retryable failure.
 - Missing or invalid API key returns 401; insufficient balance or quota returns 402. Top up or switch credentials; do not retry the same call.

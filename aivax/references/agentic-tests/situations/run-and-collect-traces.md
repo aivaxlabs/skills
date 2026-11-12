@@ -36,11 +36,11 @@ Do not call `/run`; the implemented queue endpoint is plural `/runs`. Do not sen
 Keep these dimensions separate:
 
 - `state`: operational lifecycle — `pending`, `running`, `succeeded`, `failed`, or `cancelled`.
-- `result.outcome`: behavioral result — `success`, `loss`, or `incomplete`.
+- `result.outcome`: behavioral result — `success`, `loss`, or `incomplete`; `interrupted` when a failed run stopped on a validation hook or execution error. The run summary repeats it as `outcome`.
 - `score`: final normalized conversation trajectory (`conversation_delta`), not an average over inputs.
 - `error`: safe operational failure text, usually relevant when state is `failed`.
-- `conversation`: timestamped `user`, `assistant`, and `judge` entries with per-message token usage and cost.
-- `cost`: total billed cost attributed to the run.
+- `conversation`: timestamped `user`, `assistant`, `tool`, and `judge` entries with per-message token counts; assistant entries carry `tool_calls`, and `tool` entries carry `tool_call_id` and `name`.
+- `cost`: total billed cost attributed to the run. Per-message `usage.cost` is currently `0` and `usage.model` is `null`, so do not sum or attribute them.
 
 A `succeeded` run may have `result.outcome: loss` or `incomplete`; succeeded only means the runner completed without an execution error.
 

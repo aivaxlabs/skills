@@ -17,7 +17,7 @@ AIVAX errors fall into a small number of classes. The agent should classify befo
 - Verify the MCP is configured for the intended account.
 - Do not ask the user to paste secrets unless no safer account-auth surface exists.
 - If using fallback HTTP, confirm the base URL, key type (`sk-aiv-acc` private vs `pk-aiv-` public), and the route is public-safe.
-- Public keys are restricted to RAG query, answer, speech, image generation, media descriptions, and chat completions with stripped tool surfaces. They cannot call integrated models directly and cannot use gateway slugs.
+- Public keys carry only the `InferenceText`, `InferenceGenerations`, and `RagRead` permissions, so routes that need any other permission return `403`. Their chat completions use stripped tool surfaces, and they cannot call integrated models directly or use gateway slugs.
 
 ### Not Found (404)
 

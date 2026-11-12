@@ -1,11 +1,11 @@
 ---
 name: aivax-text-tools
-description: Use AIVAX text tools — document classification, text segmentation, media description, schema-guided extraction, summarization, and translation — to prepare, structure, or summarize content before or instead of chat completion. Load when the agent needs to classify documents, segment long text into chunks, describe media, extract fields into JSON, summarize documents, or translate text, images, or audio.
+description: Use AIVAX text tools — document classification, text segmentation, media description, schema-guided extraction, summarization, translation, and instruction refinement — to prepare, structure, review, or summarize content before or instead of chat completion. Load when the agent needs to classify documents, segment long text into chunks, describe media, extract fields into JSON, summarize documents, translate text, images, or audio, or review LLM instructions, prompts, and skills with located findings and diff patches.
 ---
 
 # Text Tools
 
-This sub-skill owns AIVAX's non-chat text tools: document classification, text segmentation, media description, document extraction, summarization, and translation. These tools are designed for the pre- and post-processing stages of a pipeline: classify an incoming document, segment a long text, or describe a media file so a downstream model can reason over the description.
+This sub-skill owns AIVAX's non-chat text tools: document classification, text segmentation, media description, document extraction, summarization, translation, and instruction refinement. These tools are designed for the pre- and post-processing stages of a pipeline: classify an incoming document, segment a long text, or describe a media file so a downstream model can reason over the description.
 
 ## Operating Files
 
@@ -13,6 +13,7 @@ This sub-skill owns AIVAX's non-chat text tools: document classification, text s
 - `situations/segment-text.md`: segment a long text into chunks.
 - `situations/describe-media.md`: produce a textual description of a media file.
 - `situations/extract-summarize-translate.md`: extract schema fields, summarize, or translate documents.
+- `situations/refine-instructions.md`: review instructions, prompts, skills, and tool descriptions; read findings and apply diff patches.
 
 ## Endpoints
 
@@ -22,6 +23,7 @@ This sub-skill owns AIVAX's non-chat text tools: document classification, text s
 - Extraction: `POST /api/v1/generations/extract`.
 - Summarization: `POST /api/v1/generations/summarize`.
 - Translation: `POST /api/v1/generations/translate`.
+- Instruction refinement: `POST /api/v1/generations/instruction-refinement`.
 
 None of these endpoints accepts a `model` field. Their request bodies and response shapes are distinct:
 
@@ -29,6 +31,7 @@ None of these endpoints accepts a `model` field. Their request bodies and respon
 - Segmentation accepts `documents` and optional `sanitize` (default `false`); inspect `data.result` by each item's `index`, with `count` and `segments`, and `data.usage.processing_units` / `cost`. `sanitize: true` may omit content and can return per-document `error` entries; do not assume HTTP success means every document succeeded. See `situations/segment-text.md`.
 - Media description accepts `input`, optional `extractionGuidance`, and optional `preset`; `preset` is `auto` (default) or `high`. The response envelope's `data` is an array with one resolver-generated object per input item (`OpenIndexer.Alpha2/Api/Modules/Generations/MediaDescriptionsApi.cs:117-121,174`).
 - Extraction accepts `responseSchema`, `documents`, and optional `instructions`; summarization accepts `documents` and optional `instructions`; translation accepts `toLanguage`, optional `fromLanguage`, and `documents`. Each returns one `data` entry per document in input order. See `situations/extract-summarize-translate.md`.
+- Instruction refinement accepts `context` (items with `type`, `content`, optional `title` and `description`), optional `view` (`micro`, default, or `macro`), and optional `purpose`; `data` holds `overallScore`, `summary`, `findings` with line/column evidence spans, and `suggestedFixes` with unified diff `patches` (`OpenIndexer.Alpha2/Api/Modules/Generations/InstructionRefinerApi.cs:495-501,578-604,648-786`). See `situations/refine-instructions.md`.
 
 ## When To Use Text Tools
 
@@ -38,6 +41,7 @@ Use this sub-skill when the agent needs to:
 - Segment a long text into chunks for downstream indexing, retrieval, or display.
 - Produce a textual description of a media file (image, audio, video, file) that a downstream model can reason over.
 - Extract fields described by a JSON schema from text, images, or PDFs, summarize them, or translate text, images, or audio.
+- Review system instructions, prompts, skills, or tool descriptions against prompt-engineering guidelines and get fixes as patches.
 
 Do not use this sub-skill for:
 
@@ -48,7 +52,7 @@ Do not use this sub-skill for:
 
 ## Quotas
 
-Text-classification and text-segmentation quotas each count every item in the request's `documents` array, not each HTTP request. Extraction and summarization share one document-processing quota that also counts every document; the translation quota counts requests. Do not confuse the quota count with billing units; plan batches around the live account limits.
+Text-classification and text-segmentation quotas each count every item in the request's `documents` array, not each HTTP request. Extraction, summarization, and instruction refinement share one document-processing quota that counts every document or `context` item; the translation quota counts requests. Do not confuse the quota count with billing units; plan batches around the live account limits.
 
 ## Cost Awareness
 
@@ -60,6 +64,7 @@ Verify the current pricing for the selected tool rather than assuming per-docume
 - Segmentation returns `data.result`, with indexed segments per document, plus `data.usage`.
 - Media description returns an array directly in `data`, preserving input order.
 - Extraction returns one object per document in `data`; summarization and translation return one string per document.
+- Instruction refinement returns one review object in `data`; patches are computed against the original items, independently per fix.
 
 ## Limits
 
@@ -72,4 +77,5 @@ Verify the current pricing for the selected tool rather than assuming per-docume
 - The classification is wrong: clarify the labels or clean noisy documents.
 - The segmentation is wrong: adjust `sanitize` or the source document structure.
 - The description is wrong: adjust `extractionGuidance` or `preset`, or improve the input quality.
+- A refinement fix has no patch: read its `description` and supply the missing facts yourself.
 - The task is large: load `references/batch/`.

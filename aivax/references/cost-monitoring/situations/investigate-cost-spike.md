@@ -17,7 +17,7 @@ Identify the cost driver, connect it to account resources, and recommend safe sa
 1. What is the current account health? Call `GET /api/v1/information/balance` and read the top-level fields.
 2. What is the usage for the relevant period? Call `GET /api/v1/information/usage?timeStart=<iso-start>&timeEnd=<iso-end>` and read the detailed fields.
 3. Compare short and longer windows when the user did not specify a period. The dominant driver may appear in a longer window.
-4. Rank spend by model, category, and resource. The top driver is usually the cause.
+4. Rank spend by model, category, and resource. The top driver is usually the cause. The plan's inference commission is recorded as its own category (`inference.commission`), separate from the model cost; do not treat it as a second inference. Amounts and per-plan ceilings are on the Pricing page.
 5. Map top resource IDs to gateways, collections, chat clients, sessions, batch workflows, or API keys.
 6. Inspect the top resources. For each: view the resource, then inspect relevant conversation records, RAG collection transactions, or batch job items.
 7. Identify the controllable cause. A controllable cause is one the agent can change safely.

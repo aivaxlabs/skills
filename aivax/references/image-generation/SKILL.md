@@ -35,7 +35,7 @@ The request accepts only:
 - `input` (required): a non-empty prompt string or a non-empty array of prompt strings.
 - `count` (optional): an integer from 1 to 4; defaults to one image per prompt.
 - `model` (required): the catalog `name` from `GET /api/v1/information/image-models.json`, in `@provider/model` form. Unprefixed names from before the 2026-11-01 review still resolve until 2026-12-01.
-- `referenceImages` (optional): safe absolute HTTP(S) URLs, or `data:image/png`, `data:image/jpeg`, `data:image/webp`, or `data:image/gif` base64 data URIs, within the current request limit. Use this only when the selected model has the reference-image capability flag in the catalog.
+- `referenceImages` (optional): at most 16 entries, each a safe absolute HTTP(S) URL or a `data:image/png`, `data:image/jpeg`, `data:image/webp`, or `data:image/gif` base64 data URI of up to 8 MB. Use this only when the selected model has the reference-image capability flag in the catalog.
 - `size` (optional): `"1024x1024"` or `{ "width": 1024, "height": 1024 }`, each side 64–4096 px; defaults to 1080x1920. The model may adjust it to dimensions it supports.
 - `format` (optional): `png`, `jpeg`, or `webp`; when omitted, the image is returned in the format the model produced.
 - `quality` (optional): integer 1–100 for `jpeg`/`webp` encoding; ignored for `png`. When a conversion happens and `quality` is omitted, encoding uses 90.
@@ -74,14 +74,14 @@ Do not assume a base64 response or a URL expiration policy not stated by the end
 When configured, use the Streamable HTTP server at `https://inference.aivax.net/v1/mcp/media-generation`, authenticated with an account bearer key. Keep credentials in the client's secret storage.
 
 - Discover models with `list_models({ "type": "image" })`; check reference-image support before selecting one.
-- Call `generate_image` with required `prompt` and `model`, optional integer `count` (defaults to one), optional `reference_images` URLs, and optional `size` (`"<W>x<H>"`), `format` and `quality`. Do not copy REST's `input` or `referenceImages` field names into this tool call.
+- Call `generate_image` with required `prompt` and `model`, optional integer `count` (defaults to one), optional `reference_images` (up to 4 public URLs; data URIs are REST-only), and optional `size` (`"<W>x<H>"`), `format` and `quality`. Do not copy REST's `input` or `referenceImages` field names into this tool call.
 - Read generated URLs, per-image costs and per-image errors from MCP text, not a REST `data` array. These URLs are public; do not use this path for confidential assets unless that exposure is acceptable. Saving another copy does not make the original URL private.
 - Restrict tools with `X-Mcp-Enabled-Tools: list_models, generate_image`. Omitting the header exposes all media tools; an empty or unrecognized allowlist exposes none. Refresh MCP discovery after changing it.
 - Generation remains billable. Consult [Pricing](https://docs.aivax.net/docs/pricing) and [Limits](https://docs.aivax.net/docs/limits) rather than hardcoding charges or quotas.
 
 ## Models
 
-Use `GET /api/v1/information/image-models.json` as the image model catalog; it changes often, so re-read it instead of hardcoding names. Check the selected model's `flags` (an array) before sending `referenceImages`, and skip models flagged `Deprecated` unless the user asks for one (the media MCP `list_models` already hides them). Expose only models returned by this public catalog.
+Use `GET /api/v1/information/image-models.json` as the image model catalog; it changes often, so re-read it instead of hardcoding names. Send the entry's `name` as `model`; `displayName` (`Provider: Model`) is only a readable label. Check the selected model's `flags` (an array) before sending `referenceImages`, and skip models flagged `Deprecated` unless the user asks for one (the media MCP `list_models` already hides them). Expose only models returned by this public catalog.
 
 ## Cost Awareness
 

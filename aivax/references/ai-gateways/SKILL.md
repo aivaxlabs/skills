@@ -81,7 +81,7 @@ Arrays are usually replacements during patching; include the complete intended l
 
 ## Public vs Private Keys
 
-Public keys (`pk-aiv-`) can call chat completions with the full AI Gateway UUID. Direct integrated-model calls and gateway slug lookup are disabled. MCP sources, protocol functions, built-in tools, Bash, skills, and sentinel options are stripped from the request. Only these parameters are accepted: `model`, `messages`, `prompt`, `temperature`, `top_p`, `top_k`, `seed`, `tools`, `reasoning_effort`, `max_completion_tokens`, `stream`, and `idempotency_key` (`OpenIndexer.Alpha2/Api/Modules/OpenAi.cs:27-39`).
+Public keys (`pk-aiv-`) can call chat completions with the full AI Gateway UUID. Direct integrated-model calls and gateway slug lookup are disabled. MCP sources, protocol functions, built-in tools, Bash, skills, and sentinel options are stripped from the request. Only these parameters are accepted: `model`, `messages`, `prompt`, `temperature`, `top_p`, `top_k`, `seed`, `tools`, `reasoning_effort`, `max_completion_tokens`, `stream`, `conversation_token`, and its deprecated alias `idempotency_key` (`OpenIndexer.Alpha2/Api/Modules/OpenAi.cs:27-43`).
 
 Private-key chat-completion requests may set `routing_options.preset` (`Balanced`, `Cheapest`, `Fastest`, or `Quality`) and `routing_options.allowed_providers` without changing the saved gateway. Omitted values inherit its configuration. The deprecated `routing_preset` is still accepted, but `routing_options.preset` takes precedence. Public keys cannot send either routing extension.
 

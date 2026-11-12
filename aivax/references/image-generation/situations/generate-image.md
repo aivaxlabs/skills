@@ -18,7 +18,7 @@ Generate images from one or more prompts and handle their URLs according to the 
 1. For one image, send one `input` prompt with `count: 1` (or omit `count`).
 2. For alternatives, increase `count` within the current [Limits](https://docs.aivax.net/docs/limits) and agreed budget; an array of prompts produces a separate group for each input.
 3. For many independent requests, load `references/batch/situations/design-batch-workflow.md`.
-4. For a reference-guided change, use `referenceImages` within the current request limit, with a model that supports them. Each entry is an HTTP(S) URL or a `data:image/png`, `data:image/jpeg`, `data:image/webp`, or `data:image/gif` data URI. The endpoint has no mask or separate editing operation.
+4. For a reference-guided change, send up to 16 `referenceImages` with a model that supports them. Each entry is an HTTP(S) URL or a `data:image/png`, `data:image/jpeg`, `data:image/webp`, or `data:image/gif` base64 data URI of up to 8 MB. The endpoint has no mask or separate editing operation.
 5. Put style and exclusions in the prompt. Send optional `size`, `format` (`png`, `jpeg`, or `webp`), and `quality` (1–100, used for `jpeg`/`webp` encoding and ignored for `png`). This endpoint does not accept `seed` or `negative_prompt`; do not promise reproducible reruns.
 
 ## Construction
@@ -67,7 +67,7 @@ For reference-guided generation, choose a reference-capable model:
 
 ## Failure Modes
 
-- Invalid prompts, `count`, model, `size`, `format`, `quality`, or reference images return a validation error: fix the reported field before retrying.
+- Invalid prompts, `count`, model, `size`, `format`, `quality`, or reference images (more than 16, an unsupported data URI type, invalid or oversized base64, an unsafe URL, or references for a model without the flag) return a validation error: fix the reported field before retrying.
 - An empty or short `images` array: read `outputs[].error` for each failed image before deciding whether to retry.
 - The output misses the brief: refine the prompt, change `size`, or try another catalog model. `quality` only sets the `jpeg`/`webp` encoding, not the generation quality.
 - A returned URL is unavailable: report the failed retrieval rather than claiming a seeded rerun will reproduce the image.

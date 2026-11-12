@@ -14,7 +14,7 @@ Inspect the pending tool call and return exactly one behavior: let AIVAX execute
 ## Decision Tree
 
 1. Is this the tool the worker governs? If not, return `2xx` and let AIVAX execute it normally.
-2. Is the call authorized for this user and argument set? If not, return a non-OK response to block it.
+2. Is the call authorized for this user and argument set? If not, return a non-OK response to block it. The model receives a failed tool result saying the gateway blocked the tool, and the turn continues.
 3. Should your system supply the result (private data, internal state)? If yes, return a `tool.called.response` worker action with the result text.
 4. On downstream failure, can the model proceed safely? Return a result describing the failure and the next step, or block explicitly.
 
@@ -47,7 +47,7 @@ To replace the result, return `Content-Type: application/json+worker-action` wit
 }
 ```
 
-`data.result` is the textual content injected as the tool result; `data.messages` carries optional additional OpenAI-format messages. When this response is returned, AIVAX uses it instead of executing the default tool handler.
+`data.result` is the textual content injected as the tool result; `data.messages` carries optional additional OpenAI-format messages. When this response is returned, AIVAX uses it instead of executing the default tool handler, and `tool.fetched` is not sent for that call.
 
 ## Validation
 
@@ -66,4 +66,5 @@ To replace the result, return `Content-Type: application/json+worker-action` wit
 ## Limits
 
 - This event fires before AIVAX executes an internal server-side tool; it does not intercept client-executed OpenAI-compatible `tools`.
+- To inspect or redact the real result after execution, handle `tool.fetched` (`situations/handle-tool-fetched.md`); it fires only when this event continued.
 - For stable per-tool integrations owned by your app, prefer protocol functions over a worker replacement.

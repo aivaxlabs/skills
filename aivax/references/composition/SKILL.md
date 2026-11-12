@@ -102,6 +102,6 @@ Also check account-level constraints before substituting: an account restricted 
 
 ## Cross-Skill Observability
 
-Correlate each stage through fields its contract actually supports: propagate caller-defined `metadata`, record a supplied `idempotency_key` as a conversation correlation field, capture the conversation `requestId` when returned, and record returned resource IDs such as conversation, collection transaction, batch job, item, run, or hook schedule. Do not require a universal trace or parent request ID from endpoints that do not expose one. The final report links the chain stage by stage.
+Correlate each stage through fields its contract actually supports: propagate caller-defined `metadata`, record the `conversation_token` (returned by chat completions) as a conversation correlation field, capture the conversation `requestId` when returned, and record returned resource IDs such as conversation, collection transaction, batch job, item, run, or hook schedule. Do not require a universal trace or parent request ID from endpoints that do not expose one. The final report links the chain stage by stage.
 
 See `situations/cross-skill-observability.md` for the propagation rules.

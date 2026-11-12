@@ -34,6 +34,10 @@ Do not use this sub-skill to create a schedule; creation happens through model g
 
 The list response marks each one-time schedule with a derived `state` of `Pending`, `Activated`, or `Failed`. The get operations return the raw activation fields instead.
 
+Every operation requires the web chat client to belong to the authenticated account: a client owned by another account returns 403, and an unknown client ID returns 400, before the schedule or task ID is checked.
+
+A schedule skipped at activation time, for example because the owning account is unavailable or the user stopped interacting, is not sent and its `activationResult` starts with `Skipped:`. The list still derives `state` `Activated` for it, so read the get operation to tell a skip from a delivery.
+
 ## Safety
 
 - Cancellation is destructive and irreversible. Confirm the schedule or task ID and its owning web chat client with a GET before deleting, and proceed only with explicit user approval.
@@ -41,7 +45,7 @@ The list response marks each one-time schedule with a derived `state` of `Pendin
 
 ## Validation
 
-- The inspected schedule or task belongs to the `<web-chat-id>` in the route; a 404 means a wrong ID or a wrong client, not a system error.
+- The inspected schedule or task belongs to the `<web-chat-id>` in the route; a 404 means a wrong schedule or task ID under that client, and a 403 means the client belongs to another account. Neither is a system error.
 - After a cancel, the item no longer appears in the list response.
 - The trace ID is preserved.
 

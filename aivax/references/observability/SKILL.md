@@ -33,7 +33,7 @@ Do not use this sub-skill for:
 - `GET /api/v1/conversations`: list conversations.
 - `GET /api/v1/conversations/<id>`: view a stored conversation, or the in-progress snapshot when that id is still generating on this instance.
 - `GET /api/v1/conversations/management/live`: SSE stream of in-progress conversations. Each event is `{ "type": "conversations.live.updated", "data": [ ... ] }` with `id`, `version`, `status` (`running`, `persisting`, or `completed`), `origin`, `startedAt`, `completedAt`, `conversationId`, `modelName`, `externalUserId`, token counts, `elapsedTime`, and previews. A finished conversation stays for 10 seconds with `status: "completed"` and the stored `conversationId`, which is `null` when it was not stored. Only conversations served by the same instance, and only while logging is enabled, are listed. Keep-alive pings arrive about every 15 seconds.
-- `GET /api/v1/conversations/<live-id>/sse`: SSE stream of one generating conversation. Events are `{ "type": "conversation.live.updated", "data": { ... } }` in the view-conversation shape, including the growing assistant message. The stream closes after `status: "completed"`. A missing, expired, or foreign id is 404.
+- `GET /api/v1/conversations/<live-id>/sse`: SSE stream of one generating conversation. Events are `{ "type": "conversation.live.updated", "data": { ... } }` with `id`, `status`, `conversationId`, `origin`, `modelName`, `providerName`, `resources`, `timestamps`, `tokenCount`, `externalUserId`, `metadata`, and `messages`, including the growing assistant message. Stored-only detail fields such as `requestId`, `usageObject`, and `providerDataCollection` are absent. The stream closes after `status: "completed"`. A missing, expired, or foreign id is 404.
 - `DELETE /api/v1/conversations/<id>`: delete a conversation (destructive).
 - `GET /api/v1/conversations/management/export.jsonl?period=<window>&media=<mode>&thinking=<mode>&truncate=<n>`: bulk export.
 - `GET /api/v1/conversations/<id>/export.json`: single conversation export.
@@ -48,7 +48,9 @@ Plain-text `filter` searches input/output previews, model name, and provider nam
 
 ## Routing And Usage Evidence
 
-Use listing fields `inputTokenCount`, `outputTokenCount`, `cost`, and `elapsedTime` for comparisons; `elapsedTime` is in milliseconds. These come from the stored usage object and can be null on older or incomplete records. Do not replace missing values with zero. The listing no longer exposes the old aggregate `tokenCount` field.
+Use listing fields `inputTokenCount`, `cachedInputTokenCount`, `outputTokenCount`, `cost`, and `elapsedTime` for comparisons; `elapsedTime` is in milliseconds. `cachedInputTokenCount` is the cached part of `inputTokenCount`, not an extra amount. These come from the stored usage object and can be null on older or incomplete records or when the provider reports no cache data. Do not replace missing values with zero. The listing no longer exposes the old aggregate `tokenCount` field.
+
+The listing's `moderationCategories` is `null` unless the moderation layer or the agent guardrails refused the conversation; then it lists the refused categories (`Violence`, `SexualExplicit`, `Political`, `DangerousContent`, `Jailbreak`) and `isError` is true. Read `errorMessage` in the detail for the full refusal text.
 
 Compare `modelName`, `providerName`, `modelVariant`, and `routingOption` to distinguish model changes from provider or routing changes. The detail endpoint also exposes `providerDataCollection`; treat it as the recorded provider policy, not proof of actual retention or permission to send sensitive data. The chat-completion response's `provider` is a routing tag; `providerName` is a display name.
 
@@ -56,7 +58,7 @@ In a conversation detail, inspect `usageObject.prompt_tokens`, `usageObject.comp
 
 ## Missing Records Are Not Failures
 
-A conversation exists only when it was stored. No record is written when the account has `allowConversationsLogging` off, when the chat-completion request sent `allow_logging: false`, or for batch item, image generation, and media description calls. RAG transaction telemetry follows `allowRagLogging` instead. Before calling a missing record a failure or data loss, check those settings (`references/account/`) and fall back to the response, usage, batch item, or error evidence. Changing logging settings only to investigate needs explicit user approval, because it changes what is retained.
+A conversation exists only when it was stored. No record is written when the account has `allowConversationsLogging` off, when the chat-completion request sent `allow_logging: false`, or for batch item, image generation, and media description calls. RAG transaction telemetry follows `allowRagLogging` instead. Context retrieved from a gateway knowledge base is sent to the provider but is not saved in the stored messages; inspect the collection transactions to see what was retrieved. Before calling a missing record a failure or data loss, check those settings (`references/account/`) and fall back to the response, usage, batch item, or error evidence. Changing logging settings only to investigate needs explicit user approval, because it changes what is retained.
 
 ## Bulk Export Options
 

@@ -1,6 +1,6 @@
 ---
 name: aivax
-description: Operate AIVAX as a unified agent platform. Use when an agent needs to plan, execute, or validate work that touches AIVAX inference, RAG, rerankers, agentic tests, voice (TTS, STT, realtime), image generation, text tools (classify, segment, describe, extract, summarize, translate), AI gateways, gateway workers, protocol functions, batch, web chat, account operations, cost monitoring, or observability. Routes to focused sub-skills instead of duplicating endpoint documentation. Covers the case when the AIVAX MCP is available and when only public docs are reachable.
+description: Operate AIVAX as a unified agent platform. Use when an agent needs to plan, execute, or validate work that touches AIVAX inference, RAG, rerankers, agentic tests, voice (TTS, STT, realtime), image generation, text tools (classify, segment, describe, extract, summarize, translate, refine instructions), AI gateways, gateway workers, protocol functions, batch, web chat, account operations, cost monitoring, or observability. Routes to focused sub-skills instead of duplicating endpoint documentation. Covers the case when the AIVAX MCP is available and when only public docs are reachable.
 ---
 
 # AIVAX
@@ -16,6 +16,7 @@ Use this skill when the task involves any of the following:
 - Generating, transcribing, or describing media (speech, image, video, file).
 - Opening or designing a realtime voice session.
 - Classifying, segmenting, summarizing, translating, or extracting structure from text or media.
+- Reviewing LLM instructions, prompts, or skills against prompt-engineering guidelines (instruction refinement).
 - Evaluating one text against fixed criteria in a single call (semantic decisions).
 - Searching the web or extracting content from URLs or files via direct API calls.
 - Searching and reranking a knowledge base, with or without a collection.
@@ -45,6 +46,7 @@ Map the user intent to a sub-skill. Load only what you need. When in doubt, pref
 | Transcribe audio to text (STT) | `references/speech/` (STT) |
 | Open a realtime bidirectional voice session | `references/voice-realtime/` |
 | Classify documents, segment text, describe media into text, extract schema fields, summarize, or translate documents | `references/text-tools/` |
+| Review instructions, prompts, skills, or tool descriptions and get located findings with diff patches | `references/text-tools/` (instruction refinement) |
 | Evaluate one text against fixed noul/choice/score criteria in a single call | `references/decisions/` |
 | Search the web or extract content from URLs/files via direct API calls | `references/web/` |
 | Build a RAG pipeline: collection, ingestion, query, answer, grounding | `references/rag/` |
@@ -54,7 +56,7 @@ Map the user intent to a sub-skill. Load only what you need. When in doubt, pref
 | Investigate a cost spike, balance drop, or spend optimization | `references/cost-monitoring/` |
 | Correlate traces, diagnose latency/error, audit a conversation | `references/observability/` |
 | Create, edit, or operate an AI gateway (model + instructions + RAG + tools + skills) | `references/ai-gateways/` |
-| Implement or debug a gateway worker (message.received, tool.called) | `references/gateway-workers/` |
+| Implement or debug a gateway worker (message.received, tool.called, tool.fetched, message.completed) | `references/gateway-workers/` |
 | Define or serve a protocol function (server-side tool with HTTP callback) | `references/protocol-functions/` |
 | Author or attach an account-scoped skill under `/api/v1/skills` | `references/skill-development/` |
 | Operate a web chat client, session, or messaging integration | `references/web-chat/` |
@@ -155,7 +157,7 @@ These apply in addition to the rules inside each sub-skill.
 | `references/image-generation/` | Text-to-image generation and storage |
 | `references/speech/` | Text-to-speech and speech-to-text generation |
 | `references/voice-realtime/` | Realtime bidirectional voice sessions |
-| `references/text-tools/` | Document classification, segmentation, media description, extraction, summarization, and translation |
+| `references/text-tools/` | Document classification, segmentation, media description, extraction, summarization, translation, and instruction refinement |
 | `references/rag/` | RAG pipeline design, evaluation, and grounding diagnosis |
 | `references/rerankers/` | Reranker selection, catalog, and collection-less rerank (Reflex) |
 | `references/agentic-tests/` | Test creation, runs, evaluation, comparison, and trace analysis |
@@ -165,7 +167,7 @@ These apply in addition to the rules inside each sub-skill.
 | `references/cost-monitoring/` | Cost spike investigation and spend optimization |
 | `references/observability/` | Trace correlation, degradation diagnosis, conversation audit |
 | `references/ai-gateways/` | Gateway design, skills and tools attachment, safe editing |
-| `references/gateway-workers/` | Gateway worker implementation (message.received, tool.called) |
+| `references/gateway-workers/` | Gateway worker implementation (message.received, tool.called, tool.fetched, message.completed) |
 | `references/protocol-functions/` | Protocol function definition and callback serving |
 | `references/skill-development/` | Authoring and attaching account-scoped skills |
 | `references/web-chat/` | Web chat clients, sessions, and messaging integrations |

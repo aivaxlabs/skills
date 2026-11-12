@@ -19,7 +19,7 @@ This sub-skill owns the account-level resources on AIVAX. The agent uses these r
 AIVAX has two key families because browser-facing and server-side use cases have different risk profiles.
 
 - **Private key** (`sk-aiv-acc`): server-side integrations and administrative API calls. Authenticated account APIs and OpenAI-compatible inference.
-- **Public key** (`pk-aiv-`): restricted client-side calls to explicitly public routes (RAG query, RAG answer, speech generation, speech-to-text transcription, image generation, media descriptions, and chat completions with stripped tool surfaces).
+- **Public key** (`pk-aiv-`): restricted client-side calls. It carries only the `InferenceText`, `InferenceGenerations`, and `RagRead` permissions (RAG query, RAG answer, `/api/v1/generations/*` tools such as speech, image generation, descriptions, and instruction refinement, and chat completions with stripped tool surfaces).
 - **Application key** (`sk-aiv-apk`): a third-party OAuth grant. It has `AccountIdentity` plus the permissions the account holder approved. It is not a private or public key. See `references/platform-rules/`.
 
 When the agent writes a server-side integration, use a private key. When the agent writes a browser or widget experience, use a public key and keep the workflow limited to routes designed for public access.
@@ -65,15 +65,13 @@ Two-factor authentication (TOTP) protects console sign-in only. API keys (`sk-ai
 
 ## Public Key Restrictions
 
-Public keys can call only the following routes:
+A public key is limited by permission, not by a route list: it can call only routes whose required permissions are within `InferenceText`, `InferenceGenerations`, and `RagRead` (`Model/AuthorizationToken.cs:79-82`; checked in `Middleware/AuthenticateAccount.cs`). Anything that also requires `ResourcesRead`, `ResourcesWrite`, `RagWrite`, `Account`, or another permission returns `403`. In practice:
 
-- RAG search (`/api/v2/query`, `/api/v2/query/similar`, `/api/v2/query/browse`, and the deprecated `/api/v1/query`).
-- RAG answer generation (`/api/v1/answer`).
-- Speech generation (`/api/v1/generations/speech`).
-- Speech-to-text transcription (`POST /api/v1/generations/audio/transcriptions`).
-- Media descriptions (`/api/v1/generations/descriptions`).
-- Image generation (`/api/v1/generations/images`).
+- RAG search (`/api/v2/query`, `/api/v2/query/similar`, `/api/v2/query/browse`, and the deprecated `/api/v1/query`) and RAG answer generation (`/api/v1/answer`).
+- Routes under `/api/v1/generations/` that require only `InferenceGenerations`, such as speech, speech-to-text transcription, image generation, media descriptions, classification, extraction, summarization, translation, decisions, and instruction refinement. Routes that also require `ResourcesRead` (such as validations) are not available.
 - Chat completions with stripped tool surfaces (no MCP sources, no protocol functions, no built-in tools, no Bash, no skills, no sentinel options).
+
+Public keys are rate limited per key and per client address, and calls are billed to the account. Do not expose a public key on a page that lets visitors reach costly generation routes without your own limits.
 
 When a public key calls chat completions, the `model` must be a full AI Gateway UUID. Direct integrated-model calls and gateway slug lookup are disabled.
 
@@ -104,7 +102,7 @@ Balance, usage, and plan drive the cost of every operation. Inspect them before 
 
 - A key is compromised: load `situations/create-and-rotate-keys.md` and rotate immediately.
 - A secret leaked in a log or final response: load `situations/secret-hygiene.md` and rotate the affected credentials.
-- Balance is low: load `references/cost-monitoring/situations/optimize-spend.md`. Prepaid credit top-ups and payment-provider details are not part of the documented agent API surface: send the user to the account console, and see Pricing for amounts and fees. Never create payment invoices on the user's behalf.
+- Balance is low: load `references/cost-monitoring/situations/optimize-spend.md`. Prepaid credit top-ups and payment-provider details are not part of the documented agent API surface: send the user to the account console, and see Pricing for amounts and fees. Paid subscription plans are exempt from the AIVAX service fee on top-ups; payment-processor fees can still apply, and only the chosen amount is credited. Never create payment invoices on the user's behalf.
 - A subscription renewal failed or an invoice is open: load `situations/manage-subscription.md`.
 - The salt must be rolled: load `situations/create-and-rotate-keys.md` (the salt section) and confirm approval.
 - The request fails with 429 or a transient error: load `references/resilience/` and classify before retrying.

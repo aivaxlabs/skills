@@ -8,13 +8,13 @@ Resolve the exact item under the owning web chat client, confirm it with a get, 
 
 ## Preconditions
 
-- The owning `<web-chat-id>` is known.
+- The owning `<web-chat-id>` is known and belongs to the authenticated account; otherwise every route returns 403.
 - The target is identified by user, time window, reason, or cron pattern — never by a guessed ID.
 
 ## Decision Tree
 
 1. One-time schedule or recurring task? List with `GET .../hook-schedules` (optionally `?external-user-id=` to scope to one user) and read the derived `state` (`Pending`, `Activated`, `Failed`) plus `cronExpression`, `nextActivation`, and `executionCount` for recurring tasks.
-2. Confirm the candidate with the matching get: `GET .../schedules/<id>` or `GET .../recurring/<id>`. A 404 means a wrong ID or a wrong client, not a system error.
+2. Confirm the candidate with the matching get: `GET .../schedules/<id>` or `GET .../recurring/<id>`. A 404 means the ID does not belong to this client; a 403 means the client belongs to another account. Neither is a system error.
 3. Cancel only with explicit user approval: `DELETE .../schedules/<id>` or `DELETE .../recurring/<id>`. Cancellation is irreversible.
 4. Confirm the item no longer appears in the list response.
 
@@ -39,6 +39,7 @@ DELETE /api/v1/web-chat-clients/<web-chat-id>/hook-schedules/recurring/<id>
 
 - Cancelling by guessed ID: always resolve from list or get first.
 - Cancelling under the wrong client: the route is client-scoped; re-resolve under the right `<web-chat-id>`.
+- A 403 on every route: the API key belongs to a different account than the client; use the owning account's key instead of retrying.
 
 ## Limits
 

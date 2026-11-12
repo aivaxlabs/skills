@@ -29,7 +29,7 @@ Both modes use metered inference for the tested gateway, simulated user, and jud
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `GET` | `/api/v1/agentic-tests?search=&gateway=` | List owned tests with `latest_run`. |
+| `GET` | `/api/v1/agentic-tests?search=&gateway=` | List owned tests with `associated_gateway` and `latest_run`. |
 | `POST` | `/api/v1/agentic-tests` | Create a definition; returns `201`. |
 | `GET` | `/api/v1/agentic-tests/{test-id}` | Get the complete definition and latest run. |
 | `GET` | `/api/v1/agentic-tests/{test-id}/sse` | Subscribe to live updates for this persisted test. |
@@ -49,7 +49,7 @@ Both modes use metered inference for the tested gateway, simulated user, and jud
 | Field | Type | Required/default | Contract |
 | --- | --- | --- | --- |
 | `name` | string | required | Non-empty; maximum 200 characters. |
-| `gateway` | string | required | Available AI gateway slug or integrated model name; maximum 200 characters. |
+| `gateway` | string | required | Available AI gateway slug, gateway identifier, or integrated model name; maximum 200 characters. |
 | `goal` | string, message-part object, or message-part array | required | Shared with the simulated user and judge. |
 | `validation_criteria` | string, message-part object, array, or null | `null` | Visible only to the judge. |
 | `start` | message array | `[]` | Initial OpenAI-compatible conversation messages. |
@@ -164,7 +164,7 @@ Persisted definitions may configure up to 16 `{ "event", "url" }` HTTP callbacks
 
 ## Response Contract
 
-Normal JSON endpoints use the AIVAX response envelope; read their payload from `data`. A test detail contains all definition fields plus `id`, `next_run_at`, `consecutive_failures`, `last_notification_at`, `created_at`, `updated_at`, and `latest_run`.
+Normal JSON endpoints use the AIVAX response envelope; read their payload from `data`. A test detail contains all definition fields plus `id`, `next_run_at`, `consecutive_failures`, `last_notification_at`, `created_at`, `updated_at`, and `latest_run`. A list entry is shorter: `id`, `name`, `gateway`, `associated_gateway` (`id` and `name` of the account gateway matched by `gateway`, or `null` for an integrated model or a gateway that no longer exists), `enabled`, `cron`, `next_run_at`, `created_at`, `updated_at`, and `latest_run`.
 
 A run summary contains:
 
@@ -173,6 +173,7 @@ A run summary contains:
   "id": "019...",
   "test_id": "019...",
   "state": "succeeded",
+  "outcome": "success",
   "created_at": "2026-08-16T03:00:00",
   "started_at": "2026-08-16T03:00:05",
   "finished_at": "2026-08-16T03:01:02",
@@ -183,9 +184,11 @@ A run summary contains:
 }
 ```
 
-A run detail adds `test_name`, `result`, and `conversation`. Each conversation item has `timestamp`, role (`user`, `assistant`, or `judge`), `content`, and `usage` with `model`, `prompt_tokens`, `cached_prompt_tokens`, `completion_tokens`, and `cost`.
+The summary's `outcome` copies `result.outcome` and is `null` while no result exists. A run detail adds `test_name`, `result`, and `conversation`. Each conversation item has `timestamp`, `role` (`user`, `assistant`, `tool`, or `judge`), `content`, `tool_calls` (assistant tool requests, or `null`), `tool_call_id` and `name` (tool results), and `usage` with `model`, `prompt_tokens`, `cached_prompt_tokens`, `completion_tokens`, and `cost`. Persisted runs currently leave `usage.model` as `null` and `usage.cost` as `0`; use the run-level `cost` for spend.
 
-`state: succeeded` means execution completed without an operational error; it does not mean the goal passed. Determine behavioral outcome from `result.outcome` (`success`, `loss`, or `incomplete`) and inspect `result.reason`, `result.state`, `result.turn_number`, `result.conversation_delta`, and `result.loss_streak`. `score` is the final `conversation_delta`, not a dataset average.
+`state: succeeded` means execution completed without an operational error; it does not mean the goal passed. Determine behavioral outcome from `result.outcome` (`success`, `loss`, or `incomplete`) and inspect `result.reason`, `result.state`, `result.turn_number`, `result.conversation_delta`, and `result.loss_streak`. A failed run can carry `result.outcome: interrupted` with `result.reason` `validation_hook_interrupted` or `execution_failed` and `result.error`. `score` is the final `conversation_delta`, not a dataset average.
+
+In account usage, simulated-user and judge inference is recorded under internal model names that identify the stage and profile; they are not selectable models. That usage, the tested gateway's inference, and remote-resource processing carry the request resources: `AgenticTestRun` with the run ID for persisted runs, or the calling `ApiKey` for direct evaluations, plus `AiGateway` when the target is a gateway.
 
 ## Run Lifecycle And Safety
 

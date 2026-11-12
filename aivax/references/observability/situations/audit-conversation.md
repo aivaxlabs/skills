@@ -42,13 +42,15 @@ Produce an audit conclusion that is anchored in evidence, redacted of sensitive 
 3. Inspect
    origin, modelName, providerName, providerDataCollection, modelVariant, routingOption,
    requestId, tools, usageObject, resources, timestamps, errorMessage, messages, metadata
-   Compare listing inputTokenCount, outputTokenCount, cost, and elapsedTime (milliseconds);
-   preserve missing measurements as unknown, not zero.
+   Compare listing inputTokenCount, cachedInputTokenCount (part of the input), outputTokenCount,
+   cost, and elapsedTime (milliseconds); preserve missing measurements as unknown, not zero.
+   Use listing moderationCategories to find moderation or guardrail refusals.
 
 4. Classify
    - Successful: produced a non-empty assistant message.
    - Failed: produced an error message; classify the error class.
-   - Refused: produced a refusal; capture the reason.
+   - Refused: produced a refusal; capture the reason. A moderation or guardrail refusal has
+     non-null moderationCategories in the listing and a matching errorMessage in the detail.
    - Incomplete: produced a partial response; capture the finish_reason.
 
 5. Redact

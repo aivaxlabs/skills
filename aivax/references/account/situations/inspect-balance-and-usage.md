@@ -41,8 +41,8 @@ The balance response includes:
 
 The usage response includes:
 
-- `currentBalance` and `invoices`: each has `invoiceId`, `createdAt`, `paidAt`, `expiresAt`, `amount`, `description`, `isExpired`, `type` (`CreditAddition`, `SubscriptionPayment`, or `SubscriptionRenewal`), `paymentLocation` (only while the invoice is open), and `receiptLocation` (only when paid). Only `CreditAddition` invoices add prepaid balance; do not read subscription invoices as top-ups. Do not echo payment or receipt links in reports; cite the invoice ID and state. Load `situations/manage-subscription.md` to act on them.
-- `usageDetails.modelUsageDiscriminations`: spend and token counts by model and category.
+- `currentBalance` and `invoices`: each has `invoiceId`, `createdAt`, `paidAt`, `expiresAt`, `amount`, `description`, `isExpired`, `type` (`CreditAddition`, `SubscriptionPayment`, `SubscriptionRenewal`, or `ManualBill`), `paymentLocation` (only while the invoice is open), and `receiptLocation` (only when paid). Only `CreditAddition` invoices add prepaid balance; do not read subscription or manual-bill invoices as top-ups. A `CreditAddition` `amount` is the total charged, including payment fees; only the chosen top-up amount is added to the balance, so the balance increase can be smaller than `amount`. Do not echo payment or receipt links in reports; cite the invoice ID and state. Load `situations/manage-subscription.md` to act on them.
+- `usageDetails.modelUsageDiscriminations`: spend and token counts by model and category. `tokenCount` and `totalUsage` include non-billable cost estimates for BYOK gateway inference; `effectiveTokenCount` and `effectiveUsage` count only what was billed. The other usage sections, the balance, and the monthly report exclude those estimates.
 - `usageDetails.categoryDiscriminations`: spend by SKU and category.
 - `usageDetails.resourceDiscriminations`: spend by resource type and resource ID.
 - `usageDetails.meterGroups`: storage, period spend, token volume, input tokens, output tokens, cached tokens, and cache hit rate.

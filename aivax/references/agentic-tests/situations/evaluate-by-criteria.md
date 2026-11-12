@@ -67,8 +67,8 @@ Intermediate judge states include `active`, `at_risk`, `success`, and `loss`. Th
 
 Final `result` has:
 
-- `outcome`: `success`, `loss`, or `incomplete`;
-- `reason`: `baseline_reached`, `loss_threshold_persisted`, `simulated_user_ended_conversation`, or `max_turns_reached`;
+- `outcome`: `success`, `loss`, or `incomplete`; a failed run can have `interrupted` instead;
+- `reason`: `baseline_reached`, `loss_threshold_persisted`, `simulated_user_ended_conversation`, or `max_turns_reached`; `validation_hook_interrupted` or `execution_failed` for `interrupted`;
 - `state`, `turn_number`, `conversation_delta`, and `loss_streak`;
 - `score` when the run ended from a judged turn; it can be absent when maximum turns are reached without another terminal score.
 

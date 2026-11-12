@@ -57,7 +57,7 @@ For each requested tool call:
 
 Use `builtin_tools` only for documented available AIVAX built-in tools such as `WebSearch`, `OpenUrl`, `Code`, `Request`, `DateTime`, and `Remember`. Verify supported tools and options with `aivax_search_context`.
 
-A turn may mix server-side built-in tools and client `tools`. Server tools run before the response returns. The client sees only its own tool calls; echo each returned `id` unchanged in the follow-up `tool` message. Those ids use an `aivx_` turn reference. On that follow-up, AIVAX restores the cached server-side result for the same turn, so do not expect the server result in the first response and do not rerun the server tool to recover it. An unknown `aivx_` id is ignored; the client tool result is still used. A streamed mixed turn emits only the client tool calls.
+A turn may mix server-side built-in tools and client `tools`. Server tools run before the response returns. The client sees only its own tool calls; echo each returned `id` unchanged in the follow-up `tool` message. Those ids use an `aivx_` turn reference. On that follow-up, AIVAX restores the cached server-side result for the same turn, so do not expect the server result in the first response and do not rerun the server tool to recover it. AIVAX also finds the turn from the assistant message `id` or, when the request sends the same `conversation_token`, from the assistant text. An unknown `aivx_` id is ignored; the client tool result is still used. A streamed mixed turn emits only the client tool calls.
 
 ## Web Research Depth
 
@@ -78,7 +78,7 @@ A turn may mix server-side built-in tools and client `tools`. Server tools run b
 ## Failure Modes
 
 - Unknown function name or malformed arguments: do not invoke it; return a structured tool error and let the model recover or ask for clarification.
-- Repeated calls after a transient failure: pass the AIVAX-specific `idempotency_key` to correlate with the same conversation record (it does not suppress re-execution) and load `references/resilience/` before retrying.
+- Repeated calls after a transient failure: pass the same AIVAX-specific `conversation_token` to correlate with the same conversation record (it does not suppress re-execution) and load `references/resilience/` before retrying.
 - Tool output exceeds useful context: return a minimal structured summary or reference, then configure appropriate gateway `toolContextCount` if needed.
 - The model uses the wrong tool: narrow descriptions and schemas, or adjust the gateway's attached tool surface.
 
