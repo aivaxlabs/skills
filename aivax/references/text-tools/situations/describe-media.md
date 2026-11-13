@@ -4,55 +4,71 @@ Use when the agent must produce a textual description of a media file through `P
 
 ## Objective
 
-Produce a faithful textual description of the media, with the right level of detail and language coverage for the downstream task.
+Produce a faithful textual description of the media, with the right engine and guidance for the downstream task.
 
 ## Preconditions
 
-- A description model is available on the account. Verify with `aivax_list_models`.
-- The media is in a supported format.
-- The account balance is sufficient for the modality (image/audio $0.10, file/video $0.50).
+- The account balance is positive.
+- The media is an OpenAI-compatible content part: `image_url`, `input_audio`, `video_url`, or `file`. Inference engines accept only PDFs as `file`; `fileEngine: "Ocr"` accepts other documents.
+- Remote URLs are publicly reachable. Remote files are downloaded up to 5 MB each.
 
 ## Decision Tree
 
-1. What is the modality? Image, audio, video, or file. Pick a model that supports it.
-2. What is the level of detail? Short caption, paragraph description, or detailed enumeration. The level of detail affects the cost and the latency.
-3. What is the language of the description? Match the user's language. The model may support multiple languages; verify with `aivax_list_models`.
-4. Is the description for a downstream model or a human? For a downstream model, the description should be structured and dense. For a human, it should be readable and contextualized.
-5. Should the description include specific aspects (e.g. text in image, faces, objects)? Some models support a `focus` parameter; verify with `aivax_search_context`.
+1. What is the modality? Pick the engine for that content type in `options`.
+2. Does the task need understanding or only text?
+   - Understanding (subjects, scenes, tone, music): `InferenceLow`, or `InferenceHigh` when small details matter and the higher cost is acceptable.
+   - Only the visible text of images or documents: `Ocr`.
+   - Only the spoken words of audio: `Stt`.
+3. Does the description need a focus? Write `extractionGuidance` as the question the workflow needs answered. `Ocr` and `Stt` ignore it.
+4. Is the result for a chat model in the same request? Prefer multimodal pre-processing: load `references/multimodal/situations/multimodal-preprocess.md`.
 
 ## Construction
 
-```text
+```json
 {
-  "model": "<description-model>",
-  "file": "<url or data:>",
-  "modality": "image",
-  "detail": "standard",
-  "language": "en",
-  "metadata": { "trace_id": "tr_..." }
+  "options": {
+    "imageEngine": "InferenceHigh",
+    "audioEngine": "Stt",
+    "videoEngine": "InferenceLow",
+    "fileEngine": "Ocr"
+  },
+  "extractionGuidance": "Identify the main subject and visible text.",
+  "input": [
+    { "type": "image_url", "image_url": { "url": "https://example.com/image.png" } }
+  ]
 }
 ```
 
-Some models accept `prompt` (a hint about what to describe), `max_length`, and `focus`. Verify with `aivax_search_context`.
+| Field | Values | Default |
+| --- | --- | --- |
+| `options.imageEngine` | `InferenceLow`, `InferenceHigh`, `Ocr` | `InferenceLow` |
+| `options.audioEngine` | `InferenceLow`, `InferenceHigh`, `Stt` | `InferenceLow` |
+| `options.videoEngine` | `InferenceLow`, `InferenceHigh` | `InferenceLow` |
+| `options.fileEngine` | `InferenceLow`, `InferenceHigh`, `Ocr` | `InferenceLow` |
+
+- Omit `options` or any engine to use the default.
+- `preset` (`auto` or `high`) is deprecated. Never send it with `options`; the request is rejected with `400`.
+- There are no `model`, `detail`, `language`, `max_length`, or `focus` fields. Express language and focus through `extractionGuidance`.
 
 ## Response Handling
 
-1. The response is a textual description.
-2. Use the description for the downstream task: feed it to a model, store it, or display it.
-3. Record the description length, the model, and the modality in the trace.
+1. `data` holds one JSON object per input item, in input order.
+2. Inference engines return a structured object whose shape depends on the content type (for example, `foregroundSubjects` for images and `textContent` plus `sections` for PDFs).
+3. `Ocr` and `Stt` return `{ "textContent": "..." }`.
 
 ## Validation
 
 - The description is faithful to the media. Spot-check on a sample.
-- The level of detail matches the request.
-- The language matches the request.
-- The trace ID is preserved.
+- The output count matches the input count.
+- The selected engine matches the task: no `InferenceHigh` where `InferenceLow` or `Ocr` is enough.
 
 ## Failure Modes
 
-- The model returns no description: the media is unsupported, the balance is too low, or the content is unreachable. Inspect the error.
-- The description is wrong: the model is not strong on the modality or the input is too noisy. Switch the model.
-- The description is too short or too long: the parameters are wrong. Adjust.
+- `400` with "cannot be used together": remove `preset`.
+- `400` on an engine value: the engine is not valid for that content type (for example, `videoEngine: "Ocr"`).
+- `400` "not a multimodal content part supported by the resolver model": a non-PDF file with an inference engine. Use `fileEngine: "Ocr"`.
+- Details are missing: switch the engine to `InferenceHigh` or refine `extractionGuidance`.
+- `402`: the balance is not positive.
 
 ## Escalation
 
