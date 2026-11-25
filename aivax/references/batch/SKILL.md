@@ -17,7 +17,7 @@ Batch runs the same AI workflow over many independent items in the background. A
 
 Use Batch when dozens to thousands of independent records need the same classification, extraction, enrichment, summarization, moderation, structured generation, or tool-assisted processing.
 
-Do not use Batch when inputs need shared memory, when a user needs an immediate single answer, or when the workflow is mainly searchable knowledge. Use direct inference for one immediate result and `references/rag/` for retrieval over a knowledge base.
+Do not use Batch when inputs need shared memory, when a user needs an immediate single answer, or when the workflow is mainly searchable knowledge. Use direct inference for one immediate result, `async` generations (`references/resilience/situations/async-generation.md`) for a few calls that can run in the background without a workflow, and `references/rag/` for retrieval over a knowledge base.
 
 ## Operating Surfaces
 

@@ -1,6 +1,6 @@
 ---
 name: aivax-resilience
-description: Reusable patterns for AIVAX API failures — rate limits (429), transient errors, partial failures, idempotent retries, fallback models, and graceful degradation. Load when a sub-skill encounters a retryable error or when the agent is designing a pipeline that must survive transient failures.
+description: Reusable patterns for AIVAX API failures — rate limits (429), transient errors, partial failures, idempotent retries, fallback models, and graceful degradation — plus deferring a call to the background with `async` generations. Load when a sub-skill encounters a retryable error, when the agent is designing a pipeline that must survive transient failures, or when a call should run in the background and be read later.
 ---
 
 # Resilience
@@ -13,6 +13,7 @@ Any AIVAX sub-skill can fail. The patterns for surviving failure are reusable: t
 - `situations/transient-failure.md`: dependency failures (`503`), safe retries of unexpected failures (`500`), and evidenced temporary transport failures.
 - `situations/idempotent-retry.md`: how to retry without creating duplicates.
 - `situations/partial-failure.md`: a chain of calls where one stage failed mid-way.
+- `situations/async-generation.md`: queue a call with `async`, read the stored result, and cancel or delete queued generations.
 
 ## Scope Boundary
 
@@ -42,7 +43,7 @@ When a primary call cannot be retried, the fallback options are:
 - **Reranker swap**: when the reranker is failing, swap to `lexical` (no model cost, but subject to the reranking request quota) or `none` (RAG only, disables rerank).
 - **Gateway bypass**: a direct chat completion to an integrated model may bypass a gateway that is failing.
 - **Skip stage**: a stage that is not critical (e.g. rerank, classify) can be skipped if the rest of the pipeline can still meet the goal.
-- **Defer**: when the work is not time-critical, queue it for later rather than retrying now. Batch is the right shape for this.
+- **Defer**: when the work is not time-critical, queue it rather than retrying now: batch for many records under one workflow, `async` generations for a few calls (`situations/async-generation.md`).
 
 ## Cost Awareness
 

@@ -75,6 +75,7 @@ Fetch request with structured extraction:
 - `contents` is required and non-empty; each entry is a URL or a base64 data URI of the form `data:<mime-type>;base64,<payload>`. The data URI must specify a MIME type and base64 content.
 - `returnErrors` defaults to `true`: each failed item returns an entry with null extracted values, zero PU fields, and an `error` message. When `false`, failed items are omitted from `results`.
 - `responseSchema` is optional; omit it or set it to null for text-only extraction. `instructions` inside the schema is an AIVAX extension (not a standard JSON Schema keyword) carrying extraction guidance. Successful JSON conversion retains `extractedText`; without a schema, `extractedObject` is null and `jsonProcessingUnits` is 0.
+- Both endpoints accept `async` (see `references/resilience/situations/async-generation.md`); the reply is then a `202` with a generation `id`, not `results`.
 - Match each result to its input via the zero-based `index`. User-visible failures (invalid input, fetch or conversion errors) surface their message in `error`; unexpected failures surface a generic fetch failure message.
 
 ## Cost Awareness

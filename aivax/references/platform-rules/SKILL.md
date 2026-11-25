@@ -38,27 +38,9 @@ When the MCP is not available, use direct HTTPS calls to `https://inference.aiva
 
 For LLM-friendly responses, send `X-Response-Truncating: agent-optimized` on every call. Keep payloads compact and avoid media unless required.
 
-## Decision Order
+## Workflow And Safety
 
-For any task that touches AIVAX, follow this order:
-
-1. Classify the intent and load the right sub-skill (see `SKILL.md`).
-2. Discover the environment: auth, plan, balance, MCP availability, model or gateway availability.
-3. Read current state before any mutation.
-4. If the contract is unclear, search AIVAX context (MCP) or `docs.aivax.net` / `inference.aivax.net/apidocs/llms.txt` (fallback).
-5. Apply the smallest change.
-6. Validate through the same path the user will use.
-7. Report changed resources, IDs, evidence, and remaining risk.
-
-## Global Safety Rules
-
-- Preserve secrets. Never print API keys, provider keys, integration tokens, webhook secrets, salts, chat access keys, or private credentials.
-- Treat destructive operations as explicit-only: delete, reset, clear, roll salt, sync imports that remove records, bulk cancellation.
-- Export or capture current configuration before large imports, destructive edits, broad migrations, skill imports, collection resets, or gateway rewrites.
-- For shallow-merge endpoints, send only the fields that must change.
-- Keep AIVAX `systemInstruction` separate from account skills. Skills are a flat list attached to gateways; do not assume native priority or a primary skill.
-- For integrated models, prefer `baseAddress: "@integrated"` and a model returned by `aivax_list_models`.
-- For external providers, preserve existing `apiKey` values when patching unrelated gateway parameters.
+The default workflow and the global safety rules live in `SKILL.md`. Follow them for every AIVAX task; this sub-skill adds the mutation, error, and tool-choice contracts below.
 
 ## Model Names
 

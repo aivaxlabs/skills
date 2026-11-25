@@ -15,7 +15,7 @@ Retry a mutation safely. The retry must produce the same observable effect as a 
 
 1. Does the endpoint accept a correlation key? If yes, use it to correlate the retry. Chat completions accept the AIVAX-specific `conversation_token` (deprecated alias `idempotency_key`; it identifies the stored conversation but does not deduplicate execution or cost); many other mutations do not accept any key.
 2. Is the endpoint a `PUT` that overwrites the resource? If yes, a retry is safe only if the pre-state and the retry payload are identical. A retry that lands after a different mutation will overwrite the different mutation.
-3. Is the endpoint a `POST` that creates a new resource? A retry may create a duplicate. Capture the new resource's ID and check for it before retrying (`conversation_token` only applies to chat completions, where it correlates but does not suppress re-execution).
+3. Is the endpoint a `POST` that creates a new resource? A retry may create a duplicate. Capture the new resource's ID and check for it before retrying (`conversation_token` only applies to chat completions, where it correlates but does not suppress re-execution). A lost `async` queue reply is the same case: list by tag first (`situations/async-generation.md`).
 4. Is the endpoint a `DELETE`? A retry is safe (deleting an already-deleted resource is a no-op for most AIVAX resources, but verify with the affected sub-skill).
 5. Is the endpoint a `PATCH` with shallow-merge? A retry is safe if the patch payload is identical and the resource state has not changed for unrelated reasons. If another mutation may have touched the same fields, do not retry — re-read the resource and re-decide.
 

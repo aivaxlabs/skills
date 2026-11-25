@@ -28,7 +28,7 @@ The SSE stream emits events with `data:` prefixes. Each event is a JSON object t
 - `choices[i].delta.content`: append to the assistant text buffer.
 - `choices[i].delta.tool_calls`: append to a tool-call buffer. The first event may have only `id`; later events add `function.name` and `function.arguments`.
 - `choices[i].finish_reason`: capture the last non-null value (`stop`, `tool_calls`, `length`, `content_filter`).
-- The final event has `[DONE]` as the data payload and carries the `usage` block when the server reports it.
+- The last chunk before `[DONE]` has an empty `delta` and carries the `usage` block when the server reports it. `[DONE]` itself has no JSON payload.
 
 A common pattern:
 
@@ -37,8 +37,9 @@ buffer_text = ""
 buffer_tool_calls = []
 for event in stream:
   if event is "[DONE]":
-    finalize(usage = event.usage, finish_reason = last_finish_reason)
+    finalize(usage = last_usage, finish_reason = last_finish_reason)
     return
+  last_usage = event.usage or last_usage
   for choice in event.choices:
     if choice.delta.content:
       buffer_text += choice.delta.content
@@ -64,7 +65,6 @@ for event in stream:
 
 - **Truncated stream**: a network drop or a 5xx can cut the stream mid-response. Treat the partial text as candidate output, not final output. Validate or re-request.
 - **No usage block**: some streams do not include `usage`. Estimate it from the prompt and the partial text length, and tag the estimate.
-- **Empty `choices`**: the response is a non-streaming object. Switch to the non-streaming parser.
 - **Tool call without `id`**: the server may stream a tool call delta without an ID if the model started one in a previous chunk. Carry the ID forward from the previous chunk.
 
 ## Escalation

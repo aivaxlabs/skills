@@ -52,5 +52,5 @@ Always include:
 ## Escalation
 
 - The model catalog has no candidate that meets the floors: surface the binding constraint, ask the user to relax it (quality, modality, latency, cost) or accept that the task cannot run.
-- The recommended model is deprecated or preview: load `references/account/situations/secret-hygiene.md` and `references/cost-monitoring/situations/optimize-spend.md` for the rotation plan.
+- The recommended model is deprecated or preview: pick a stable alternative that meets the same floors and plan it with `references/cost-monitoring/situations/optimize-spend.md`.
 - A swap is needed in production: load `references/platform-rules/safe-mutations.md` and confirm approval before changing the gateway's model.

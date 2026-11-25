@@ -23,7 +23,7 @@ Ask for explicit user confirmation before any of the following. The classificati
 - Rotating salts, hook keys, or other secrets.
 - Pausing, finishing, or cancelling active production jobs.
 - Changing plan, subscription, rate limits, storage cleanup, or cost controls. A plan change can charge the account immediately.
-- Changing account `parameters` that affect privacy or availability (`zeroDataRetentionOnly`, `allowConversationsLogging`, `allowRagLogging`). `PUT /api/v1/accounts` replaces all `parameters`, so omitted settings revert to defaults.
+- Changing account `parameters` that affect privacy or availability (`zeroDataRetentionOnly`, `allowConversationsLogging`, `allowRagLogging`, `asyncGenerationsEnabled`). `PUT /api/v1/accounts` replaces all `parameters`, so omitted settings revert to defaults.
 - Creating payment invoices or charging a saved payment method. Agents never do this on their own.
 - Changing production gateway model, routing, tool access, moderation, or chat delivery behavior when impact is uncertain.
 - Bulk removing batch items or any operation that touches more than 100 records.

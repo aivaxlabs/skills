@@ -55,7 +55,7 @@ A gateway has:
 - `parameters.knowledgeBaseMinimumScore`: similarity cutoff.
 - `parameters.knowledgeUseReferences`: include referenced parent documents.
 - `parameters.knowledgeUseMetaDescriptions`: include metadata descriptions in retrieved context.
-- `parameters.temperature`, `parameters.topP`, `parameters.presencePenalty`, `parameters.frequencyPenalty`, `parameters.stop`, `parameters.maxCompletionTokens`, `parameters.reasoningEffort`, `parameters.verbosity`: sampling and output.
+- `parameters.temperature`, `parameters.topP`, `parameters.presencePenalty`, `parameters.frequencyPenalty`, `parameters.stop`, `parameters.maxCompletionTokens`, `parameters.reasoningEffort`, `parameters.verbosity`: sampling and output. A model that does not accept a setting (for example `temperature` on some subscription models) rejects a gateway that sets it; remove the field.
 - `parameters.userPromptTemplate`, `parameters.assistantPrefill`, `parameters.includePrefillingInMessages`: prompt shaping.
 - `parameters.systemInstructionsSources`: external text resources appended to the system prompt. Final order is deterministic: base `systemInstruction`, then MCP-source instructions, then the sources in array order. Put the most important source first and do not rely on fetch speed.
 - `parameters.hideToolsWithoutSkill` and `parameters.alwaysVisibleTools`: with the flag on, a skill's `allowedToolsNames` become visible only after a `read_skill` call that actually returned that skill's content. Blocked, rejected, or failed `read_skill` calls expose nothing. Only the latest `read_skill` result counts, so activate every needed skill in one call; a later call (including one with an empty `skills` list) replaces the earlier visible set. `read_skill` and `alwaysVisibleTools` stay visible.
@@ -83,7 +83,7 @@ Arrays are usually replacements during patching; include the complete intended l
 
 Public keys (`pk-aiv-`) can call chat completions with the full AI Gateway UUID. Direct integrated-model calls and gateway slug lookup are disabled. MCP sources, protocol functions, built-in tools, Bash, skills, and sentinel options are stripped from the request. Only these parameters are accepted: `model`, `messages`, `prompt`, `temperature`, `top_p`, `top_k`, `seed`, `tools`, `reasoning_effort`, `max_completion_tokens`, `stream`, `conversation_token`, and its deprecated alias `idempotency_key` (`OpenIndexer.Alpha2/Api/Modules/OpenAi.cs:27-43`).
 
-Private-key chat-completion requests may set `routing_options.preset` (`Balanced`, `Cheapest`, `Fastest`, or `Quality`) and `routing_options.allowed_providers` without changing the saved gateway. Omitted values inherit its configuration. The deprecated `routing_preset` is still accepted, but `routing_options.preset` takes precedence. Public keys cannot send either routing extension.
+Private-key chat-completion requests may set `routing_options.preset` (`Balanced`, `Cheapest`, `Fastest`, `Quality`, or `Special`) and `routing_options.allowed_providers` without changing the saved gateway. Omitted values inherit its configuration. The deprecated `routing_preset` is still accepted, but `routing_options.preset` takes precedence. Public keys cannot send either routing extension.
 
 ## Cost Awareness
 

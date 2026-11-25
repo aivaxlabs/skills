@@ -26,7 +26,7 @@ Get past the rate limit without burning the account balance, without retrying in
    - Per-minute request: back off exponentially with jitter, starting at 1s, doubling, capping at 30s.
    - Token-rate: reduce the payload (shorter context, smaller `top_n`, smaller `limit` or `candidates` in `/api/v2/query`) before retrying.
 3. Are three or more retries failing with the same class? Open the circuit breaker. Do not retry further. Switch to a fallback or surface the error.
-4. Is the work in a batch or long-running job? Pause the job, wait, then resume. Do not start a new job while the old one is being throttled.
+4. Is the work in a batch or long-running job? Pause the job, wait, then resume. Do not start a new job while the old one is being throttled. For `async` queueing, see `situations/async-generation.md`.
 
 ## Actions
 
