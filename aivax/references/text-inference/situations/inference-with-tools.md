@@ -65,7 +65,7 @@ A turn may mix server-side built-in tools and client `tools`. Server tools run b
 - `AdvancedWebUsage` (`advanced_web_search`) is unavailable: calling it returns `this tool is not available in the moment`. Do not enable or recommend it for deep research. `WebSearch` and `OpenUrl` do not provide an equivalent deep research pass.
 - `OpenUrl` reads a user-provided URL; use it instead of search when the source is already known.
 - Searching the web or extracting URL/file content as a direct agent-called API step (`POST /api/v1/web/search`, `POST /api/v1/web/fetch`): load `references/web/` instead of a built-in tool.
-- `get_date_time` returns a JSON object with `date`, `time`, `day_of_week`, `time_zone`, `utc_offset`, and `date_time` (ISO 8601). Parse it as JSON; it no longer returns prose and has no day-of-year field. It takes no arguments; configure the zone with `builtin_tools.options.dateTimeTimeZone`.
+- `get_date_time` returns a JSON object with `date`, `time`, `day_of_week`, `time_zone`, `utc_offset`, and `date_time` (ISO 8601). Parse it as JSON; it no longer returns prose and has no day-of-year field. It takes no arguments; configure the zone with the request `time_zone` field or the gateway `parameters.timeZone`.
 
 ## Validation
 

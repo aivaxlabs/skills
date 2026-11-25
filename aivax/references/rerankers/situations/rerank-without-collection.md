@@ -24,7 +24,7 @@ Get a relevance-ranked list of candidates without the cost of indexing, storing,
 ```text
 POST /api/v1/generations/rerank
 {
-  "model": "@aivax/reflex-v1",
+  "model": "@aivax/reflex:latest",
   "query": "<query>",
   "documents": [
     "<candidate 1>",

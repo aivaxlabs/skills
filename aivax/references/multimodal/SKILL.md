@@ -27,6 +27,8 @@ AIVAX accepts OpenAI-compatible content parts inside the `messages[].content` fi
 | `input_audio` | Audio content | `input_audio.data` is base64 audio data. `input_audio.format` names the format (e.g. `wav`, `mp3`). |
 | `file` | File content | `file.filename` names the file. `file.file_data` can be an external URL or a base64 data URL. |
 
+`POST /v1/responses` uses `input_text`, `input_image`, `input_file`, `input_audio`, and `input_video` parts. `POST /v1/messages` uses `text`, `image`, and `document` blocks with base64 or URL sources; `file_id` references are rejected.
+
 The selected model must support the modality. Otherwise, configure that media type in `multimodal_resolver` to convert it into text before the main call.
 
 ## External Links

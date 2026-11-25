@@ -147,7 +147,7 @@ Use Media Injector when the useful knowledge sits inside a source file (PDF repo
 
 ## Limits
 
-- Per-collection and per-account quotas exist. Plan limits control collection count, search rate, insertion rate, and JSONL import size.
+- Per-collection and per-account quotas exist. Plan limits control collection count, stored documents per account and per collection, search rate, insertion rate, and JSONL import size. Inserting beyond the document limit returns `400`; updating existing documents is not affected. Check Plans and limits before large imports.
 - Search and insertion embeddings share the plan's daily RAG embedding allowance. Each uncached embedding item is either fully covered or billed normally; cached query embeddings do not consume it. Included items appear in subscription consumption, not billing history. Billed embeddings are charged from the cost actually reported for that embedding call, not from a catalog price, so use the Pricing page and the account's usage records rather than estimating from a model list.
 - Indexing is asynchronous and shared across accounts. Queued documents are drained in batches that interleave collections, so a large import in one collection does not starve others but a backlog still delays searchability. A failed embedding batch stays `queued` and is retried by the next run; the document is not lost and not marked as an error. If documents stay `queued` for long, wait and recheck before re-uploading; re-uploading unchanged text does not speed indexing.
 - Reflex reranking uses a separate allowance; answer generation and other rerankers are billed separately. Allowances do not bypass balance requirements or rate limits.

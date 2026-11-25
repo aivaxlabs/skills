@@ -39,7 +39,8 @@ AIVAX errors fall into a small number of classes. The agent should classify befo
 ### Balance Or Storage Gate (402), Rate Limit (429)
 
 - Inspect `GET /api/v1/information/balance` and the relevant `usage` period. `402` can indicate insufficient balance or exceeded storage; use the message to distinguish them.
-- `429` indicates a rate limit, not a request to top up. Balance and usage are not live rate-limit counters, and `Retry-After` is not guaranteed on a rate-limit response.
+- `429` indicates a rate limit, concurrency cap, or subscription quota, not a request to top up. "Too many simultaneous generations for your plan" is a concurrency cap; "Subscription model quota exhausted" is the monthly subscription model quota.
+- Both are covered in `references/resilience/situations/rate-limit-429.md`. Balance and usage are not live rate-limit counters, and `Retry-After` is not guaranteed on a rate-limit response.
 - Consult [Pricing](https://docs.aivax.net/docs/pricing) and [Plans and limits](https://docs.aivax.net/docs/limits), not fixed commercial figures in a skill. Do not start large jobs until cost is understood.
 - For `429`, load `references/resilience/situations/rate-limit-429.md`.
 
@@ -63,7 +64,10 @@ AIVAX errors fall into a small number of classes. The agent should classify befo
 
 ### OpenAI-Compatible Error Codes And Streams
 
-- For HTTP exception responses, `error.code` is `invalid_request_error` for client failures, `service_unavailable` for dependency failures, or `server_error` for unexpected AIVAX failures. Use HTTP status to distinguish auth, balance, permission, and rate-limit cases within `invalid_request_error`.
+- For chat-completions HTTP exception responses, `error.code` is `invalid_request_error` for client failures, `service_unavailable` for dependency failures, or `server_error` for unexpected AIVAX failures.
+- `POST /v1/responses` errors carry `error.type` (`invalid_request_error` or `server_error`) and `error.code`; an upstream failure uses `server_is_overloaded`. A failed stream emits an `error` event, then `response.failed`, then `[DONE]`.
+- `POST /v1/messages` errors use `{ "type": "error", "error": { "type", "message" } }` with `invalid_request_error`, `overloaded_error` (upstream), or `api_error`. A failed stream emits an SSE `error` event. Non-stream upstream failures can include `Retry-After`.
+- A stream that receives no data from the provider for 180 seconds fails with code `stream_idle_timeout`. Use HTTP status to distinguish auth, balance, permission, and rate-limit cases within `invalid_request_error`.
 - Once chat-completion streaming starts, inspect error chunks even after a successful HTTP status. A chunk can contain `finish_reason: "error"` and an `error` object before `[DONE]`; its code may be provider-specific. Neither the initial status nor `[DONE]` proves successful generation.
 
 ### Tool or MCP Failure (tool or MCP surfaced inside a chat completion)

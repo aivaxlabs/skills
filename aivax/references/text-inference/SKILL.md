@@ -40,7 +40,9 @@ Do not use this sub-skill for:
 
 `POST /v1/chat/completions` (also exposed as `/api/v1/chat/completions`).
 
-The endpoint accepts OpenAI-compatible payloads plus AIVAX extensions:
+Two compatibility endpoints reach the same inference engine and are billed like chat completions: `POST /v1/responses` (OpenAI Responses) and `POST /v1/messages` (Anthropic Messages), also under `/api/v1/`. Both are stateless: send the full conversation every time. Responses rejects `previous_response_id`. Both accept only client function tools (no server or built-in tool types). Public keys may send only a short allowlist of fields and any other field is rejected. Messages rejects `file_id` references; send base64 or a URL. Errors use each protocol's own shape (see `references/platform-rules/error-handling.md`). The rest of this file describes chat completions.
+
+The chat completions endpoint accepts OpenAI-compatible payloads plus AIVAX extensions:
 
 - `model`: an integrated model name, an AI gateway UUID, or an AI gateway slug (private keys only). Use the catalog `@provider/model` name. An integrated chat model name accepts an inline routing suffix after the first `#`: a preset (`Balanced`, `Cheapest`, `Fastest`, `Quality`, or `Special`), such as `@provider/model#cheapest`, or a provider tag such as `@provider/model#azure-us`. The suffix is removed before the provider call and is not returned in `model`. `routing_options` takes precedence over it. Image, speech, transcription, decision, and realtime names do not accept the suffix. `@metaai/llama-3.3-70b` and `@metaai/llama-3.1-8b` still resolve to the `@meta/` names until 2026-12-01.
 - `messages`: an OpenAI-compatible messages array. Multimodal content parts are described in `references/multimodal/`.
@@ -63,9 +65,9 @@ The endpoint accepts OpenAI-compatible payloads plus AIVAX extensions:
 - `multimodal_resolver`: per-media engines (`imageEngine`, `audioEngine`, `videoEngine`, `fileEngine`) that convert selected inputs into text. It takes precedence over the deprecated `multimodal_preprocess` flags and the gateway's resolver configuration. See `references/multimodal/`.
 - `conversation_token`: AIVAX-specific optional conversation identifier, up to 128 characters (not part of the OpenAI spec). Send the same value in every request of a conversation: AIVAX restores the server-side tool calls and results of previous turns and updates the same stored conversation record. When omitted, AIVAX generates one and returns it in the response `conversation_token`. It does not deduplicate inference execution; each request still executes.
 - `idempotency_key`: deprecated alias for `conversation_token`. When both are sent, they must have the same value, or the request is rejected.
-- `metadata`: a JSON object of string key/value pairs, stored with the conversation record for correlation.
+- `metadata`: a JSON object of string key/value pairs, stored with the conversation record for correlation. Keys starting with `_aiv` are reserved and dropped. MCP tool servers receive the request context (external user, call source, conversation token) in `params._meta`, and their tool discovery is cached per that context.
 - `allow_logging`: optional boolean, default `true`. Send `false` to keep this request out of the account conversation logs; it then cannot be found in `references/observability/` afterwards, so use it only when that loss is intended. It does not change provider-side retention (see Limits). Private keys only.
-- `tool_invocation_explanations`: when supported, expose tool-call explanations in the response.
+- `tool_invocation_explanations`: when supported, expose tool-call explanations in the response. The explanation fields (`_tool_reason`, `_tool_goal`) are removed from the arguments before MCP tools and protocol functions are called, so handlers never receive them.
 
 These fields are implemented in `OpenIndexer.Alpha2/Api/Modules/OpenAi.cs`. The built-in names come from `OpenIndexer.Alpha2/Inference/ReasoningChainResolverOptions.cs`.
 

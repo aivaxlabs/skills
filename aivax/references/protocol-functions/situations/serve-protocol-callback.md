@@ -25,7 +25,7 @@ Validate the callback request (nonce, arguments, authorization), execute the act
 The callback request carries the function name, the model-supplied arguments, and the execution context:
 
 - `function.name`: the called function.
-- `function.content`: the model-supplied arguments (validate against the schema).
+- `function.content`: the model-supplied arguments (validate against the schema). The tool-explanation fields `_tool_reason` and `_tool_goal` are removed before the callback, so they never reach the endpoint.
 - `context.externalUserId`: session or request user ID, or null when unidentified.
 - `context.metadata`: caller-supplied string pairs (never put secrets here).
 - `context.callSource`: inference origin (`WebChatClient`, `ChatCompletionsApi`, `IntegrationBot`).

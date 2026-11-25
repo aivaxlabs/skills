@@ -17,7 +17,7 @@ Use `GET /api/v1/information/rerankers-models.json` to inspect current names, `a
 
 | Use case | Recommended reranker | Why |
 | --- | --- | --- |
-| Default general use | `@aivax/reflex-v1` | Low latency, account-scoped cache, good quality. |
+| Default general use | `@aivax/reflex:latest` | Low latency, account-scoped cache, good quality. |
 | Very long documents | Jina (`@jina/reranker-v3`, `@jina/reranker-v3.5`) | Check the current context limit. |
 | Multilingual retrieval | Qwen or `@voyageai/rerank-3` | Verify language coverage in the live catalog. |
 | Multilingual, low cost | `@voyageai/rerank-3-lite` | Token-priced; smaller than `rerank-3`. |

@@ -39,7 +39,7 @@ Map the user intent to a sub-skill. Load only what you need. When in doubt, pref
 
 | Intent | Load |
 | --- | --- |
-| Choose a model, build chat-completion messages, stream, attach tools, retry, or swap models for cost/latency/quality | `references/text-inference/` |
+| Choose a model, build chat-completion (or Responses / Anthropic Messages) requests, stream, attach tools, retry, or swap models for cost/latency/quality | `references/text-inference/` |
 | Send images, audio, video, or files inside chat-completion messages; preprocess media to text | `references/multimodal/` |
 | Generate images from text prompts | `references/image-generation/` |
 | Synthesize speech from text (TTS) | `references/speech/` (TTS) |

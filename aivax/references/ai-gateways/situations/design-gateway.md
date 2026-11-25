@@ -18,7 +18,7 @@ Produce a gateway definition that meets the user's goal with the right balance o
 2. What is the model? Pick the cheapest model that meets the capability floor. See `references/text-inference/situations/choose-model.md`.
 3. What is the system instruction? Short, specific, and named. Do not duplicate gateway skills.
 4. What collections? One or more RAG collections. Each collection should be authoritative for a domain. See `references/rag/`.
-5. What reranker? Default is `lexical`. Switch to a semantic reranker for higher precision. See `references/rerankers/`.
+5. What reranker? Default is Reflex, a semantic reranker. Use `lexical` only when no reranking charge is required. See `references/rerankers/`.
 6. What skills? Skills are reusable instruction bundles attached by ID. Load `references/skill-development/situations/attach-skill-to-gateway.md` for the pattern.
 7. What tools? MCP sources, protocol functions, built-in functions. Enable only what is needed. See `references/ai-gateways/situations/attach-skills-and-tools.md`.
 8. What multimodal inputs need conversion to text? Set `multimodalResolverParameters` per media type; leave raw media only when the main model supports it. See `references/multimodal/`.

@@ -15,7 +15,7 @@ This sub-skill owns rerankers on AIVAX. A reranker takes a query and a list of c
 
 ## Endpoint
 
-`POST /api/v1/generations/rerank`. The endpoint accepts a query, a list of candidate document strings, an optional model name, an optional `top_n`, and an optional `min_score`. `top_n` defaults to a small number of results capped by the document count and must be between 1 and the document count; Reflex also caps `top_n` (see the error message or live catalog). `min_score` must be between 0 and 1. Read the raw response object's `results` array (no `data` envelope), alongside `id`, `model`, and `usage`. Each result carries the original zero-based `index`, `relevance_score`, and `document.text`.
+`POST /api/v1/generations/rerank`. The endpoint accepts a query, a list of candidate document strings, an optional model name, an optional `top_n`, and an optional `min_score`. `top_n` defaults to 5, capped by the document count and must be between 1 and the document count; Reflex also caps `top_n` (see the error message or live catalog). `min_score` must be between 0 and 1. Read the raw response object's `results` array (no `data` envelope), alongside `id`, `model`, and `usage`. Each result carries the original zero-based `index`, `relevance_score`, and `document.text`.
 
 The legacy `/api/v1/generations/reflex/rerank` route is a deprecated alias for the same endpoint. Use the generic route for new integrations.
 
@@ -32,10 +32,10 @@ Do not use this sub-skill for:
 
 Rerankers differ in language coverage, context window, document limits, latency, and cost. The full catalog is in `reranker-catalog.md`. The short version:
 
-- **Reflex** (`@aivax/reflex-v1`): default AIVAX reranker. Low latency, bounded lexical evidence, account-scoped cache. Best general default.
+- **Reflex** (`@aivax/reflex:latest`, resolves to `@aivax/reflex-v1.5`; `@aivax/reflex-v1` is an accepted alias): default AIVAX reranker. Low latency, bounded lexical evidence, account-scoped cache. Best general default.
 - **Qwen 3 Reranker** (`@qwen/qwen3-reranker-0.6b`, `4b`, `8b`): three sizes for different quality/latency trade-offs.
 - **Jina Reranker** (`@jina/reranker-v3`, `@jina/reranker-v3.5`): useful for long documents; check the live catalog's context limit.
-- **Cohere Rerank** (`@cohere/rerank-4-pro`, `@cohere/rerank-4-fast`, `@cohere/rerank-3.5`): search-unit pricing, large document support.
+- **Cohere Rerank** (`@cohere/rerank-5-pro`, `@cohere/rerank-5-fast`, `@cohere/rerank-4-pro`, `@cohere/rerank-4-fast`, `@cohere/rerank-3.5`): search-unit pricing, large document support.
 - **Voyage AI Rerank** (`@voyageai/rerank-3`, `@voyageai/rerank-3-lite`): multilingual, long-context, token-based pricing; the `lite` variant is the cheaper, faster one.
 - Names come from the live catalog; if a name is rejected as unknown, re-read the catalog instead of guessing.
 - **NVIDIA Nemotron** (`@nvidia/llama-nemotron-rerank-vl-1b-v2`): vision-language reranker, useful when the candidates include images. `@nvidia/nemotron-3.5-rerank-8b` is the text relevance variant.
@@ -61,7 +61,7 @@ Reflex calls consume the plan's daily reranking allowance when fully covered; ot
 
 ## Limits
 
-Use the live catalog at `GET /api/v1/information/rerankers-models.json` for current capabilities and limits (`OpenIndexer.Alpha2/Api/Modules/InformationApi.cs:84`). Check the live catalog for each model's context and document limits; Jina and lexical declare no maximum document count. The endpoint rejects unknown or non-autonomous models, invalid `top_n` or `min_score`, empty input, or a document count above the model's declared limit. All non-none reranking operations share the account's reranking request quota; Reflex also has a processing-time cap. These constraints and balance requirements still apply to allowance-covered calls. On rate limits, load `references/resilience/situations/rate-limit-429.md`.
+Use the live catalog at `GET /api/v1/information/rerankers-models.json` for current capabilities and limits (`OpenIndexer.Alpha2/Api/Modules/InformationApi.cs:136`). Check the live catalog for each model's context and document limits; Jina and lexical declare no maximum document count. The endpoint rejects unknown or non-autonomous models, invalid `top_n` or `min_score`, empty input, or a document count above the model's declared limit. All non-none reranking operations share the account's reranking request quota; Reflex also has a processing-time cap. These constraints and balance requirements still apply to allowance-covered calls. On rate limits, load `references/resilience/situations/rate-limit-429.md`.
 
 ## Escalation
 

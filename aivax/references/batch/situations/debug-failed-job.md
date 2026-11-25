@@ -16,7 +16,7 @@ Identify whether the fault is input-specific or systemic before changing a workf
 
 1. Are failures isolated to a few inputs? Inspect those inputs and their item details before changing the workflow.
 2. Are failures systemic? Compare the workflow's model, schema, validation, tools, retries, and input shape across affected items.
-3. Is the job paused due to cost or balance? Inspect balance and usage before resuming.
+3. Is the job paused due to cost or balance? Inspect balance and usage before resuming. Read the last entry of the job's updates: `paused_rate_limit` (daily item limit; wait for the window to reset, the job resumes by itself), `paused_insufficient_funds` (resumes by itself after the balance is restored), `paused_error_threshold`, or `paused_transient_failure_threshold` (fix the cause, then set `Active`).
 4. Is the issue a provider or rate-limit failure? Use the narrow execution-error retry after loading `references/resilience/`.
 5. Is output useful but validation fails? Align schema and validation instruction rather than increasing retries.
 

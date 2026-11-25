@@ -5,7 +5,7 @@ description: Operate AIVAX web chat clients, browser sessions, embed settings, l
 
 # Web Chat
 
-This sub-skill owns the user-facing surfaces that connect a browser or messaging channel to an AIVAX AI Gateway. A chat client controls UI behavior, allowed frame origins, rate limits, sessions, media upload modes, audio synthesis, and optional messaging integrations.
+This sub-skill owns the user-facing surfaces that connect a browser or messaging channel to an AIVAX AI Gateway. A chat client controls UI behavior, rate limits, sessions, media upload modes, audio synthesis, and optional messaging integrations.
 
 ## Operating Files
 
@@ -18,7 +18,7 @@ This sub-skill owns the user-facing surfaces that connect a browser or messaging
 Use this sub-skill to:
 
 - Create, inspect, or edit a web chat client.
-- Configure the initial user experience, allowed iframe origins, input modes, audio synthesis, or rate limits.
+- Configure the initial user experience, input modes, audio synthesis, or rate limits.
 - Create or refresh a customer-specific session and retrieve its `talkUrl`.
 - Configure or remove a Zapi, Telegram, EvolutionApi, or Kapso integration, or rotate its webhook key.
 - Send prompts to a session, with per-inference instructions, client-side tools, streaming, or inference options.
@@ -35,6 +35,7 @@ Do not use this sub-skill to tune the model, tools, RAG, or instructions behind 
 - `DELETE /api/v1/web-chat-client/<id>`: delete a client (destructive; require explicit confirmation and verify it is absent afterward).
 - `GET /api/v1/web-chat-client/<id>/sessions?filter=<text>`: list up to 300 sessions; `filter` searches access key, extra context, external user ID, or exact session ID.
 - `POST /api/v1/web-chat-client/<id>/sessions`: create or refresh a session.
+- `POST /api/v1/web-chat-client/<id>/sessions/insert-message`: append `user`, `assistant`, or `tool` messages to the history of an active session without running inference. Identify the session with exactly one of `sessionId` or `tag`; `messages` is text (a user message), one OpenAI-compatible message, or an ordered array. Returns `sessionId`, `insertedCount`, and `messageCount`. 400 when the session is missing or expired or a message is empty or has another role; 409 while an inference is running for the session.
 - `DELETE /api/v1/web-chat-client/<id>/sessions/<session-id>`: revoke access by ending and deleting the session (destructive; require explicit confirmation).
 - `PUT /api/v1/web-chat-client/<id>/integrations`: configure a messaging integration.
 - `DELETE /api/v1/web-chat-client/<id>/integrations/<name>`: remove one integration (destructive).
@@ -49,12 +50,12 @@ The main client parameters include:
 
 - `primaryColor`, `pageTitle`, `logoImageUrl`, `helloLabel`, `helloSubLabel`, and `textAreaPlaceholder` for presentation.
 - `suggestionButtons` for high-value starting prompts.
-- `allowedFrameOrigins` for embedding control.
 - `inputModes` (`Image`, `Document`, `Audio`) and `uploadUnsupportedFiles` for uploads.
 - `showToolCalls` and `debug` for diagnostics; disable `debug` after troubleshooting.
 - `audioSynthesisSource`, `audioSynthesisVoice`, `audioSynthesisInstruction`, and `summarizeTextBeforeAudioSynthesis` for spoken replies. `audioSynthesisSource` takes a TTS model `name` from `GET /api/v1/information/speech-models.json`, or `None` to disable audio.
-- `allowScheduledContinuations`, `splitAnswerIntoMessageChunks`, `maxScheduledIgnoredZone`, and `messageDebounceInterval` for messaging-channel behavior.
-- On messaging channels, a user message that arrives while a reply is being generated is steered into the running inference between its rounds, so the agent can react without waiting for a new turn. Messages not delivered before the run ends start the next generation after the debounce interval. `/reset` and `/usage` are not steered.
+- `allowScheduledContinuations`, `splitAnswerIntoMessageChunks`, `maxScheduledIgnoredZone`, and `messageDebounceInterval` for messaging-channel behavior. Duration fields, including integration `sessionDuration`, are numbers of seconds.
+- On messaging channels, a user message that arrives while a reply is being generated is steered into the running inference between its rounds, so the agent can react without waiting for a new turn. Messages not delivered before the run ends start the next generation after the debounce interval. `/reset`, `/usage`, and `/cancel` are handled on their own and are not steered. `/cancel` stops the running generation, and steered messages not yet delivered do not start a new generation.
+- Integration sessions pass their session `metadata` to the bot inference and to scheduled-message inference, the same as web sessions.
 
 ## Integration Webhooks
 
@@ -91,6 +92,7 @@ A session response can contain `sessionId`, `accessKey`, and `talkUrl`. Treat al
 - `prompt` (required): text, one OpenAI-compatible message, or an array of messages, including `tool` results for client-side tool calls.
 - `commit`: default `true`. `false` runs against the history without saving this turn; usage and tool side effects still occur.
 - `instructions`: string or array of strings for this inference only. It is not persisted and does not replace the session `extraContext`.
+- `context`: disposable context for this inference only: text, one OpenAI-compatible content part (`text`, `image_url`, `input_audio`, `video_url`, `file`), or an array of them. The parts are inserted at the start of the last user message, never saved to the history (even with `commit: true`), and not returned in `createdMessages`. It does not change the system instructions, so it keeps the prompt cache; resend it on every request that needs it. It is user input to the model: use it for information, and put directives in `instructions`. An invalid value is rejected with a validation error.
 - `tools`: OpenAI-compatible function tools for this inference only, each with `function.name`. They are client-side tools: calls return in `toolCalls` for your application to execute. They stay visible even when the gateway hides tools without a skill. Do not repeat gateway tool names, and send them again with the tool results.
 - `stream`: default `false`. `true` returns server-sent events: `text` (`content`, `replace`), `reasoning`, `tool` (server-side tool updates), a final `result` with the same body as the JSON response, or `error` with a `message`.
 - `inferenceOptions`: `reasoningEffort`, `toolInvocationExplanations`, and `renderingMode` (`default` or `textual_blocks`; other values are rejected). Omitted fields keep the gateway configuration.
@@ -103,7 +105,6 @@ The session `extraContext`, the content fetched from `contextLocation`, and `ins
 
 - The client references the intended gateway.
 - Limits and changed parameters match the intended values; unrelated configuration is preserved.
-- The permitted embedding origin works, and an unpermitted origin is not added accidentally.
 - Session creation or refresh returns a usable result without exposing access material.
 - After client deletion, `GET /api/v1/web-chat-client/<id>` no longer returns the client; after session revocation, the session no longer appears in its client's listing.
 - Recent conversations show the expected client or session attribution.

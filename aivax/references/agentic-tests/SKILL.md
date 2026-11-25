@@ -71,7 +71,7 @@ Both modes use metered inference for the tested gateway, simulated user, and jud
 | `notification_threshold` | integer | `1` | Consecutive execution failures before notification; minimum 1. |
 | `recovery_notification` | boolean | `true` | Notify when a successful run follows the configured failure streak. |
 
-`PATCH` accepts any subset of the same fields. Omitted fields remain unchanged; supplying `resources` or `hooks` replaces the entire respective list (send `[]` to remove all). Explicit `null` clears `cron`, but `null` for `validation_criteria` or `external_user_id` currently retains the existing value. Do not claim those fields were cleared without verifying the returned definition.
+`PATCH` accepts any subset of the same fields. Omitted fields remain unchanged; supplying `resources` or `hooks` replaces the entire respective list (send `[]` to remove all). Explicit `null` clears `cron`, `validation_criteria`, and `external_user_id`; omitting a field keeps it. Confirm the clear in the returned definition.
 
 ```json
 {

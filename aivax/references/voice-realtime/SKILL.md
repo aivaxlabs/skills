@@ -30,7 +30,7 @@ Do not use this sub-skill for:
 
 ## Endpoint
 
-`GET /api/v1/voice-session` upgrades an authenticated connection to WebSocket (`101 Switching Protocols`), using the OpenAI-compatible Realtime event protocol. It does not return a JSON session descriptor or separate connection credentials. A private API key and sufficient account balance are required; public keys are rejected.
+`GET /api/v1/voice-session` upgrades an authenticated connection to WebSocket (`101 Switching Protocols`), using the OpenAI-compatible Realtime event protocol. It does not return a JSON session descriptor or separate connection credentials. A private API key and sufficient account balance are required; public keys are rejected with `403`.
 
 The first client message must be a JSON `session.update` event containing a `session` object. Optional `gateway` and `model` selectors may be supplied at the event level or inside `session`; event-level selectors take precedence and are removed before forwarding. If omitted, server defaults apply. Configure standard realtime fields such as `audio.output.voice`, `reasoning.effort`, `instructions`, and `tools` inside `session`, not in URL query parameters.
 
@@ -54,7 +54,7 @@ Realtime models are tuned for low-latency two-way audio. Send the catalog `@prov
 
 ## Cost Awareness
 
-Realtime voice is priced per second of audio. A long conversation can cost more than a chat equivalent. Set a cost cap with the user before opening a long session. Some realtime models charge for both input and output audio; verify with `aivax_list_models`.
+Realtime voice is priced per token, by modality (text, audio, and image; input and output; cached input is priced separately). A long conversation can cost more than a chat equivalent. Set a cost cap with the user before opening a long session and verify model pricing with `aivax_list_models`.
 
 ## Validation
 

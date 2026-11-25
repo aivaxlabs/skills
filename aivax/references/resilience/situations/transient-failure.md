@@ -16,6 +16,7 @@ Recover from a temporary failure without losing the user's work, without spendin
 1. Is the status a client error? Do not treat an unchanged `400` as retryable, even if a dependency's message says it is temporarily unavailable, and even when the cause is an unreadable request or dropped connection on your side (also a `400`). A zero data retention restriction with no eligible provider is a `400` too; change the model or the setting. Load `references/platform-rules/error-handling.md`; route `429` to the rate-limit scenario.
 2. Could the call have partially applied? Inspect the resource before any retry. See `situations/idempotent-retry.md` and `situations/partial-failure.md`.
 3. Did the response include `Retry-After`? Wait for that interval before a safe retry. Otherwise back off exponentially with jitter, starting at 500ms, doubling, capping at 30s.
+   A stream that stops sending data for 180 seconds fails with `stream_idle_timeout`. Before any output was produced it is safe to retry within this policy; after partial output, follow `situations/partial-failure.md` instead of retrying blindly.
 4. After three failures with the same class, open the circuit breaker. Switch to an approved fallback or surface the error. A `500` does not guarantee that another attempt will succeed.
 
 ## Actions

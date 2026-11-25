@@ -15,7 +15,7 @@ Apply one intentional change, preserve existing client behavior, and verify it t
 ## Decision Tree
 
 1. Is the target a client parameter, a limit, or an integration? Use the dedicated endpoint for integrations.
-2. Does the field widen access or increase cost? `allowedFrameOrigins`, uploads, message limits, and scheduled continuations require deliberate review.
+2. Does the field widen access or increase cost? Uploads, message limits, and scheduled continuations require deliberate review.
 3. Is the field a nested object or array? Confirm merge behavior with `aivax_search_context`; preserve all intended existing array members.
 4. Does the configuration include a secret? Do not echo or report bot tokens, `hookKey` values, or credentials unless changing them intentionally.
 5. Is removing an integration requested? Confirm the exact type because `DELETE` cannot be reversed.
@@ -29,7 +29,9 @@ PUT /api/v1/web-chat-client/<client-id>
 {
   "clientParameters": {
     "showToolCalls": true,
-    "allowedFrameOrigins": ["https://console.example.com"]
+    "suggestionButtons": [
+      { "label": "Order status", "prompt": "I want to check my order status." }
+    ]
   }
 }
 GET /api/v1/web-chat-client/<client-id>
@@ -46,7 +48,7 @@ PUT /api/v1/web-chat-client/<client-id>/integrations
   "integrations": {
     "telegramIntegration": {
       "botToken": "<secret>",
-      "sessionDuration": "03:00:00"
+      "sessionDuration": 10800
     }
   }
 }
@@ -70,7 +72,7 @@ DELETE /api/v1/web-chat-client/<client-id>/integrations/Telegram
 ## Validation
 
 - The client view shows the exact intended change.
-- Unrelated limits, parameters, allowed origins, and integrations remain unchanged.
+- Unrelated limits, parameters, and integrations remain unchanged.
 - The embed, upload, audio, or messaging flow affected by the change still works.
 - `debug` is disabled after troubleshooting.
 - No access key, bot token, hook key, or integration secret appears in logs or final reporting.
@@ -79,7 +81,7 @@ DELETE /api/v1/web-chat-client/<client-id>/integrations/Telegram
 ## Failure Modes
 
 - API rejects a field: verify its type and allowed enum with `aivax_search_context`.
-- An origin list was accidentally narrowed or broadened: restore the captured intended array, then test embedding.
+- An array parameter (such as `suggestionButtons`) was accidentally narrowed or broadened: restore the captured intended array.
 - An integration fails: confirm the supported payload from the live API reference and inspect the client detail; do not guess credentials or nested fields.
 - Kapso webhooks return 401 after setting `webhookSecretKey`: the secret must match the one configured in Kapso, which signs each request with `X-Webhook-Signature`.
 - A webhook returns 410: it still uses the legacy URL without `<hook-key>`; configure the keyed URL.

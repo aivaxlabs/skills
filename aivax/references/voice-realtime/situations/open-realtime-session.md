@@ -63,7 +63,7 @@ Use a WebSocket client to complete the upgrade handshake. The first client messa
 
 ## Failure Modes
 
-- The model is not available on the plan: switch the model.
+- Unknown `model`: the server sends an `error` event (`type: invalid_request_error`, `code: model_not_found`, `param: model`) listing the available models, then closes the socket. Pick a listed model and reconnect.
 - The transport fails to connect: the network or the credentials are wrong. Inspect the error and the network.
 - The initial event is rejected: ensure it is valid JSON with `type: session.update` and a `session` object. Each new WebSocket connection requires this event.
 

@@ -14,7 +14,7 @@ Report the real plan and payment state, and change it only with explicit user ap
 
 ## Decision Tree
 
-1. Need the current state? `GET /api/v1/subscriptions`. Need only public list prices, without authentication? `GET /api/v1/information/plans.json` returns `plan` and `monthlyPrice` (USD) for `Free`, `Pro`, `Max`, and `Ultimate`; it excludes negotiated prices, so use `GET /api/v1/subscriptions` for the account's price.
+1. Need the current state? `GET /api/v1/subscriptions`. Need list prices? Read the public Pricing page; negotiated prices are only available through `GET /api/v1/subscriptions`.
 2. Upgrade or first subscription? `POST /api/v1/subscriptions/plan` with `{"plan": "Pro" | "Max" | "Ultimate"}`. It is charged now with a pro-rata discount and applied only after payment is confirmed.
 3. Downgrade? Same call; it is scheduled for the next renewal (`scheduled: true`) and nothing is charged now.
 4. Stop renewing? `POST /api/v1/subscriptions/cancel`. The paid plan stays active until the end of the paid cycle, then the account returns to `Free`.
@@ -29,7 +29,7 @@ Success responses use the standard `{ message, data }` envelope.
 - `GET /api/v1/subscriptions`: `plan`, `monthlyPrice`, `isActive` (current cycle is paid), `cycleEnd`, `pendingPlanModification`, `pendingPlan`, `isCancellationPending`, `planStartAt`, `pendingInvoiceId`, `pendingPaymentLocation`, `supportsSavedPaymentMethods`, and `plans[]` with `plan`, `monthlyPrice`, `dueToday`, `isDowngrade`. Use `plans[].dueToday` to show the user what the change costs before asking for approval.
 - `POST .../plan`: `applied`, `scheduled`, `invoiceId`, `paymentLocation`. `applied: false` with a `paymentLocation` means the user must open that link to pay; the plan changes only after confirmation. `paymentLocation: null` means a saved card was charged or nothing was due.
 - `GET .../payment-methods`: array of `id`, `brand`, `last4`, `expirationMonth`, `expirationYear`, `isDefault`.
-- `invoices[]` in the usage response: `invoiceId`, `createdAt`, `paidAt`, `expiresAt`, `amount`, `description`, `isExpired`, `type` (`CreditAddition`, `SubscriptionPayment`, `SubscriptionRenewal`, or `ManualBill`), `paymentLocation` (only while open), `receiptLocation` (only when paid). A `ManualBill` is issued by the AIVAX team, stays open until `expiresAt`, and does not add balance when paid.
+- `invoices[]` in the usage response: `invoiceId`, `createdAt`, `paidAt`, `expiresAt`, `amount`, `description`, `isExpired`, `type` (`CreditAddition`, `SubscriptionPayment`, `SubscriptionRenewal`, or `ManualBill`), `paymentLocation` (only while open), `receiptLocation` (only when paid), `serviceInvoiceLocation` (service invoice download, `null` until issued). A `ManualBill` is issued by the AIVAX team, stays open until `expiresAt`, and does not add balance when paid.
 
 ## Rules
 

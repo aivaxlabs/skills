@@ -48,7 +48,7 @@ Define these before creating a workflow:
 - **Model or gateway:** `modelName` accepts an integrated model name or an AI gateway reference. A model name alone always routes to the cheapest available provider, ignoring the default routing preference; use a gateway when the workflow needs another routing preset, provider list, or fixed instructions. Check the model and provider in `aivax_list_models` before a large run.
 - **Validation:** optional criteria for output correctness and confidence.
 - **Tools:** only the tools required for every item.
-- **Failure policy:** `errorStopThreshold` and `maxRetries`.
+- **Failure policy:** `errorStopThreshold` (1 to 100) and `maxRetries` (0 to 10). Values outside these ranges, or a missing `instruction`, `modelName`, or `resultSchema`, are rejected with `400`.
 - **Cost expectation:** item count, expected tokens, model price, validation overhead, and a pilot budget.
 
 Use stable record identifiers in input JSONL so exported outputs can be joined back to the source system.
@@ -60,6 +60,8 @@ Jobs begin **paused**. Import and inspect items before spending credits. Import 
 Use `Active` to start a job, `Paused` to stop it temporarily, and `Finished` to terminate it. Pilot 5–20 representative items before processing the full workload.
 
 Item states include `Pending`, `Finished`, `Refused`, `ExecutionError`, `ValidationError`, and `Cancelled`. Retry modes are `errors`, `execution-error`, `validation-error`, and `low-confidence`. A retry moves matching non-running items to `Pending` and automatically starts a non-active job if at least one item is retried.
+
+A job can pause itself. When the plan's daily limit of processed items is reached, the job moves to `Paused` with the `paused_rate_limit` event in its updates, and no item is processed past the limit. It resumes automatically only after the daily window has fully reset; do not set it to `Active` in a loop meanwhile. A job paused for insufficient funds also resumes by itself once the account has operating balance. Other pauses (`paused_error_threshold`, `paused_transient_failure_threshold`, or a manual `Paused`) need a deliberate `Active` after the cause is fixed.
 
 ## Privacy And Observability
 

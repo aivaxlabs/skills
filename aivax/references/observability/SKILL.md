@@ -42,9 +42,9 @@ Do not use this sub-skill for:
 
 ## Listing Filters
 
-The conversations listing accepts command-line-style expressions in the `filter` query parameter: `--gateway <id>`, `--chat-client <id>`, `--chat-session <id>`, `--model <name>`, `--user <external-user-id>`, `--api-key <id>`. URL-encode the complete expression, for example `?filter=--gateway%20<id>`. The listing window uses `timeStart` and `timeEnd` (ISO 8601), or `offsetminutes` when `timeStart` is omitted; `period` belongs to export, not listing.
+The conversations listing accepts command-line-style expressions in the `filter` query parameter: `--id|-i <conversation-id>`, `--token|-t <conversation-token>`, `--rid|-r <request-id>`, `--model|-m <name>`, `--user|-u <external-user-id>`, `--api-key <id>`, `--gateway <id>`, `--chat-client <id>`, `--chat-session <id>`. The `--id`, `--token`, and `--rid` values match as case-insensitive substrings. URL-encode the complete expression, for example `?filter=--gateway%20<id>`. The listing window uses `timeStart` and `timeEnd` (ISO 8601), or `offsetminutes` when `timeStart` is omitted; `period` belongs to export, not listing.
 
-Plain-text `filter` searches input/output previews, model name, and provider name; it is not a full-transcript search. Use `--user` for an external user ID. The listing is bounded, so use a narrow time window and do not infer account-wide totals from a partial list.
+Free text left in `filter` can be combined with the options above and searches input/output previews, model name, provider name, conversation ID, conversation token, request ID, and external user ID; it is not a full-transcript search. Filters apply to the whole window before the result limit, which is higher when a filter is present. When more conversations match, the `X-Results-Truncated` response header carries the applied limit. The listing is bounded, so use a narrow time window and do not infer account-wide totals from a truncated list.
 
 ## Routing And Usage Evidence
 

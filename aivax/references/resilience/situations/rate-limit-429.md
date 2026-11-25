@@ -18,6 +18,9 @@ Get past the rate limit without burning the account balance, without retrying in
 
 ## Decision Tree
 
+0. Read the message first.
+   - "Too many simultaneous generations for your plan": a per-account concurrency cap, not a request-rate window. Wait for in-flight generations to finish, lower parallelism, then retry with short backoff.
+   - "Subscription model quota exhausted": the monthly subscription model quota is used up or not in the plan. Do not retry. Choose another model explicitly, and ask the user before switching to a billed model.
 1. Did the response include a `Retry-After` header? If yes, sleep for that duration and retry once. Do not retry earlier.
 2. If no `Retry-After`, was the quota a per-minute request limit or a token-rate limit?
    - Per-minute request: back off exponentially with jitter, starting at 1s, doubling, capping at 30s.

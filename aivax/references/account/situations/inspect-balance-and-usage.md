@@ -36,12 +36,13 @@ The balance response includes:
 - `usage24h`: recent spend.
 - `plan`: account plan.
 - `storageUsage`: current account storage usage.
-- `subscriptionModelUsage`: service-allowance snapshot with `consumptions` by type, `usedPercent`, `resetAt`, `isExhausted`, and usage-share `details`. Inference coverage is currently disabled.
-- `planLimits`: included storage and whether the plan defines a subscription-model allowance; this does not mean inference coverage is active.
+- `subscriptionModelUsage`: service-allowance snapshot with `consumptions` by type, `usedPercent`, `resetAt`, `isExhausted`, and usage-share `details`. Requests to subscription models (names starting with `@aivax-subscription/`) consume the `ModelInference` allowance instead of the balance.
+- `planLimits`: included storage and `includesSubscriptionModels`, whether the plan defines a subscription-model allowance.
+- When the subscription-model allowance is exhausted, or the plan does not include it, a request to a subscription model returns `429`. It is never routed to another model or charged to the balance; use another model explicitly or wait for `resetAt`. Do not treat this `429` as a retryable rate limit.
 
 The usage response includes:
 
-- `currentBalance` and `invoices`: each has `invoiceId`, `createdAt`, `paidAt`, `expiresAt`, `amount`, `description`, `isExpired`, `type` (`CreditAddition`, `SubscriptionPayment`, `SubscriptionRenewal`, or `ManualBill`), `paymentLocation` (only while the invoice is open), and `receiptLocation` (only when paid). Only `CreditAddition` invoices add prepaid balance; do not read subscription or manual-bill invoices as top-ups. A `CreditAddition` `amount` is the total charged, including payment fees; only the chosen top-up amount is added to the balance, so the balance increase can be smaller than `amount`. Do not echo payment or receipt links in reports; cite the invoice ID and state. Load `situations/manage-subscription.md` to act on them.
+- `currentBalance` and `invoices`: each has `invoiceId`, `createdAt`, `paidAt`, `expiresAt`, `amount`, `description`, `isExpired`, `type` (`CreditAddition`, `SubscriptionPayment`, `SubscriptionRenewal`, or `ManualBill`), `paymentLocation` (only while the invoice is open), `receiptLocation` (only when paid), and `serviceInvoiceLocation` (download of the service invoice issued for the invoice, `null` until one exists). Only `CreditAddition` invoices add prepaid balance; do not read subscription or manual-bill invoices as top-ups. A `CreditAddition` `amount` is the total charged, including payment fees; only the chosen top-up amount is added to the balance, so the balance increase can be smaller than `amount`. Do not echo payment, receipt, or service invoice links in reports; cite the invoice ID and state. Load `situations/manage-subscription.md` to act on them.
 - `usageDetails.modelUsageDiscriminations`: spend and token counts by model and category. `tokenCount` and `totalUsage` include non-billable cost estimates for BYOK gateway inference; `effectiveTokenCount` and `effectiveUsage` count only what was billed. The other usage sections, the balance, and the monthly report exclude those estimates.
 - `usageDetails.categoryDiscriminations`: spend by SKU and category.
 - `usageDetails.resourceDiscriminations`: spend by resource type and resource ID.
@@ -68,4 +69,4 @@ The usage response includes:
 - An invoice is open or a renewal failed: load `situations/manage-subscription.md`.
 - A spike is detected: load `references/cost-monitoring/situations/investigate-cost-spike.md`.
 - Storage is approaching the plan limit: identify the largest collections and consider cleanup. Confirm with the user.
-- A service allowance is exhausted early: inspect its consumption details and reset time; items that do not fit are billed normally. Compare billed usage before recommending a change.
+- A service allowance is exhausted early: inspect its consumption details and reset time. Items that do not fit are billed normally, except subscription-model requests, which return `429` (see above). Compare billed usage before recommending a change.

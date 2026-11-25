@@ -50,7 +50,7 @@ The agent must close the session cleanly, store the transcript (if any), charge 
 
 ## Cost Awareness
 
-Realtime voice is priced per second. A 30-minute conversation can cost more than a chat equivalent. Set a max duration and a max cost with the user before opening a long session.
+Realtime voice is priced per token, by modality. A 30-minute conversation can cost more than a chat equivalent. Set a max duration and a max cost with the user before opening a long session.
 
 ## Validation
 

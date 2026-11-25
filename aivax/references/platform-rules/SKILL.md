@@ -33,6 +33,7 @@ When the MCP is not available, use direct HTTPS calls to `https://inference.aiva
 
 - `Authorization: Bearer <API_KEY>` (preferred for server-to-server).
 - `Authorization: Basic <base64(username:api_key)>`.
+- `x-api-key: <API_KEY>` (for Anthropic-style clients).
 - `?api-key=<API_KEY>` (only when the client cannot send headers).
 
 For LLM-friendly responses, send `X-Response-Truncating: agent-optimized` on every call. Keep payloads compact and avoid media unless required.

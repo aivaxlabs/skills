@@ -41,7 +41,7 @@ For every candidate model, capture the following decision axes before recommendi
 | `intelligence` | Quality class. Hard reasoning needs a high class. |
 | `pricing` | Input, output, cached input, audio input prices per million tokens. |
 | `plan_availability` | Whether the model is available on Free, Pro, Max. |
-| `flags` | Preview, deprecated, unstable, regional, BYOK-only. |
+| `flags` | Preview, deprecated, unstable, regional, BYOK-only. In `models.json`, `flags.isDeprecating` is true only for an explicitly deprecated model. In `/v1/models`, `_details.provider_model.is_deprecated` is also true for a model released more than 12 months ago. |
 | `cache` | Whether the model supports cached input (lower cost on repeated prefixes). |
 
 ## Compare Two Candidates
@@ -86,7 +86,7 @@ Recommend a model swap when:
 - The current model is consistently more expensive than a cheaper model with the same capability floor.
 - The current model is too slow for the workload (real-time, batch) and a faster model is available with acceptable quality loss.
 - The current model lacks a required capability (modality, tool surface, structured output, context window).
-- A deprecated or preview flag was raised and a stable alternative exists.
+- `flags.isDeprecating` or `is_deprecated` is true, or a preview flag was raised, and a stable alternative exists.
 
 Do not recommend a swap when:
 

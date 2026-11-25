@@ -18,6 +18,7 @@ How to map an intent to a tool call. This file is a decision guide, not an endpo
 | Discover or compare models | `aivax_list_models` (with `name_filter` for focus) | `GET https://inference.aivax.net/v1/models` |
 | Verify field, enum, or behavior | `aivax_search_context` with `search_type: "all"` or `"api-function-reference"` | Fetch `https://inference.aivax.net/apidocs/llms.txt` or `https://docs.aivax.net/docs/<topic>` |
 | Direct chat completion | Not available via MCP; use HTTP or OpenAI SDK with `base_url: https://inference.aivax.net/v1` | Same |
+| Responses or Anthropic Messages client | Not available via MCP; `POST /v1/responses` or `POST /v1/messages` over HTTP or the matching SDK | Same |
 | Realtime voice | Not available via MCP; use authenticated WebSocket upgrade `GET /api/v1/voice-session`, then send `session.update` | Same |
 
 ## Resource Path Map
@@ -29,7 +30,6 @@ GET  /api/v1/information/balance
 GET  /api/v1/information/usage?timeStart=<iso>&timeEnd=<iso>
 GET  /api/v1/information/rerankers-models.json
 GET  /api/v1/information/audio-transcription-models.json
-GET  /api/v1/information/plans.json
 
 GET  /api/v1/ai-gateways
 GET  /api/v1/ai-gateways/<gateway-id>

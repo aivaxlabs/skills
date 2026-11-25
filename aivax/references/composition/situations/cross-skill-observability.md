@@ -58,7 +58,7 @@ stages:
     skill: references/rerankers/
     duration: 180ms
     cost: 0.0005
-    ids: { reranker: "@aivax/reflex-v1", request_id: req_def }
+    ids: { reranker: "@aivax/reflex-v1.5", request_id: req_def }
   - name: generate
     skill: references/text-inference/
     duration: 1800ms

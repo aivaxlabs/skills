@@ -39,12 +39,12 @@ A gateway has:
 - `parameters.routingOption` and `parameters.allowedProviders`: integrated-model provider selection; defaults are `Balanced` and `["*"]`. Provider tags are tried in order, and `"*"` allows any provider. See `references/text-inference/model-catalog.md` before restricting providers.
 - `parameters.systemInstruction`: the base behavior of the gateway.
 - `parameters.knowledgeCollections`: collection IDs queried before model call.
-- `parameters.rerankerName`: the reranker for RAG. Default is `lexical`. See `references/rerankers/`.
+- `parameters.rerankerName`: the reranker for RAG. Default is Reflex (`@aivax/reflex:latest`). See `references/rerankers/`.
 - `parameters.skills`: flat list of AIVAX skill IDs. No native priority or primary skill concept.
 - `parameters.mcpSources`, `parameters.protocolFunctions`, `parameters.protocolFunctionSources`: external capabilities.
 - `parameters.builtinFunctionsOptions`: options for built-in web search, image generation, memory, and related tools.
 - `parameters.sentinelOptions.enabledFunctions`: built-in tools exposed through Sentinel reasoning.
-- `parameters.enableBash` and `parameters.bashOptions`: controlled virtual Bash behavior. `bashOptions.toolList` takes case-insensitive runtime tool names or `*`/`?` wildcard patterns (for example `web_*`, matching `web_search`), interpreted by `bashOptions.toolExclusionMode`: `WhiteList` moves only matching tools into the shell, `BlackList` keeps matching tools as direct model functions and moves the rest. `shell` and `read_skill` are always reserved; `allowDataPersistence` needs a user external ID to persist files.
+- `parameters.enableBash` and `parameters.bashOptions`: controlled virtual Bash behavior. `bashOptions.toolList` takes case-insensitive runtime tool names or `*`/`?` wildcard patterns (for example `web_*`, matching `web_search`), interpreted by `bashOptions.toolExclusionMode`: `WhiteList` moves only matching tools into the shell, `BlackList` keeps matching tools as direct model functions and moves the rest. `shell` and `read_skill` are always reserved; `allowDataPersistence` needs a user external ID to persist files. `allowInternetAccess` (default `true`): set `false` to remove the network commands (`curl`, `wget`, `ping`) from the shell.
 - `parameters.timeZone`: IANA time zone in which the model reads and writes dates and times (`get_date_time`, scheduled messages, recurring jobs, and the Bash tool). Defaults to `America/Sao_Paulo`; invalid identifiers are rejected. A request-level `time_zone` overrides it for that call. Set it to the end users' zone so cron expressions and unzoned schedule times mean what they expect.
 - `parameters.toolContextCount`: how many previous tool results stay in context.
 - `parameters.contextMaximumSize` and `parameters.contextOverflowAction`: cap and handle long context.
