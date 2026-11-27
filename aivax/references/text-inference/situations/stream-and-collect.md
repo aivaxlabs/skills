@@ -57,7 +57,7 @@ for event in stream:
 
 - The accumulated text is non-empty and matches the expected length.
 - Every tool call has a non-empty `function.name` and a parseable `function.arguments` (JSON).
-- The `usage` block has `prompt_tokens`, `completion_tokens`, and `total_tokens` (or a normalized equivalent).
+- The `usage` block has `prompt_tokens`, `completion_tokens`, and `total_tokens` (or a normalized equivalent). On Chat Completions, `prompt_tokens` counts the full input, including `prompt_tokens_details.cached_tokens`.
 - The `finish_reason` is one of the expected values.
 - The trace ID is recorded in the conversation.
 
