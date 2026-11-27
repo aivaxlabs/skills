@@ -20,7 +20,7 @@ This sub-skill owns text-to-speech and speech-to-text generation through AIVAX. 
 Both endpoints accept AIVAX API keys (private or public, depending on the workflow).
 
 - TTS accepts `model`, `input`, optional `voice`, optional `format` (`mp3`, `wav`, or `ogg`; default `wav`), and optional `raw`. With the default `raw=false`, it returns the standard JSON envelope whose `data` contains `{ "format", "mimeType", "data" }`, with audio base64 in `data`. Binary audio is returned only with `raw=true`. Do not send MCP-only `instructions`, or invent `speed`, `language`, `sample_rate`, or `metadata` controls for this REST endpoint.
-- STT accepts only optional `model`, required `input_audio.data`, required `input_audio.format`, and optional `language`; diarization is not a request parameter (`OpenIndexer.Alpha2/Api/Modules/Generations/AudioTranscriptionsApi.cs:35-39`). Use `GET /api/v1/information/audio-transcription-models.json` for the live STT catalog (`OpenIndexer.Alpha2/Api/Modules/InformationApi.cs:86`).
+- STT accepts only optional `model`, required `input_audio.data`, required `input_audio.format`, and optional `language`; diarization is not a request parameter. Use `GET /api/v1/information/audio-transcription-models.json` for the live STT catalog.
 
 ## Media Generation MCP
 

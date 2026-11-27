@@ -70,7 +70,7 @@ Two-factor authentication (TOTP) protects console sign-in only. API keys (`sk-ai
 
 ## Public Key Restrictions
 
-A public key is limited by permission, not by a route list: it can call only routes whose required permissions are within `InferenceText`, `InferenceGenerations`, and `RagRead` (`Model/AuthorizationToken.cs:79-82`; checked in `Middleware/AuthenticateAccount.cs`). Anything that also requires `ResourcesRead`, `ResourcesWrite`, `RagWrite`, `Account`, or another permission returns `403`. In practice:
+A public key is limited by permission, not by a route list: it can call only routes whose required permissions are within `InferenceText`, `InferenceGenerations`, and `RagRead`. Anything that also requires `ResourcesRead`, `ResourcesWrite`, `RagWrite`, `Account`, or another permission returns `403`. In practice:
 
 - RAG search (`/api/v2/query`, `/api/v2/query/similar`, `/api/v2/query/browse`, and the deprecated `/api/v1/query`) and RAG answer generation (`/api/v1/answer`).
 - Routes under `/api/v1/generations/` that require only `InferenceGenerations`, such as speech, speech-to-text transcription, image generation, media descriptions, classification, extraction, summarization, translation, decisions, and instruction refinement. Routes that also require `ResourcesRead` (such as validations) are not available.

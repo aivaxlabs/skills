@@ -64,7 +64,7 @@ A gateway has:
 
 - `POST /api/v1/ai-gateways`: create a gateway.
 - `PATCH /api/v1/ai-gateways/<id>`: edit a gateway. Top-level gateway fields and top-level `parameters` fields are shallow-merged; send only the fields that should change.
-- `GET /api/v1/ai-gateways`: list gateways. Add `?filter=<value>` to search by gateway name, model name, slug, or ID (`OpenIndexer.Alpha2/Api/Modules/AiGatewayApi.cs:112-116`).
+- `GET /api/v1/ai-gateways`: list gateways. Add `?filter=<value>` to search by gateway name, model name, slug, or ID.
 - `GET /api/v1/ai-gateways/<id>`: view one gateway.
 - `DELETE /api/v1/ai-gateways/<id>`: delete a gateway. Requires explicit approval.
 
@@ -81,7 +81,7 @@ Arrays are usually replacements during patching; include the complete intended l
 
 ## Public vs Private Keys
 
-Public keys (`pk-aiv-`) can call chat completions with the full AI Gateway UUID. Direct integrated-model calls and gateway slug lookup are disabled. MCP sources, protocol functions, built-in tools, Bash, skills, and sentinel options are stripped from the request. Only these parameters are accepted: `model`, `messages`, `prompt`, `temperature`, `top_p`, `top_k`, `seed`, `tools`, `reasoning_effort`, `max_completion_tokens`, `stream`, `conversation_token`, and its deprecated alias `idempotency_key` (`OpenIndexer.Alpha2/Api/Modules/OpenAi.cs:27-43`).
+Public keys (`pk-aiv-`) can call chat completions with the full AI Gateway UUID. Direct integrated-model calls and gateway slug lookup are disabled. MCP sources, protocol functions, built-in tools, Bash, skills, and sentinel options are stripped from the request. Only these parameters are accepted: `model`, `messages`, `prompt`, `temperature`, `top_p`, `top_k`, `seed`, `tools`, `reasoning_effort`, `max_completion_tokens`, `stream`, `conversation_token`, and its deprecated alias `idempotency_key`.
 
 Private-key chat-completion requests may set `routing_options.preset` (`Balanced`, `Cheapest`, `Fastest`, `Quality`, or `Special`) and `routing_options.allowed_providers` without changing the saved gateway. Omitted values inherit its configuration. The deprecated `routing_preset` is still accepted, but `routing_options.preset` takes precedence. Public keys cannot send either routing extension.
 

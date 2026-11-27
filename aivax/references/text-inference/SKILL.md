@@ -70,8 +70,6 @@ The chat completions endpoint accepts OpenAI-compatible payloads plus AIVAX exte
 - `allow_logging`: optional boolean, default `true`. Send `false` to keep this request out of the account conversation logs; it then cannot be found in `references/observability/` afterwards, so use it only when that loss is intended. It does not change provider-side retention (see Limits). Private keys only.
 - `tool_invocation_explanations`: when supported, expose tool-call explanations in the response. The explanation fields (`_tool_reason`, `_tool_goal`) are removed from the arguments before MCP tools and protocol functions are called, so handlers never receive them.
 
-These fields are implemented in `OpenIndexer.Alpha2/Api/Modules/OpenAi.cs`. The built-in names come from `OpenIndexer.Alpha2/Inference/ReasoningChainResolverOptions.cs`.
-
 The response `id` and `choices[].message.id` are the AIVAX id of the assistant message, in the `aivx_` format; every streamed chunk carries the same id, and the last chunk carries `conversation_token`. Non-streaming responses also return `conversation_token` and `choices[].generated_messages`, every message created in the request, including intermediate assistant tool calls and server-side tool results. Send the assistant messages back with their `id` so AIVAX can restore that turn's server-side state.
 
 For integrated models, the response includes the serving provider's routing tag in `provider`, next to `model`, including streamed chunks. BYOK gateways return `provider: null`. Use this observed value rather than inferring the provider from the requested model name. Public catalogs and responses do not include upstream provider model identifiers or provider base URLs. Do not read a removed `model_name` or `providerModel` field.

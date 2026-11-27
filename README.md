@@ -14,18 +14,26 @@ aivax/
     +-- batch/
     +-- composition/
     +-- cost-monitoring/
+    +-- decisions/
+    +-- gateway-workers/
+    +-- hook-schedules/
     +-- image-generation/
+    +-- memories/
     +-- multimodal/
+    +-- notifications/
     +-- observability/
     +-- platform-rules/
+    +-- protocol-functions/
     +-- rag/
     +-- rerankers/
     +-- resilience/
+    +-- shell-io/
     +-- skill-development/
     +-- speech/
     +-- text-inference/
     +-- text-tools/
     +-- voice-realtime/
+    +-- web/
     +-- web-chat/
 ```
 
@@ -37,9 +45,9 @@ It includes:
 
 - A capability router that loads only the relevant operational guidance.
 - Platform rules for tool choice, error handling, and safe mutations.
-- Playbooks for AI gateways, text inference, RAG, reranking, and agentic tests.
-- Batch, web chat, account, cost monitoring, and observability workflows.
-- Image, multimodal, speech, realtime voice, and text-tool guidance.
+- Playbooks for AI gateways, gateway workers, protocol functions, text inference, decisions, RAG, reranking, and agentic tests.
+- Batch, web chat, hook schedules, account, notifications, memories, shell sandbox, cost monitoring, and observability workflows.
+- Image, multimodal, speech, realtime voice, web utilities, and text-tool guidance.
 - Composition and resilience patterns for cross-capability workflows.
 
 ## Install

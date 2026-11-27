@@ -61,7 +61,7 @@ Reflex calls consume the plan's daily reranking allowance when fully covered; ot
 
 ## Limits
 
-Use the live catalog at `GET /api/v1/information/rerankers-models.json` for current capabilities and limits (`OpenIndexer.Alpha2/Api/Modules/InformationApi.cs:136`). Check the live catalog for each model's context and document limits; Jina and lexical declare no maximum document count. The endpoint rejects unknown or non-autonomous models, invalid `top_n` or `min_score`, empty input, or a document count above the model's declared limit. All non-none reranking operations share the account's reranking request quota; Reflex also has a processing-time cap. These constraints and balance requirements still apply to allowance-covered calls. On rate limits, load `references/resilience/situations/rate-limit-429.md`.
+Use the live catalog at `GET /api/v1/information/rerankers-models.json` for current capabilities and limits. Check the live catalog for each model's context and document limits; Jina and lexical declare no maximum document count. The endpoint rejects unknown or non-autonomous models, invalid `top_n` or `min_score`, empty input, or a document count above the model's declared limit. All non-none reranking operations share the account's reranking request quota; Reflex also has a processing-time cap. These constraints and balance requirements still apply to allowance-covered calls. On rate limits, load `references/resilience/situations/rate-limit-429.md`.
 
 ## Escalation
 

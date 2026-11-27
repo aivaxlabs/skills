@@ -7,7 +7,7 @@ description: Search the web and extract readable text from URLs or inline files 
 
 This sub-skill owns the direct web search and content extraction endpoints: `system.v1.web.search` and `system.v1.web.fetch`. These are explicit API calls the agent makes itself, not model-driven browsing inside a chat completion.
 
-All routes share the prefix `/api/v1/web`. They require a private API key; public keys get `403` because they lack the web-utilities permission (`OpenIndexer.Alpha2/Api/Modules/WebApi.cs:27-28`, `OpenIndexer.Alpha2/Model/AuthorizationToken.cs:74-85`).
+All routes share the prefix `/api/v1/web`. They require a private API key; public keys get `403` because they lack the web-utilities permission.
 
 ## When To Use
 
